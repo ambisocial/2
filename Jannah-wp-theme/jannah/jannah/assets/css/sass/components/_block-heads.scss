@@ -1,0 +1,75 @@
+// Section Titles
+.section-title{
+	font-weight: 700;
+
+	&.section-title-default{ // separate the default style to fix the override of blocks head style
+		font-size: 50px;
+		margin-bottom: 40px;
+
+		@include breakpoint(max_min_sm){
+			font-size: 35px;
+			margin-top: 10px;
+			margin-bottom: 20px;
+		}
+	}
+
+	span.the-section-title .the-section-icon{
+		font-size: 85%;
+	}
+}
+
+.section-title-centered{
+	font-size: 50px;
+	margin-bottom: 50px;
+  display: flex;
+	justify-content: center;
+	align-content: center;
+
+	@include breakpoint(max_min_sm){
+		font-size: 35px;
+		margin-top: 10px;
+		margin-bottom: 30px;
+	}
+
+	span.the-section-title{
+		padding: 0 2%;
+		text-align: center;
+		line-height: 1;
+	}
+
+	.dark-skin & {
+		color: #ffffff;
+	}
+
+	&:before,
+	&:after{
+		height: 2px;
+		content: '';
+		flex-basis: 15%;
+		position: relative;
+		background-color: $base-color;
+		align-self: center;
+
+		.dark-skin & {
+			background-color: #ffffff;
+		}
+	}
+}
+
+.section-title-big{
+	padding: 0 15px;
+	font-size: 80px;
+	margin-bottom: -15px;
+	line-height: 1;
+	color: rgba(0,0,0,0.3);
+
+   @include breakpoint(max_min_sm){
+		font-size: 35px;
+		margin-top: 10px;
+		margin-bottom: 5px;
+	}
+
+	.dark-skin & {
+		color: rgba(255,255,255,0.3);
+	}
+}

@@ -1,0 +1,556 @@
+//  (Improvements stage #1 - 28 Feb 2018)
+//  Using !importnat keyword Guidlines:
+//  - Sometimes we use !important keyword instead of repeat the whole rules in rtl againe,
+//  if the components is a kind of default component, it will inherit the deafutl
+//  style from the default.
+//  - In RTL we change the default component style (left => right).
+//  But there are some components want to be in the same style in both LTR & RTL,
+//  and the RTL default component style will affect it.
+//  - We fix this by using high specificity keyword (!importnat) in the default style
+//  to override the default RTL style of this component.
+//  - EXamples:
+// 	The title area padding in block #16 (Block #16 is a kind of block #12).
+// 	.post-thumb float in Block #11.
+
+
+// Section Wrapper
+.is-stretch-section{
+	.container{
+		max-width: 100%
+	}
+}
+
+.section-item{
+	position: relative;
+	padding: 30px 0 0;
+	clear: both;
+
+	@include breakpoint(max_min_md){
+		padding-top: 15px;
+	}
+
+	.has-title &{
+		padding-top: 85px;
+		padding-bottom: 55px;
+
+		@include breakpoint(max_min_md){
+			padding-top: 20px;
+			padding-bottom: 10px;
+		}
+	}
+
+	.without-background:not(.has-title) + .without-background.has-title & {
+		padding-top: 55px;
+	}
+
+	.has-background &{
+		overflow: hidden;
+		background-size: cover;
+		background-repeat: no-repeat;
+		background-position: 50% 50%;
+
+		.archive &{
+			padding-bottom: 30px; // Archive
+		}
+	}
+
+	.normal-width.has-background &{
+		padding-right: 30px;
+		padding-left: 30px;
+
+		@include breakpoint(max_min_md){
+			padding-right: 15px;
+			padding-left: 15px;
+		}
+	}
+
+	@include breakpoint(max_min_md){
+		@at-root .container.has-background{
+			padding-right: 0;
+			padding-left: 0;
+		}
+	}
+
+	&.first-block-is-full-width,
+	.without-background + .without-background & {
+		padding-top: 0;
+	}
+
+	.has-background & > section{
+		&{
+			margin-bottom: 0;
+		}
+
+		// this can't happen unless we have a fullwidth slider {section beside .container}
+		+ .container{
+			margin-top: 30px;
+
+			@include breakpoint(max_min_md){
+				margin-top: 15px;
+			}
+		}
+	}
+}
+
+// General Blocks Style
+
+// - Block Title
+.mag-box-title{
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 20px;
+
+	h3{
+		font-size: 18px;
+		margin-right: 20px;
+		flex: 0 0 auto;
+		max-width: calc(100% - 145px);
+		float: left;
+
+		@include breakpoint(max_min_xs){
+			max-width: calc(100% - 105px);
+		}
+
+		&:only-child{
+			max-width: 100%;
+		}
+	}
+
+	.tie-alignright{
+		flex-grow: 1;
+		-ms-flex-positive: 1; // IE fix
+		width: 100%;
+	}
+}
+
+// - Block Filters and FlexMenu
+.mag-box-options{
+	font-size: 12px;
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+
+	.slider-arrow-nav{
+		flex: 0 0 55px;
+	}
+}
+
+.block-more-button{
+	margin-left: 10px;
+	line-height: 22px;
+}
+
+.mag-box-filter-links {
+	opacity: 0;
+	transition: opacity 0.5s;
+	overflow: hidden;
+	height: 22px;
+
+	padding-left: 15px;
+
+	li{
+		float: left;
+	}
+
+	a{
+		padding: 0 6px;
+		margin: 0 2px;
+		line-height: 22px;
+		border-radius: 2px;
+		color: $base-color;
+		display: inline-block;
+		transition: 0.2s;
+		white-space: nowrap;
+		word-wrap: normal; // IE fix
+
+		&:hover{
+			border-color: $brand-color;
+			background-color: $brand-color;
+			color: $bright;
+		}
+
+		div.mag-box .mag-box-options &.active{ // override dark-skin
+			color: $brand-color;
+			background-color: transparent;
+			cursor: default;
+		}
+	}
+}
+
+
+.flexMenu-viewMore {
+	> a{
+		position: relative;
+		z-index: 5;
+
+		> span{
+			display: inline-block;
+			line-height: 22px;
+			font-size: 16px;
+		}
+	}
+
+	.mag-box-filter-links &{
+		&:hover > a{
+			background-color: transparent !important;
+			color: $brand-color;
+		}
+	}
+}
+
+.flexMenu-popup{
+	z-index: 4;
+	transform: translateX(-100%) translateX(34px);
+	min-width: 100px;
+	text-align: right;
+	white-space: nowrap;
+	word-wrap: normal; // IE fix
+	border-radius: $base-border-radius;
+	background: #ffffff;
+
+	li{
+		width: 100%;
+		display: block;
+	}
+
+	.mag-box-filter-links &{
+		top: 0;
+		padding-top: 22px;
+		box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+
+		li:first-child{
+			border-top: 1px solid rgba(0,0,0,0.05);
+		}
+	}
+
+	a{
+		border-radius: 0;
+		display: block;
+		padding: 3px 10px;
+		transition: none;
+		margin: 0;
+	}
+}
+
+
+
+// Default Block post list style
+.mag-box-container{
+	position: relative;
+}
+
+.mag-box .posts-items li:nth-child(1),
+.mini-posts-box .posts-items li:nth-child(2),
+.big-post-left-box .posts-items li:nth-child(2),
+.big-posts-box .posts-items li:nth-child(2){
+	margin-top: 0;
+}
+
+.mag-box{
+	margin-bottom: 30px;
+	clear: both;
+
+	@include breakpoint(max_min_md){
+		margin-bottom: 15px;
+	}
+
+	.is-loading{
+		opacity: 0.5;
+		transition: opacity 0.3s;
+	}
+
+	.posts-items{
+		clear: both;
+		margin: 0 -2%;
+
+		li{
+			float: left;
+			width: 50%;
+			margin-top: 24px;
+			padding: 0 2%;
+
+			@include breakpoint_max(670px){
+				width: 100%;
+
+				&:not(:first-child){
+					margin-top: 14px;
+				}
+			}
+		}
+	}
+
+	.posts-items-loaded-ajax{
+		margin-top: 24px !important;
+	}
+
+	.post-title{
+		font-size: 20px;
+		line-height: 1.4;
+	}
+
+	.post-meta{
+		margin: 0 0 3px;
+	}
+
+	.post-excerpt{
+		margin-top: 10px;
+		color: $secondry-text-color;
+		word-break: break-word;
+		font-size: 14px;
+	}
+
+	li:not(:first-child){
+		.post-thumb{
+			float: left;
+			margin-right: 15px;
+		}
+
+		.post-details{
+			padding-left: 125px;
+		}
+
+		.post-title{
+			font-size: 16px;
+		}
+	}
+
+	// .pages-nav{
+	// 	padding: 30px 0 0;
+	// }
+}
+
+// - Posts Without Thumbs
+.no-small-thumbs{
+	&.post-item .post-details,
+	&.post-widget-body,
+	&.comment-body{
+		padding-left: 0 !important;
+	}
+}
+
+// - Block Content Only
+.content-only{
+	&:not(.tabs-box){
+		&,
+		> .container-wrapper{
+			background-color: transparent;
+			border: 0;
+			padding: 0;
+			box-shadow: none;
+		}
+	}
+
+	@include breakpoint(max_min_md){
+		margin: 30px 0;
+	}
+}
+
+// - Show More Button
+.show-more-button{
+	border: $primary-border;
+	height: 50px;
+	line-height: 50px;
+	position: relative;
+	text-align: center;
+	display: block;
+	font-weight: 600;
+	cursor: pointer;
+	clear: both;
+
+	.mag-box &{
+		margin: 25px -30px -30px;
+		border-width: 1px 0 0;
+
+		@include breakpoint(max_min_sm){
+			margin: 20px -15px -20px;
+		}
+	}
+
+	.pages-nav &{
+		padding: 0 20px;
+		min-height: 50px;
+		line-height: 50px;
+	}
+
+	.magazine1 .content-only &,
+	.magazine2 &{
+		border-width: 1px;
+		margin: 35px auto 0;
+		max-width: 350px;
+
+		@include breakpoint(max_min_md){
+			margin-top: 20px;
+		}
+	}
+
+	@include spinner-width(26px);
+}
+
+.pagination-disabled{
+	opacity: 0.5;
+	cursor: default !important;
+
+	&,
+	&:hover{
+		color: #888 !important; // override the custom block color
+	}
+}
+
+
+
+
+/* Grid layout for blocks */
+.categories-block{
+
+	.catgeory-title{
+		font-weight: bold;
+		white-space: nowrap;
+	}
+
+	.catgeory-count{
+		border-radius: 100%;
+		background-color: #fff;
+		min-width: 34px;
+		text-align: center;
+		height: 34px;
+		line-height: 34px;
+		font-size: 8pt;
+		display: inline-block;
+
+		.dark-skin & {
+			background-color: #1e1e1e;
+		}
+	}
+
+	.catgeory-icon {
+		width: 60px;
+
+		img{
+			border-radius: 50%;
+			object-fit: cover;
+			aspect-ratio: 1;
+			height: 60px;
+			float: inline-start;
+		}
+	}
+
+	&.categories-block-vertical{
+		li{
+			text-align: center;
+			align-items: center;
+
+			a{
+				flex-direction: column;
+				min-width: 150px;
+				width: 100%;
+			}
+		}
+	}
+
+	&.categories-block-horizontal{
+		a{
+			gap: 10px;
+		}
+
+		.catgeory-title{
+			flex-grow: 2;
+		}
+	}
+
+
+
+
+	ul{
+		display: flex;
+		gap: 10px;
+		justify-content: center;
+
+		
+		&.categories-layout-scroll{
+			overflow: auto;
+			justify-content: flex-start;
+
+			padding-bottom: 30px;;
+		}
+
+		&.categories-layout-wrap{
+			flex-wrap: wrap;
+			justify-content: flex-start;
+
+			&.categories-wrap-1 li{
+				flex-basis: 60%;
+			}
+			&.categories-wrap-2 li{
+				flex-basis: 45%;
+			}
+			&.categories-wrap-3 li{
+				flex-basis: 30%;
+			}
+		}
+	}
+
+	li{
+		background: rgba(0,0,0,0.02);
+		transition: 0.15s;
+		display: flex;
+		position: relative;
+		flex-grow: 1;
+		border-radius: 5px;
+		
+		.dark-skin & {
+			background-color: rgba(0,0,0,0.1);
+		}
+
+		&:hover{
+			transform: scale(1.022);
+		}
+
+		&.has-bg{
+			background-size: cover;
+			background-repeat: no-repeat;
+			background-position: center;
+
+			&:after{
+				content: "";
+				position: absolute;
+				display: block;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				height: 100%;
+				transition: opacity 0.2s;
+				-webkit-backface-visibility: hidden;
+				backface-visibility: hidden;
+				background-color: rgba(0,0,0, 0.6);
+				border-radius: 5px;
+			}
+
+			&:hover{
+				&:after{
+					opacity: 0.7;
+				}
+			}
+
+			.catgeory-title{
+				color: #fff;
+				font-size: 16px;
+			}
+		}
+
+		a{
+			padding: 10px 20px;
+			display: flex;
+			align-items: center;
+			flex-grow: 1;
+			z-index: 1;
+			gap: 5px;
+			
+			&:hover{
+				text-decoration: none !important;
+			}
+		}
+	}
+
+
+}

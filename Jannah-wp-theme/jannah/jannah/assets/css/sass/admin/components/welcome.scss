@@ -1,0 +1,177 @@
+body[class*="tie-install-plugins"],
+body[class*="tie-system-status"],
+body[class*="tie-posts-switcher"],
+body[class*="tie-one-click-demo-import"]{
+
+	#theme_not_authorized{
+		max-width: 100%;
+
+		.tie-notice-content{
+			padding-top: 15px;
+		}
+	}
+
+	#screen-meta-links{
+		display: none;
+	}
+}
+
+body[class*="tie-install-plugins"]{
+	.column-source,
+	.plugin-update.colspanchange,
+	.actions.bulkactions + p strong small{
+		display: none;
+	}
+
+	.plugin-required{
+		padding: 2px 5px;
+	  text-transform: uppercase;
+	  font-size: 80%;
+	  background: #ff574a;
+	  border-radius: 3px;
+	  color: #fff;
+	}
+}
+
+.tie-about-wrap{
+	max-width: 1250px;
+
+	.tie-badge{
+		top: 0;
+		right: 0;
+		position: absolute;
+	}
+}
+
+
+
+
+
+
+
+/**
+ * System Status
+ */
+table.tie-status-table {
+	margin-bottom: 30px;
+
+	tr {
+		&:nth-child( 2n ) {
+			th,
+			td {
+				background: #fcfcfc;
+			}
+		}
+	}
+
+	th {
+		font-weight: 700;
+		padding: 9px;
+	}
+
+	td:first-child {
+		width: 25%;
+	}
+
+
+	td {
+		padding: 9px;
+
+		mark {
+			background: transparent none;
+		}
+
+		mark.yes {
+			color: $success_color;
+		}
+
+		mark.no {
+			color: #999;
+		}
+
+		mark.error {
+			color: $danger_color;
+		}
+
+		ul {
+			margin: 0;
+		}
+	}
+}
+
+
+#tie-debug-report {
+	display: none;
+	margin: 10px 0;
+	padding: 0;
+	position: relative;
+
+	textarea {
+		font-family: monospace;
+		width: 100%;
+		margin: 0;
+		height: 300px;
+		padding: 20px;
+		resize: none;
+		font-size: 12px;
+		line-height: 20px;
+		outline: 0;
+	}
+}
+
+
+#follow-tielabs{
+	line-height: 0.9;
+
+	li{
+		display: inline-block;
+		padding: 0 2px;
+
+	}
+}
+
+
+#recommended-plugins{
+	td{
+		padding: 15px;
+	}
+
+	.plugin-name{
+		width: 220px;
+	}
+}
+
+body .wrap .tie-nav-tab-wrapper{
+	margin-top: 50px;
+	margin-bottom: 50px;
+	padding: 0;
+	background-color: #fff;
+	border: none;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 25px 20px -20px;
+
+	a{
+		padding: 20px 30px !important;
+		line-height: 1.33333333;
+		border-radius: 0;
+		margin: 0;
+		font-size: 14px;
+		font-weight: 500;
+		border: none;
+
+		&:not(.button-primary){
+			background: transparent;
+
+			&:hover{
+				color: #000;
+			}
+		}
+
+
+	}
+}
+
+body.admin-color-modern{
+	.tie-nav-tab-wrapper  .nav-tab-active{
+		background: #3858e9;
+	}
+}

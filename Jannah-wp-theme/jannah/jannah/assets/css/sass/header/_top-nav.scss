@@ -1,0 +1,262 @@
+.top-nav {
+	background-color: #ffffff;
+	position: relative;
+	z-index: 10;
+	line-height: 40px;
+	border: $base-border;
+	border-width: 1px 0;
+	color: $base-color;
+	clear: both;
+
+	.main-nav-below.top-nav-above &{
+		border-top-width: 0;
+	}
+
+	a:not(.button):not(:hover){
+		color: $base-color;
+	}
+
+	.components > li:hover > a{
+		color: $brand-color;
+	}
+
+	.search-bar{
+		margin-top: 3px;
+		margin-bottom: 3px;
+		line-height: 34px;
+	}
+}
+
+.topbar-wrapper{
+	display: flex;
+	min-height: 40px;
+}
+
+.top-nav {
+	&.has-menu,
+	&.has-components{
+		.topbar-wrapper{
+			display: block;
+		}
+	}
+
+	.tie-alignleft,
+	.tie-alignright{
+		flex-grow: 1;
+		position: relative;
+	}
+
+	&.has-breaking-news{
+		.tie-alignleft{
+			flex: 1 0 100px;
+		}
+
+		.tie-alignright{
+			flex-grow: 0;
+			z-index: 1;
+		}
+	}
+
+	&.has-date-components .tie-alignleft,
+	&.has-date-components-menu,
+	.top-nav-boxed &.has-components{
+		.components > li:first-child:not(.search-bar){
+			border-width: 0;
+		}
+	}
+
+	@include breakpoint(md){
+		.header-layout-1.top-nav-below:not(.has-shadow) &{
+			border-width: 0 0 1px;
+		}
+	}
+}
+
+.topbar-today-date{
+	padding-right: 15px;
+	flex-shrink: 0;
+}
+
+// Top Menu
+.top-menu{
+	.menu {
+		a{
+			padding: 0 10px;
+		}
+
+		li:hover > a{
+			color: $brand-color;
+		}
+
+		ul{
+			display: none;
+			position: absolute;
+			background: #ffffff;
+		}
+
+		li:hover > ul{
+			display: block;
+		}
+
+		li{
+			position: relative;
+		}
+
+		ul.sub-menu a{
+			width: 200px;
+			line-height: 20px;
+    	padding: 10px 15px;
+		}
+	}
+
+	.tie-alignright &{
+		float: right;
+		border-width: 0 1px;
+	}
+
+	.menu .tie-current-menu > a{
+		color: $brand-color;
+	}
+}
+
+
+//Boxed Topbar-
+@include breakpoint(md){
+	.top-nav-boxed {
+
+		.topbar-wrapper{
+			padding-right: 15px;
+			padding-left: 15px;
+		}
+
+		.top-nav {
+			background: transparent !important;
+			border-width: 0;
+		}
+
+		.topbar-wrapper {
+			background: #ffffff;
+			border: $base-border;
+			border-width: 1px 0;
+			width: 100%;
+		}
+
+		&.has-shadow{
+			&.top-nav-below,
+			&.top-nav-below-main-nav {
+				.topbar-wrapper{
+					border-bottom-width: 0 !important;
+				}
+			}
+		}
+
+
+	}
+}
+
+
+//Topbar Components
+.top-nav{
+	.tie-alignleft{
+		.components,
+		.components > li{
+			float: left;
+			justify-content: start;
+		}
+
+		.comp-sub-menu{
+			right: auto;
+			left: -1px;
+		}
+	}
+}
+
+//TopBar Dark Mode
+.top-nav-dark{
+	.top-nav{
+		background-color: $top-nav-dark-bg;
+		color: $light-dark-base-color;
+	}
+
+	.top-nav *{
+		border-color: $base-border-color-in-white;
+	}
+
+	// breaking news
+	.top-nav .breaking a{
+		color: $light-dark-base-color;
+
+		&:hover{
+			color: #ffffff;
+		}
+	}
+
+	// components
+	.top-nav .components {
+		> li > a,
+		> li.social-icons-item .social-link:not(:hover) span{
+			color: $light-dark-base-color;
+		}
+
+		> li:hover > a {
+			color: #ffffff;
+		}
+	}
+
+	// top menu
+	.top-nav .top-menu li a{
+		color: $light-dark-base-color;
+		border-color: rgba(255,255,255,0.04);
+	}
+
+	.top-menu{
+		ul{
+			background: $top-nav-dark-bg;
+		}
+
+		li:hover > a{
+			background: rgba(0,0,0,0.1);
+			color: $brand-color;
+		}
+	}
+
+	&.top-nav-boxed {
+		.top-nav {
+			background-color: transparent;
+		}
+
+		.topbar-wrapper {
+			background-color: $top-nav-dark-bg;
+		}
+
+		&.top-nav-above.main-nav-below .topbar-wrapper {
+			border-width: 0;
+		}
+	}
+}
+
+.top-nav-light #top-nav,
+.main-nav-light #main-nav{
+	.weather-icon{
+		.icon-cloud,
+		.icon-basecloud-bg,
+		.icon-cloud-behind{
+			color: #d3d3d3;
+		}
+	}
+}
+
+//Top Nav Media Queries
+@include breakpoint(max_min_md){
+	.top-nav:not(.has-breaking-news),
+	.topbar-today-date,
+	.top-menu,
+	.theme-header .components{
+		display: none;
+	}
+}
+
+// Hide the breaking news till its CSS loaded
+.breaking{
+	display: none;
+}

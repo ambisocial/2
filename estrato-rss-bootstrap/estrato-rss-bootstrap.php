@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_RSS_VERSION', '1.1.0' );
+define( 'ESTRATO_RSS_VERSION', '1.2.0' );
+define( 'ESTRATO_RSS_DEMO_META', 'jannah_demo_data' );
 define( 'ESTRATO_RSS_CRON_HOOK', 'estrato_rss_import_event' );
 define( 'ESTRATO_RSS_OPTION_FEEDS', 'estrato_rss_feeds_config' );
 define( 'ESTRATO_RSS_OPTION_IMPORTED', 'estrato_rss_imported_guids' );
@@ -194,6 +195,196 @@ function estrato_rss_create_categories() {
 }
 
 /**
+ * @return string
+ */
+function estrato_rss_theme_options_key() {
+	return apply_filters( 'TieLabs/theme_options', 'tie_jannah_options' );
+}
+
+/**
+ * Remove categorias, menus e anexos marcados pelo demo do Jannah.
+ *
+ * @return array{terms:int,menus:int,attachments:int}
+ */
+function estrato_rss_remove_demo_artifacts() {
+	$stats = array(
+		'terms'       => 0,
+		'menus'       => 0,
+		'attachments' => 0,
+	);
+
+	$terms = get_terms(
+		array(
+			'taxonomy'   => array( 'category', 'post_tag' ),
+			'hide_empty' => false,
+			'meta_key'   => ESTRATO_RSS_DEMO_META,
+		)
+	);
+	if ( ! is_wp_error( $terms ) ) {
+		foreach ( $terms as $term ) {
+			wp_delete_term( $term->term_id, $term->taxonomy );
+			$stats['terms']++;
+		}
+	}
+
+	$menus = wp_get_nav_menus();
+	foreach ( $menus as $menu ) {
+		if ( get_term_meta( $menu->term_id, ESTRATO_RSS_DEMO_META, true ) ) {
+			wp_delete_nav_menu( $menu->term_id );
+			$stats['menus']++;
+		}
+	}
+
+	$attachments = get_posts(
+		array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_key'       => ESTRATO_RSS_DEMO_META,
+		)
+	);
+	foreach ( $attachments as $attachment_id ) {
+		wp_delete_attachment( (int) $attachment_id, true );
+		$stats['attachments']++;
+	}
+
+	return $stats;
+}
+
+/**
+ * Ajusta textos do tema Jannah para o portal Estrato.
+ */
+function estrato_rss_localize_jannah_options() {
+	$options = get_option( estrato_rss_theme_options_key(), array() );
+	if ( ! is_array( $options ) ) {
+		$options = array();
+	}
+
+	$options['breaking_title']             = 'Em alta';
+	$options['featured_posts_menu_title']  = 'Destaques';
+	$options['footer_one']                 = '&copy; Copyright %year% Estrato. Todos os direitos reservados.';
+	$options['adblock_message']            = 'Apoie o Estrato desativando o bloqueador de anúncios.';
+
+	update_option( estrato_rss_theme_options_key(), $options, false );
+}
+
+/**
+ * Renomeia blocos da homepage do demo SEO para categorias do Estrato.
+ */
+function estrato_rss_localize_homepage_blocks() {
+	$frontpage_id = (int) get_option( 'page_on_front' );
+	if ( ! $frontpage_id ) {
+		return 0;
+	}
+
+	$sections = get_post_meta( $frontpage_id, 'tie_page_builder', true );
+	if ( empty( $sections ) || ! is_array( $sections ) ) {
+		return 0;
+	}
+
+	$title_map = array(
+		'SEO'                      => 'Economia',
+		'Content Marketing'        => 'Mercados',
+		'PPC'                      => 'Negócios',
+		'Free SEO Training Series' => 'Brasil',
+		'Web Stories'              => 'Tecnologia',
+		'Recent Topics'            => 'Últimas notícias',
+		'Read more'                => 'Leia mais',
+		'Block Title'              => 'Destaques',
+	);
+
+	$updated = 0;
+	foreach ( $sections as $section_index => $section_data ) {
+		if ( empty( $section_data['blocks'] ) || ! is_array( $section_data['blocks'] ) ) {
+			continue;
+		}
+		foreach ( $section_data['blocks'] as $block_id => $block ) {
+			if ( empty( $block['title'] ) || ! isset( $title_map[ $block['title'] ] ) ) {
+				continue;
+			}
+			$sections[ $section_index ]['blocks'][ $block_id ]['title'] = $title_map[ $block['title'] ];
+			$updated++;
+		}
+	}
+
+	if ( $updated > 0 ) {
+		update_post_meta( $frontpage_id, 'tie_page_builder', $sections );
+	}
+
+	return $updated;
+}
+
+/**
+ * @param array<string, int> $categories
+ */
+function estrato_rss_rebuild_menus( $categories ) {
+	$menu_name = 'Estrato Principal';
+	$existing  = wp_get_nav_menu_object( $menu_name );
+	if ( $existing ) {
+		wp_delete_nav_menu( $existing->term_id );
+	}
+
+	$menu_id = wp_create_nav_menu( $menu_name );
+	if ( is_wp_error( $menu_id ) ) {
+		return;
+	}
+
+	wp_update_nav_menu_item(
+		$menu_id,
+		0,
+		array(
+			'menu-item-title'  => 'Início',
+			'menu-item-url'    => home_url( '/' ),
+			'menu-item-status' => 'publish',
+		)
+	);
+
+	$order = array( 'economia', 'mercados', 'negocios', 'brasil', 'politica', 'tecnologia', 'mundo', 'criptomoedas', 'agronegocio' );
+	foreach ( $order as $slug ) {
+		if ( empty( $categories[ $slug ] ) ) {
+			continue;
+		}
+		wp_update_nav_menu_item(
+			$menu_id,
+			0,
+			array(
+				'menu-item-status'    => 'publish',
+				'menu-item-type'      => 'taxonomy',
+				'menu-item-object-id' => $categories[ $slug ],
+				'menu-item-object'    => 'category',
+			)
+		);
+	}
+
+	$locations                = get_theme_mod( 'nav_menu_locations', array() );
+	$locations['primary']     = $menu_id;
+	$locations['top-menu']    = $menu_id;
+	$locations['footer-menu'] = $menu_id;
+	set_theme_mod( 'nav_menu_locations', $locations );
+}
+
+/**
+ * Integra o layout SEO do Jannah com categorias e menus do Estrato.
+ *
+ * @param array<string, int> $categories
+ * @return array<string, int>
+ */
+function estrato_rss_bootstrap_jannah_seo_demo( $categories ) {
+	$artifact_stats = estrato_rss_remove_demo_artifacts();
+	estrato_rss_localize_jannah_options();
+	$blocks         = estrato_rss_localize_homepage_blocks();
+	estrato_rss_rebuild_menus( $categories );
+
+	return array(
+		'terms'       => $artifact_stats['terms'],
+		'menus'       => $artifact_stats['menus'],
+		'attachments' => $artifact_stats['attachments'],
+		'blocks'      => $blocks,
+	);
+}
+
+/**
  * Remove posts de exemplo/demo que não vieram do RSS.
  *
  * @return int Number of deleted posts.
@@ -239,17 +430,19 @@ function estrato_rss_activate() {
 		update_option( ESTRATO_RSS_OPTION_SETTINGS, estrato_rss_default_settings(), false );
 	}
 
-	estrato_rss_create_categories();
+	$categories = estrato_rss_create_categories();
 	update_option( ESTRATO_RSS_OPTION_FEEDS, estrato_rss_get_config(), false );
 	estrato_rss_reschedule_cron( $settings['cron_schedule'] );
 
-	$removed = estrato_rss_remove_sample_posts();
-	$stats   = estrato_rss_run_import( true );
+	$removed  = estrato_rss_remove_sample_posts();
+	$jannah   = estrato_rss_bootstrap_jannah_seo_demo( $categories );
+	$stats    = estrato_rss_run_import( true );
 
 	set_transient(
 		'estrato_rss_activation_report',
 		array(
 			'removed' => $removed,
+			'jannah'  => $jannah,
 			'stats'   => $stats,
 		),
 		DAY_IN_SECONDS
@@ -270,9 +463,12 @@ function estrato_rss_maybe_upgrade() {
 		return;
 	}
 	update_option( 'estrato_rss_plugin_version', ESTRATO_RSS_VERSION, false );
-	estrato_rss_create_categories();
-	$settings = estrato_rss_get_settings();
+	$categories = estrato_rss_create_categories();
+	$settings   = estrato_rss_get_settings();
 	estrato_rss_reschedule_cron( $settings['cron_schedule'] );
+	if ( function_exists( 'tie_get_option' ) ) {
+		estrato_rss_bootstrap_jannah_seo_demo( $categories );
+	}
 }
 
 /**
@@ -403,12 +599,15 @@ function estrato_rss_admin_notice() {
 
 	$activation = get_transient( 'estrato_rss_activation_report' );
 	if ( $activation ) {
+		$jannah = ! empty( $activation['jannah'] ) ? $activation['jannah'] : array();
 		printf(
-			'<div class="notice notice-success is-dismissible"><p><strong>Estrato RSS:</strong> removidos %1$d posts de exemplo. Importadas %2$d notícias reais (%3$d ignoradas, %4$d erros).</p></div>',
+			'<div class="notice notice-success is-dismissible"><p><strong>Estrato RSS:</strong> removidos %1$d posts de exemplo. Importadas %2$d notícias reais (%3$d ignoradas, %4$d erros). Layout SEO: %5$d blocos renomeados, %6$d categorias demo removidas.</p></div>',
 			(int) $activation['removed'],
 			(int) $activation['stats']['imported'],
 			(int) $activation['stats']['skipped'],
-			(int) $activation['stats']['errors']
+			(int) $activation['stats']['errors'],
+			(int) ( $jannah['blocks'] ?? 0 ),
+			(int) ( $jannah['terms'] ?? 0 )
 		);
 		delete_transient( 'estrato_rss_activation_report' );
 	}
@@ -456,9 +655,11 @@ function estrato_rss_admin_page() {
 	}
 
 	if ( isset( $_POST['estrato_rss_cleanup_import'] ) && check_admin_referer( 'estrato_rss_cleanup_import' ) ) {
-		$removed = estrato_rss_remove_sample_posts();
-		$stats   = estrato_rss_run_import( true );
-		echo '<div class="notice notice-success"><p>Removidos ' . esc_html( (string) $removed ) . ' posts de exemplo. Importação: ' . esc_html( wp_json_encode( $stats ) ) . '</p></div>';
+		$categories = estrato_rss_create_categories();
+		$removed    = estrato_rss_remove_sample_posts();
+		$jannah     = estrato_rss_bootstrap_jannah_seo_demo( $categories );
+		$stats      = estrato_rss_run_import( true );
+		echo '<div class="notice notice-success"><p>Removidos ' . esc_html( (string) $removed ) . ' posts de exemplo. Layout SEO atualizado. Importação: ' . esc_html( wp_json_encode( $stats ) ) . ' | Jannah: ' . esc_html( wp_json_encode( $jannah ) ) . '</p></div>';
 	}
 
 	if ( isset( $_POST['estrato_rss_run_now'] ) && check_admin_referer( 'estrato_rss_run_now' ) ) {
@@ -470,7 +671,7 @@ function estrato_rss_admin_page() {
 	$cron_opts = estrato_rss_cron_options();
 
 	echo '<div class="wrap"><h1>Estrato RSS</h1>';
-	echo '<p>Remove posts de exemplo e importa notícias reais dos feeds configurados.</p>';
+	echo '<p>Remove posts de exemplo, adapta o layout <strong>SEO</strong> do Jannah (menus, blocos, textos) e importa notícias reais dos feeds configurados.</p>';
 
 	echo '<h2>Configurações</h2><form method="post">';
 	wp_nonce_field( 'estrato_rss_settings' );

@@ -33,6 +33,8 @@ def publish_to_wordpress(portal_slug, article):
         'external_id': str(article.get('id') or article.get('slug') or ''),
         'status': 'publish',
     }
+    if article.get('imagem_url'):
+        payload['image_url'] = article['imagem_url']
 
     data = json.dumps(payload).encode()
     req = urllib.request.Request(

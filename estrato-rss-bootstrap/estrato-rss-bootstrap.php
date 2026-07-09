@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_RSS_VERSION', '1.2.0' );
+define( 'ESTRATO_RSS_VERSION', '1.3.0' );
 define( 'ESTRATO_RSS_DEMO_META', 'jannah_demo_data' );
 define( 'ESTRATO_RSS_CRON_HOOK', 'estrato_rss_import_event' );
 define( 'ESTRATO_RSS_OPTION_FEEDS', 'estrato_rss_feeds_config' );
@@ -469,6 +469,9 @@ function estrato_rss_maybe_upgrade() {
 	if ( function_exists( 'tie_get_option' ) ) {
 		estrato_rss_bootstrap_jannah_seo_demo( $categories );
 	}
+	if ( function_exists( 'estrato_bridge_backfill_featured_images' ) ) {
+		estrato_bridge_backfill_featured_images( 60 );
+	}
 }
 
 /**
@@ -489,6 +492,45 @@ function estrato_rss_mark_guid_imported( $guid ) {
 		$guids = array_slice( $guids, -4000, null, true );
 	}
 	update_option( ESTRATO_RSS_OPTION_IMPORTED, $guids, false );
+}
+
+/**
+ * Extrai URL de imagem de um item RSS.
+ *
+ * @param object $item SimplePie item.
+ * @param string $html_content
+ * @return string
+ */
+function estrato_rss_extract_image_url( $item, $html_content = '' ) {
+	if ( is_object( $item ) && method_exists( $item, 'get_enclosure' ) ) {
+		$enclosure = $item->get_enclosure();
+		if ( $enclosure && method_exists( $enclosure, 'get_link' ) ) {
+			$link = $enclosure->get_link();
+			if ( $link && preg_match( '/\.(jpe?g|png|gif|webp)(\?|$)/i', $link ) ) {
+				return esc_url_raw( $link );
+			}
+		}
+	}
+
+	if ( is_object( $item ) && method_exists( $item, 'get_item_tags' ) ) {
+		foreach ( array( 'thumbnail', 'content' ) as $tag ) {
+			$media = $item->get_item_tags( 'http://search.yahoo.com/mrss/', $tag );
+			if ( ! empty( $media[0]['attribs']['']['url'] ) ) {
+				return esc_url_raw( $media[0]['attribs']['']['url'] );
+			}
+		}
+	}
+
+	if ( function_exists( 'estrato_bridge_extract_image_from_html' ) ) {
+		$url = estrato_bridge_extract_image_from_html( $html_content );
+		if ( $url ) {
+			return $url;
+		}
+	} elseif ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/i', $html_content, $matches ) ) {
+		return esc_url_raw( $matches[1] );
+	}
+
+	return '';
 }
 
 /**
@@ -581,6 +623,12 @@ function estrato_rss_run_import( $first_run = false ) {
 				update_post_meta( $post_id, '_estrato_rss_guid', $guid );
 				update_post_meta( $post_id, '_estrato_rss_source', $feed_info['title'] );
 				update_post_meta( $post_id, '_estrato_rss_source_url', $feed_info['url'] );
+
+				$image_url = estrato_rss_extract_image_url( $item, $body );
+				if ( $image_url && function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
+					estrato_bridge_set_featured_image_from_url( $post_id, $image_url );
+				}
+
 				estrato_rss_mark_guid_imported( $guid );
 				$imported[ $guid ]      = true;
 				$stats['imported']++;

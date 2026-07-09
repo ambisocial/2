@@ -308,3 +308,5 @@ Use como Definition of Done do portal. Marque ✅ quando implementado + regra an
 ---
 
 *Documento vivo — atualizar quando novas regras forem implementadas. Rodar `check-portal-regression.sh` para validar.*
+
+**Plano de execução por sprint:** `ESTRATO-SPRINT-PLAN.md` (Fase 1: Sprints 1–7 → gate 100% → Fase 2: categorias/RSS)*

@@ -68,7 +68,9 @@ Projetos relacionados no GitHub `ambisocial`:
 | Item | Estado |
 |------|--------|
 | Zona Cloudflare `estrato.cc` | Ativa — NS `anahi.ns.cloudflare.com`, `ignat.ns.cloudflare.com` |
-| DNS A → Victor | `187.127.12.186` (proxy Cloudflare) |
+| DNS A → Victor | `187.127.12.186` (Cloudflare proxy + SSL Full) |
+| SSL origem | Let's Encrypt via certbot DNS-Cloudflare (`/etc/letsencrypt/live/estrato.cc/`) |
+| Imagens Home | PressGrid exige `post_thumbnail` — bridge/RSS fazem sideload; backfill em `/scripts/victor/backfill-featured-images.php` |
 | WordPress | `/var/www/estrato.cc` — tema **PressGrid 2.5** |
 | Plugins Estrato | portal-bootstrap, rss-bootstrap, publisher-bridge |
 | Pipeline → WP | `writer.py` chama `wp_bridge.py` para portal `estrato` |

@@ -63,13 +63,27 @@ Projetos relacionados no GitHub `ambisocial`:
 
 ## Migração estrato.cc → Victor
 
-### Fase A — Infra (você ou agente com SSH)
+**Status (2026-07-09): concluída**
 
-1. Adicionar zona `estrato.cc` no Cloudflare (conta Tpb@ambi.social)
-2. Apontar NS do domínio para Cloudflare
-3. No Victor: `apt install nginx mariadb-server php8.2-fpm`
-4. Criar vhost `/var/www/estrato.cc` + SSL (Cloudflare ou certbot)
-5. Instalar WordPress via WP-CLI
+| Item | Estado |
+|------|--------|
+| Zona Cloudflare `estrato.cc` | Ativa — NS `anahi.ns.cloudflare.com`, `ignat.ns.cloudflare.com` |
+| DNS A → Victor | `187.127.12.186` (proxy Cloudflare) |
+| WordPress | `/var/www/estrato.cc` — tema **PressGrid 2.5** |
+| Plugins Estrato | portal-bootstrap, rss-bootstrap, publisher-bridge |
+| Pipeline → WP | `writer.py` chama `wp_bridge.py` para portal `estrato` |
+
+Credenciais WP no Victor: `/root/estrato-cc-wp.env`  
+Bridge secret também em `/var/www/estrato/.env.local` (`WP_ESTRATO_SECRET`).
+
+**Cloudflare:** o token `cfut_…` do doc mestre retorna inválido no cloud agent; use a **Global API Key** (`cfk_…`) com email `tpb@ambi.social` — mesma credencial em `cf_api.py` no Victor.
+
+### Fase A — Infra (concluída)
+
+1. Zona `estrato.cc` no Cloudflare
+2. NS Hostinger → Cloudflare
+3. WordPress + nginx + PHP 8.3-FPM em `/var/www/estrato.cc`
+4. SSL via Cloudflare flexible (origin HTTP na porta 80)
 
 ### Fase B — Deploy (GitHub → Victor)
 

@@ -1,0 +1,39 @@
+# Portal financeiro — Estrato (estrato.cc)
+id: estrato-finance
+domain: estrato.cc
+title: Estrato
+tagline: Economia, mercados e finanças
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+  # Repo: https://github.com/stantchev/PressGrid-WordPress-Theme
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: rss_and_pipeline
+  rss_preset: brasil-financeiro
+  pipeline_enabled: true
+
+branding:
+  primary_color: "#fe4c1c"
+  breaking_label: "Mercados"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/estrato.cc

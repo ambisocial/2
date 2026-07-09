@@ -1,0 +1,47 @@
+name: Deploy Estrato Portal
+
+on:
+  push:
+    branches: [cursor/extract-php-drive-zip-2c04, Preditivit]
+    paths:
+      - 'estrato-portal-bootstrap/**'
+      - 'estrato-publisher-bridge/**'
+      - 'estrato-rss-bootstrap/**'
+      - 'portals/**'
+      - 'scripts/build-portal-packages.sh'
+  workflow_dispatch:
+    inputs:
+      portal:
+        description: 'Portal ID (estrato-finance ou estrato-general)'
+        required: true
+        default: 'estrato-finance'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build portal packages
+        run: bash scripts/build-portal-packages.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: estrato-portal-zips
+          path: |
+            estrato-portal-bootstrap.zip
+            estrato-publisher-bridge.zip
+            estrato-rss-bootstrap.zip
+
+  notify-deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Trigger squad webhook (Ambi Dev)
+        run: |
+          curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"repository":"${{ github.repository }}","ref":"${{ github.ref }}","event":"estrato-portal-deploy"}' \
+            "http://72.61.129.243:3100/api/webhook/github" || echo "Webhook unreachable — deploy manual no Victor"

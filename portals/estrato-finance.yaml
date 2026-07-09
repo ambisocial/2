@@ -22,7 +22,7 @@ plugins:
     - estrato-publisher-bridge
 
 content:
-  mode: rss_and_pipeline
+  mode: pipeline_primary
   rss_preset: brasil-financeiro
   pipeline_enabled: true
 

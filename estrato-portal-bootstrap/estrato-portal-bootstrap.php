@@ -149,9 +149,17 @@ function estrato_portal_activate() {
 
 	update_option( 'WPLANG', $config['language'] ?? 'pt_BR' );
 
-	if ( function_exists( 'estrato_rss_activate' ) ) {
+	$content_mode = $config['content']['mode'] ?? 'rss_and_pipeline';
+	if ( function_exists( 'estrato_rss_apply_content_mode' ) ) {
+		estrato_rss_apply_content_mode( $content_mode );
+		$log[] = 'rss mode: ' . $content_mode;
+	} elseif ( function_exists( 'estrato_rss_activate' ) ) {
 		estrato_rss_activate();
 		$log[] = 'rss bootstrap ok';
+	}
+
+	if ( ! empty( $config['timezone'] ) ) {
+		update_option( 'timezone_string', sanitize_text_field( $config['timezone'] ) );
 	}
 
 	set_transient(

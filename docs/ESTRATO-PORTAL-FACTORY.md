@@ -85,7 +85,22 @@ Bridge secret também em `/var/www/estrato/.env.local` (`WP_ESTRATO_SECRET`).
 1. Zona `estrato.cc` no Cloudflare
 2. NS Hostinger → Cloudflare
 3. WordPress + nginx + PHP 8.3-FPM em `/var/www/estrato.cc`
-4. SSL via Cloudflare flexible (origin HTTP na porta 80)
+4. SSL Let's Encrypt na origem + Cloudflare **Full** (HTTPS end-to-end)
+
+### Produção (pós-go-live)
+
+| Config | Valor |
+|--------|-------|
+| Fuso horário | `America/Sao_Paulo` |
+| Conteúdo principal | Pipeline Victor (`writer.py --portal=estrato` a cada 15 min) |
+| RSS complementar | 2 items/feed, máx 15/run, cron **hourly** (`pipeline_primary`) |
+| Thumbnails | Sideload no publish + cron hourly `estrato_thumbnail_backfill_event` |
+
+Setup reproduzível no Victor:
+
+```bash
+bash scripts/victor/setup-estrato-production.sh
+```
 
 ### Fase B — Deploy (GitHub → Victor)
 

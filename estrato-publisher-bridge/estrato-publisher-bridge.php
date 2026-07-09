@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Publisher Bridge
  * Description: Recebe artigos do pipeline Victor (scout/curator/writer/publisher) via REST API.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Cursor Agent
  */
 
@@ -12,6 +12,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'ESTRATO_BRIDGE_VERSION', '1.1.0' );
 define( 'ESTRATO_BRIDGE_SECRET_OPTION', 'estrato_bridge_secret' );
+define( 'ESTRATO_BRIDGE_BACKFILL_HOOK', 'estrato_thumbnail_backfill_event' );
+
+register_activation_hook( __FILE__, 'estrato_bridge_activate' );
+register_deactivation_hook( __FILE__, 'estrato_bridge_deactivate' );
+add_action( ESTRATO_BRIDGE_BACKFILL_HOOK, 'estrato_bridge_run_backfill_cron' );
+
+function estrato_bridge_activate() {
+	if ( ! wp_next_scheduled( ESTRATO_BRIDGE_BACKFILL_HOOK ) ) {
+		wp_schedule_event( time() + 300, 'hourly', ESTRATO_BRIDGE_BACKFILL_HOOK );
+	}
+}
+
+function estrato_bridge_deactivate() {
+	$timestamp = wp_next_scheduled( ESTRATO_BRIDGE_BACKFILL_HOOK );
+	while ( $timestamp ) {
+		wp_unschedule_event( $timestamp, ESTRATO_BRIDGE_BACKFILL_HOOK );
+		$timestamp = wp_next_scheduled( ESTRATO_BRIDGE_BACKFILL_HOOK );
+	}
+}
+
+/**
+ * Cron: garante thumbnails em posts importados sem imagem destacada.
+ */
+function estrato_bridge_run_backfill_cron() {
+	$stats = estrato_bridge_backfill_featured_images( 25 );
+	set_transient( 'estrato_bridge_last_backfill', $stats, HOUR_IN_SECONDS );
+}
 
 add_action( 'rest_api_init', 'estrato_bridge_register_routes' );
 

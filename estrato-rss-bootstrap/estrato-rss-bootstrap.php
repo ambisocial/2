@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_RSS_VERSION', '1.3.0' );
+define( 'ESTRATO_RSS_VERSION', '1.3.1' );
 define( 'ESTRATO_RSS_DEMO_META', 'jannah_demo_data' );
 define( 'ESTRATO_RSS_CRON_HOOK', 'estrato_rss_import_event' );
 define( 'ESTRATO_RSS_OPTION_FEEDS', 'estrato_rss_feeds_config' );
@@ -36,6 +36,32 @@ function estrato_rss_default_settings() {
 		'max_per_run'      => 120,
 		'cron_schedule'    => 'every_thirty_minutes',
 	);
+}
+
+/**
+ * RSS leve quando o pipeline Victor é a fonte principal de conteúdo.
+ *
+ * @return array{items_per_feed:int,items_first_run:int,max_per_run:int,cron_schedule:string}
+ */
+function estrato_rss_pipeline_primary_settings() {
+	return array(
+		'items_per_feed'   => 2,
+		'items_first_run'  => 6,
+		'max_per_run'      => 15,
+		'cron_schedule'    => 'hourly',
+	);
+}
+
+/**
+ * @param string $mode rss_and_pipeline|pipeline_primary|rss_only
+ */
+function estrato_rss_apply_content_mode( $mode ) {
+	$settings = 'pipeline_primary' === $mode
+		? estrato_rss_pipeline_primary_settings()
+		: estrato_rss_default_settings();
+	update_option( ESTRATO_RSS_OPTION_SETTINGS, $settings, false );
+	estrato_rss_reschedule_cron( $settings['cron_schedule'] );
+	return $settings;
 }
 
 /**
@@ -471,6 +497,9 @@ function estrato_rss_maybe_upgrade() {
 	}
 	if ( function_exists( 'estrato_bridge_backfill_featured_images' ) ) {
 		estrato_bridge_backfill_featured_images( 60 );
+	}
+	if ( function_exists( 'estrato_rss_apply_content_mode' ) ) {
+		estrato_rss_apply_content_mode( 'pipeline_primary' );
 	}
 }
 

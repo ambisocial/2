@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_RSS_VERSION', '1.3.1' );
+define( 'ESTRATO_RSS_VERSION', '1.3.2' );
 define( 'ESTRATO_RSS_DEMO_META', 'jannah_demo_data' );
 define( 'ESTRATO_RSS_CRON_HOOK', 'estrato_rss_import_event' );
 define( 'ESTRATO_RSS_OPTION_FEEDS', 'estrato_rss_feeds_config' );
@@ -501,6 +501,9 @@ function estrato_rss_maybe_upgrade() {
 	if ( function_exists( 'estrato_rss_apply_content_mode' ) ) {
 		estrato_rss_apply_content_mode( 'pipeline_primary' );
 	}
+	if ( function_exists( 'estrato_bridge_refresh_stock_thumbnails' ) ) {
+		estrato_bridge_refresh_stock_thumbnails( 40 );
+	}
 }
 
 /**
@@ -550,7 +553,12 @@ function estrato_rss_extract_image_url( $item, $html_content = '' ) {
 		}
 	}
 
-	if ( function_exists( 'estrato_bridge_extract_image_from_html' ) ) {
+	if ( function_exists( 'estrato_bridge_extract_best_image_from_html' ) ) {
+		$url = estrato_bridge_extract_best_image_from_html( $html_content );
+		if ( $url ) {
+			return estrato_bridge_normalize_image_url( $url );
+		}
+	} elseif ( function_exists( 'estrato_bridge_extract_image_from_html' ) ) {
 		$url = estrato_bridge_extract_image_from_html( $html_content );
 		if ( $url ) {
 			return $url;
@@ -625,6 +633,9 @@ function estrato_rss_run_import( $first_run = false ) {
 				$body    = $content ? $content : $excerpt;
 				$body    = wp_kses_post( $body );
 				$link    = esc_url( $item->get_permalink() );
+				if ( function_exists( 'estrato_bridge_clean_source_url' ) ) {
+					$link = estrato_bridge_clean_source_url( $link );
+				}
 				$source  = esc_html( $feed_info['title'] );
 				$footer  = sprintf(
 					'<p><em>Fonte: <a href="%1$s" target="_blank" rel="nofollow noopener">%2$s</a></em></p>',
@@ -652,10 +663,15 @@ function estrato_rss_run_import( $first_run = false ) {
 				update_post_meta( $post_id, '_estrato_rss_guid', $guid );
 				update_post_meta( $post_id, '_estrato_rss_source', $feed_info['title'] );
 				update_post_meta( $post_id, '_estrato_rss_source_url', $feed_info['url'] );
+				update_post_meta( $post_id, '_estrato_source_url', $link );
 
 				$image_url = estrato_rss_extract_image_url( $item, $body );
+				if ( ! $image_url && $link && function_exists( 'estrato_bridge_fetch_og_image' ) ) {
+					$image_url = estrato_bridge_fetch_og_image( $link );
+				}
 				if ( $image_url && function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
-					estrato_bridge_set_featured_image_from_url( $post_id, $image_url );
+					estrato_bridge_set_featured_image_from_url( $post_id, $image_url, true );
+					update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
 				}
 
 				estrato_rss_mark_guid_imported( $guid );

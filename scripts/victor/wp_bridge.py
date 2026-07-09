@@ -14,6 +14,22 @@ WP_PORTALS = {
 }
 
 
+STOCK_IMAGE_HOSTS = (
+    'images.unsplash.com',
+    'plus.unsplash.com',
+    'images.pexels.com',
+    'image.pollinations.ai',
+    'pollinations.ai',
+)
+
+
+def _is_stock_image(url: str) -> bool:
+    if not url:
+        return True
+    u = url.lower()
+    return any(h in u for h in STOCK_IMAGE_HOSTS)
+
+
 def publish_to_wordpress(portal_slug, article):
     """Envia artigo publicado no Supabase para o WordPress do portal."""
     cfg = WP_PORTALS.get(portal_slug)
@@ -33,7 +49,7 @@ def publish_to_wordpress(portal_slug, article):
         'external_id': str(article.get('id') or article.get('slug') or ''),
         'status': 'publish',
     }
-    if article.get('imagem_url'):
+    if article.get('imagem_url') and not _is_stock_image(article['imagem_url']):
         payload['image_url'] = article['imagem_url']
 
     data = json.dumps(payload).encode()

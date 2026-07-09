@@ -94,7 +94,8 @@ Bridge secret também em `/var/www/estrato/.env.local` (`WP_ESTRATO_SECRET`).
 | Fuso horário | `America/Sao_Paulo` |
 | Conteúdo principal | Pipeline Victor (`writer.py --portal=estrato` a cada 15 min) |
 | RSS complementar | 2 items/feed, máx 15/run, cron **hourly** (`pipeline_primary`) |
-| Thumbnails | Sideload no publish + cron hourly `estrato_thumbnail_backfill_event` |
+| Thumbnails | Imagens **originais** da matéria (RSS/og:image/conteúdo); sem fallback Unsplash |
+| Refresh stock | `scripts/victor/refresh-original-images.php` + cron hourly |
 
 Setup reproduzível no Victor:
 

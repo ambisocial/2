@@ -27,7 +27,11 @@ content:
   pipeline_enabled: true
 
 branding:
-  primary_color: "#fe4c1c"
+  primary_color: "#000000"
+  accent_color: "#9AFF33"
+  secondary_color: "#1a1a1a"
+  logo_file: estrato-logo.png
+  breaking_category: mercados
   breaking_label: "Mercados"
 
 admin:

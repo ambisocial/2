@@ -96,12 +96,16 @@ Bridge secret também em `/var/www/estrato/.env.local` (`WP_ESTRATO_SECRET`).
 | RSS complementar | 2 items/feed, máx 15/run, cron **hourly** (`pipeline_primary`) |
 | Thumbnails | Imagens **originais** da matéria (RSS/og:image/conteúdo); sem fallback Unsplash |
 | Refresh stock | `scripts/victor/refresh-original-images.php` + cron hourly |
+| Branding | Logo `estrato.` (preto + ponto `#9AFF33`), preset RSS `brasil-financeiro` |
 
 Setup reproduzível no Victor:
 
 ```bash
 bash scripts/victor/setup-estrato-production.sh
+bash scripts/victor/setup-estrato-portal-branding.sh
 ```
+
+Assets de marca em `assets/branding/` e empacotados em `estrato-portal-bootstrap/assets/`.
 
 ### Fase B — Deploy (GitHub → Victor)
 

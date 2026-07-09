@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Portal Bootstrap
  * Description: Provisiona tema (PressGrid ou Newspack), plugins e integração com pipeline/RSS por portal.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_PORTAL_VERSION', '1.0.0' );
+define( 'ESTRATO_PORTAL_VERSION', '1.1.0' );
 define( 'ESTRATO_PORTAL_CONFIG_OPTION', 'estrato_portal_config' );
 
 register_activation_hook( __FILE__, 'estrato_portal_activate' );
@@ -40,8 +40,11 @@ function estrato_portal_default_config() {
 			'pipeline_enabled'  => true,
 		),
 		'branding' => array(
-			'primary_color'  => '#fe4c1c',
-			'breaking_label' => 'Mercados',
+			'primary_color'   => '#000000',
+			'accent_color'    => '#9AFF33',
+			'secondary_color' => '#1a1a1a',
+			'logo_file'       => 'estrato-logo.png',
+			'breaking_label'  => 'Mercados',
 		),
 	);
 }
@@ -162,6 +165,11 @@ function estrato_portal_activate() {
 		update_option( 'timezone_string', sanitize_text_field( $config['timezone'] ) );
 	}
 
+	$branding_log = estrato_portal_apply_branding( $config );
+	if ( $branding_log ) {
+		$log[] = $branding_log;
+	}
+
 	set_transient(
 		'estrato_portal_activation_log',
 		array(
@@ -193,4 +201,121 @@ function estrato_portal_admin_notice() {
  */
 function estrato_portal_apply_config( $config ) {
 	update_option( ESTRATO_PORTAL_CONFIG_OPTION, $config, false );
+	estrato_portal_apply_branding( $config );
+	if ( function_exists( 'estrato_rss_apply_preset' ) ) {
+		$preset = $config['content']['rss_preset'] ?? 'brasil-financeiro';
+		estrato_rss_apply_preset( $preset );
+	}
+}
+
+/**
+ * @param string $hex
+ * @return string
+ */
+function estrato_portal_sanitize_hex_color( $hex ) {
+	$hex = sanitize_hex_color( $hex );
+	return $hex ? $hex : '#000000';
+}
+
+/**
+ * Importa o logotipo do plugin para a biblioteca de mídia.
+ *
+ * @param string $filename Basename em estrato-portal-bootstrap/assets/.
+ * @return int Attachment ID ou 0.
+ */
+function estrato_portal_import_logo( $filename ) {
+	$filename = sanitize_file_name( $filename );
+	if ( '' === $filename ) {
+		return 0;
+	}
+
+	$path = plugin_dir_path( __FILE__ ) . 'assets/' . $filename;
+	if ( ! is_readable( $path ) ) {
+		return 0;
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	$existing = get_posts(
+		array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_key'       => '_estrato_brand_logo',
+			'meta_value'     => $filename,
+		)
+	);
+	if ( ! empty( $existing[0] ) ) {
+		return (int) $existing[0];
+	}
+
+	$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	if ( false === $contents ) {
+		return 0;
+	}
+
+	$upload = wp_upload_bits( $filename, null, $contents );
+	if ( ! empty( $upload['error'] ) ) {
+		return 0;
+	}
+
+	$filetype = wp_check_filetype( $filename, null );
+	$attach_id = wp_insert_attachment(
+		array(
+			'post_title'     => 'Estrato Logo',
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+			'post_mime_type' => $filetype['type'],
+		),
+		$upload['file']
+	);
+	if ( is_wp_error( $attach_id ) || ! $attach_id ) {
+		return 0;
+	}
+
+	$meta = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
+	if ( ! is_wp_error( $meta ) && $meta ) {
+		wp_update_attachment_metadata( $attach_id, $meta );
+	}
+	update_post_meta( $attach_id, '_estrato_brand_logo', $filename );
+
+	return (int) $attach_id;
+}
+
+/**
+ * Aplica cores PressGrid, logotipo e breaking news a partir do YAML/config.
+ *
+ * @param array<string, mixed> $config
+ * @return string Log resumido.
+ */
+function estrato_portal_apply_branding( $config ) {
+	$branding = isset( $config['branding'] ) && is_array( $config['branding'] )
+		? $config['branding']
+		: estrato_portal_default_config()['branding'];
+
+	$primary   = estrato_portal_sanitize_hex_color( $branding['primary_color'] ?? '#000000' );
+	$accent    = estrato_portal_sanitize_hex_color( $branding['accent_color'] ?? '#9AFF33' );
+	$secondary = estrato_portal_sanitize_hex_color( $branding['secondary_color'] ?? '#1a1a1a' );
+
+	set_theme_mod( 'pressgrid_primary_color', $primary );
+	set_theme_mod( 'pressgrid_accent_color', $accent );
+	set_theme_mod( 'pressgrid_secondary_color', $secondary );
+	set_theme_mod( 'pressgrid_link_hover_color', $accent );
+
+	$logo_file = ! empty( $branding['logo_file'] ) ? (string) $branding['logo_file'] : 'estrato-logo.png';
+	$logo_id   = estrato_portal_import_logo( $logo_file );
+	if ( $logo_id ) {
+		set_theme_mod( 'custom_logo', $logo_id );
+	}
+
+	$breaking_slug = sanitize_title( $branding['breaking_category'] ?? 'mercados' );
+	$breaking_term = get_term_by( 'slug', $breaking_slug, 'category' );
+	if ( $breaking_term && ! is_wp_error( $breaking_term ) ) {
+		set_theme_mod( 'pressgrid_breaking_news_category', (int) $breaking_term->term_id );
+	}
+
+	return $logo_id ? 'branding ok (logo #' . $logo_id . ')' : 'branding ok (sem logo)';
 }

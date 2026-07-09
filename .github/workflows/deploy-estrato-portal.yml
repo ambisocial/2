@@ -8,7 +8,9 @@ on:
       - 'estrato-publisher-bridge/**'
       - 'estrato-rss-bootstrap/**'
       - 'portals/**'
+      - 'assets/branding/**'
       - 'scripts/build-portal-packages.sh'
+      - 'scripts/victor/setup-estrato-portal-branding.sh'
   workflow_dispatch:
     inputs:
       portal:

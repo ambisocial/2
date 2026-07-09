@@ -89,8 +89,8 @@ else
   na=$(echo "$post" | grep -o "NewsArticle" | wc -l)
   ar=$(echo "$post" | grep -o '"Article"' | wc -l)
   if [[ "$na" -gt 0 && "$ar" -gt 0 ]]; then warn "AR-SCHEMA-006 schema Article+NewsArticle duplicado"; else ok "AR-SCHEMA-006 sem duplicação crítica"; fi
-  if echo "$post" | grep -q 'rel="canonical"'; then ok "AR-SCHEMA-007 canonical"; else block "AR-SCHEMA-007 sem canonical"; fi
-  if echo "$post" | grep -q 'og:title'; then ok "AR-SCHEMA-008 og:title"; else block "AR-SCHEMA-008 sem og:title"; fi
+  if echo "$post" | grep -qE 'rel=["'\'']canonical["'\'']'; then ok "AR-SCHEMA-007 canonical"; else block "AR-SCHEMA-007 sem canonical"; fi
+  if echo "$post" | grep -qE 'property=["'\'']og:title["'\'']'; then ok "AR-SCHEMA-008 og:title"; else block "AR-SCHEMA-008 sem og:title"; fi
   if echo "$post" | grep -q 'article:published_time'; then ok "AR-SCHEMA-009 article:published_time"; else warn "AR-SCHEMA-009 sem article:published_time"; fi
 fi
 

@@ -554,3 +554,5 @@ Com as 48 tarefas acima executadas em ordem, o portal sai de “agregador automa
 ---
 
 *Documento gerado para execução pelo Cloud Agent. Próximo passo recomendado: FASE 0 (tarefas 0.1–0.10).*
+
+**Atualização 2026-07-09:** matriz técnica (robots/sitemap/schema) em `ESTRATO-BENCHMARK-TECNICO.md` · regras anti-regressão em `ESTRATO-ANTI-REGRESSAO.md` · validador `scripts/victor/check-portal-regression.sh`

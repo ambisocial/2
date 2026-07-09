@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.4.0
+ * Version: 1.4.1
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_RSS_VERSION', '1.4.0' );
+define( 'ESTRATO_RSS_VERSION', '1.4.1' );
 define( 'ESTRATO_RSS_OPTION_PRESET', 'estrato_rss_preset' );
 define( 'ESTRATO_RSS_DEMO_META', 'jannah_demo_data' );
 define( 'ESTRATO_RSS_CRON_HOOK', 'estrato_rss_import_event' );
@@ -284,6 +284,19 @@ function estrato_rss_get_active_preset() {
 }
 
 /**
+ * Executa callback após init (menus/taxonomias exigem rewrite carregado).
+ *
+ * @param callable $callback
+ */
+function estrato_rss_run_after_init( $callback ) {
+	if ( did_action( 'init' ) ) {
+		call_user_func( $callback );
+		return;
+	}
+	add_action( 'init', $callback, 20 );
+}
+
+/**
  * @param string $preset
  */
 function estrato_rss_apply_preset( $preset ) {
@@ -295,7 +308,11 @@ function estrato_rss_apply_preset( $preset ) {
 	update_option( ESTRATO_RSS_OPTION_PRESET, $preset, false );
 	update_option( ESTRATO_RSS_OPTION_FEEDS, $presets[ $preset ], false );
 	$categories = estrato_rss_create_categories();
-	estrato_rss_rebuild_menus( $categories );
+	estrato_rss_run_after_init(
+		function () use ( $categories ) {
+			estrato_rss_rebuild_menus( $categories );
+		}
+	);
 	return $preset;
 }
 
@@ -620,9 +637,17 @@ function estrato_rss_maybe_upgrade() {
 		return;
 	}
 	update_option( 'estrato_rss_plugin_version', ESTRATO_RSS_VERSION, false );
-	$preset     = estrato_rss_get_active_preset();
-	$categories = estrato_rss_create_categories();
+
+	estrato_rss_run_after_init( 'estrato_rss_run_version_upgrade' );
+}
+
+/**
+ * Tarefas de upgrade após WordPress init (menus, branding, backfill).
+ */
+function estrato_rss_run_version_upgrade() {
+	$preset = estrato_rss_get_active_preset();
 	estrato_rss_apply_preset( $preset );
+	$categories = estrato_rss_create_categories();
 	$settings   = estrato_rss_get_settings();
 	estrato_rss_reschedule_cron( $settings['cron_schedule'] );
 	if ( function_exists( 'tie_get_option' ) ) {

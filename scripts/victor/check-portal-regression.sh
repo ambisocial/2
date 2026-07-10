@@ -32,7 +32,12 @@ http_status() {
 }
 
 body() {
-  curl -sL --max-time 20 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "${CURL_HOST[@]}" "$1" 2>/dev/null || true
+  local follow="-L"
+  if [[ -f /var/www/estrato.cc/wp-config.php ]]; then
+    follow=""
+  fi
+  # shellcheck disable=SC2086
+  curl -s $follow --max-time 20 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "${CURL_HOST[@]}" "$1" 2>/dev/null || true
 }
 
 latest_post_url() {

@@ -25,7 +25,7 @@ http_status() {
 }
 
 body() {
-  curl -sL --max-time 20 "$1" 2>/dev/null || true
+  curl -sL --max-time 20 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "$1" 2>/dev/null || true
 }
 
 latest_post_url() {
@@ -95,7 +95,7 @@ else
 fi
 
 cat_code=$(http_status "$BASE/category/economia/")
-cat_html=$(body "$BASE/category/economia/")
+cat_html=$(body "$BASE/category/economia/?nocache=$(date +%s)")
 if echo "$cat_html" | grep -qi "Archives"; then warn "AR-SCHEMA-010 title categoria com 'Archives'"; else ok "AR-SCHEMA-010 title categoria pt_BR"; fi
 
 # ─── E. E-E-A-T ──────────────────────────────────────────────────
@@ -110,9 +110,9 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   if [[ "$users" -ge 7 ]]; then ok "AR-EEAT-005 $users usuários"; else warn "AR-EEAT-005 apenas $users usuários (meta: 7+)"; fi
   sem=$($WP post list --category_name=sem-categoria --post_status=publish --format=count 2>/dev/null || echo 0)
   if [[ "$sem" -eq 0 ]]; then ok "AR-CONTENT-003 zero sem-categoria"; else warn "AR-CONTENT-003 $sem posts sem-categoria"; fi
-  logo=$($WP theme mod get custom_logo 2>/dev/null || echo "")
-  if [[ -n "$logo" && "$logo" != "false" ]]; then ok "AR-VISUAL-001 custom_logo=$logo"; else block "AR-VISUAL-001 sem custom_logo"; fi
-  accent=$($WP theme mod get pressgrid_accent_color 2>/dev/null || echo "")
+  logo=$($WP theme mod get custom_logo 2>/dev/null | awk 'NR==2{print $1}')
+  if [[ -n "$logo" && "$logo" != "false" && "$logo" =~ ^[0-9]+$ ]]; then ok "AR-VISUAL-001 custom_logo=$logo"; else block "AR-VISUAL-001 sem custom_logo"; fi
+  accent=$($WP theme mod get pressgrid_accent_color 2>/dev/null | awk 'NR==2{print $1}')
   if [[ "$accent" == "#9AFF33" || "$accent" == "#9aff33" ]]; then ok "AR-VISUAL-002 accent $accent"; else warn "AR-VISUAL-002 accent=$accent (esperado #9AFF33)"; fi
 else
   warn "WP-CLI indisponível — pulando checks WordPress"

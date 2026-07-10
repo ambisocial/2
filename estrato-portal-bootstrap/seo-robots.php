@@ -21,6 +21,7 @@ function estrato_seo_register_yoast_robots_rules( $robots_txt_helper ) {
 
 	if ( method_exists( $robots_txt_helper, 'add_disallow' ) ) {
 		$robots_txt_helper->add_disallow( '*', '/wp-admin/' );
+		$robots_txt_helper->add_disallow( '*', '/?s=' );
 		$robots_txt_helper->add_disallow( '*', '/wp-login.php' );
 		$robots_txt_helper->add_disallow( '*', '/xmlrpc.php' );
 	}

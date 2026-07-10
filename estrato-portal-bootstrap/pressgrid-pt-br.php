@@ -17,7 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function estrato_portal_pressgrid_pt_br_map() {
 	return array(
-		// Single post — relacionadas e compartilhar.
+		'Home'                                                                           => 'Início',
+		'Breadcrumbs'                                                                    => 'Navegação',
 		'Свързани статии'                                                                 => 'Matérias relacionadas',
 		'Сподели:'                                                                       => 'Compartilhar:',
 		'Сподели'                                                                        => 'Compartilhar',

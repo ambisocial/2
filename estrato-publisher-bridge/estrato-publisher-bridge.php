@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Publisher Bridge
  * Description: Recebe artigos do pipeline Victor (scout/curator/writer/publisher) via REST API.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: Cursor Agent
  */
 
@@ -219,9 +219,13 @@ function estrato_bridge_publish_post( $request ) {
 					'post_status' => 'draft',
 				)
 			);
-		} elseif ( function_exists( 'estrato_content_sync_yoast_index' ) ) {
+		} else	if ( function_exists( 'estrato_content_sync_yoast_index' ) ) {
 			estrato_content_sync_yoast_index( $post_id, $words );
 		}
+	}
+
+	if ( function_exists( 'estrato_aeo_ping_indexnow' ) ) {
+		estrato_aeo_ping_indexnow( $post_id );
 	}
 
 	return new WP_REST_Response(

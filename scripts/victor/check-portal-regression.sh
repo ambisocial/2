@@ -177,6 +177,18 @@ code=$(http_status "$BASE/feed/")
 if [[ "$code" == "200" ]]; then ok "AR-NAV-004 RSS feed OK"; else warn "AR-NAV-004 RSS HTTP $code"; fi
 code=$(http_status "$BASE/llms.txt")
 if [[ "$code" == "200" ]]; then ok "AR-AEO-001 llms.txt OK"; else warn "AR-AEO-001 llms.txt ausente"; fi
+code=$(http_status "$BASE/llms-full.txt")
+if [[ "$code" == "200" ]]; then ok "AR-AEO llms-full.txt OK"; else warn "AR-AEO llms-full.txt ausente"; fi
+if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
+  hub_faq=$($WP eval 'echo function_exists("estrato_regression_hub_faq_schema") ? estrato_regression_hub_faq_schema() : -1;' 2>/dev/null || echo -1)
+  if [[ "$hub_faq" -ge 3 ]]; then ok "AR-AEO-002 $hub_faq hubs com FAQPage"; else warn "AR-AEO-002 $hub_faq hubs FAQ (meta 3+)"; fi
+  idx=$($WP option get estrato_bridge_indexnow_enabled 2>/dev/null || echo "")
+  if [[ "$idx" == "1" || "$idx" == "true" ]]; then ok "AR-INDEX-002 IndexNow habilitado"; else warn "AR-INDEX-002 IndexNow desabilitado"; fi
+fi
+code=$(http_status "$BASE/estrato-indexnow-key.txt")
+if [[ "$code" == "200" ]]; then ok "AR-INDEX-001 IndexNow key file OK"; else warn "AR-INDEX-001 key file HTTP $code"; fi
+code=$(http_status "$BASE/ads.txt")
+if [[ "$code" == "200" ]]; then ok "AR-AEO ads.txt OK"; else warn "AR-AEO ads.txt ausente"; fi
 
 hubs_ok=0
 for hub in selic ibovespa dolar cripto inflacao tributacao agronegocio; do

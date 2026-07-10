@@ -1,0 +1,54 @@
+# Estrato — llms-full.txt (GEO expandido)
+# Versão completa para modelos de linguagem e assistentes de resposta.
+
+## Identidade
+
+Nome: Estrato
+URL: https://estrato.cc/
+Idioma: pt-BR
+Tipo: portal de notícias financeiras e economia (YMYL)
+Operador: Estrato Mídia e Conteúdo Ltda.
+
+## Missão
+
+Traduzir dados econômicos, decisões de política monetária e movimentos de mercado em informação verificável para leitores, investidores e profissionais no Brasil.
+
+## Políticas
+
+- Política editorial: https://estrato.cc/politica-editorial/
+- Privacidade (LGPD): https://estrato.cc/politica-de-privacidade/
+
+## Taxonomia editorial
+
+| Editoria | Slug | Foco |
+|----------|------|------|
+| Economia | economia | Selic, IPCA, PIB, fiscal |
+| Mercados | mercados | Ibovespa, juros, câmbio |
+| Negócios | negocios | Empresas, M&A, resultados |
+| Finanças pessoais | financas-pessoais | Orçamento, crédito, investimentos |
+| Criptomoedas | criptomoedas | Bitcoin, regulação, DeFi |
+| Agronegócio | agronegocio | Commodities, safras, exportação |
+| Mundo | mundo | Fed, geopolítica, emergentes |
+
+## Hubs temáticos (FAQ + notícias)
+
+1. https://estrato.cc/tudo-sobre/selic/ — taxa básica de juros, Copom
+2. https://estrato.cc/tudo-sobre/ibovespa/ — índice B3
+3. https://estrato.cc/tudo-sobre/dolar/ — câmbio USD/BRL
+4. https://estrato.cc/tudo-sobre/cripto/ — criptoativos
+5. https://estrato.cc/tudo-sobre/inflacao/ — IPCA e preços
+6. https://estrato.cc/tudo-sobre/tributacao/ — impostos e reformas
+7. https://estrato.cc/tudo-sobre/agronegocio/ — campo e exportação
+
+## Instituições citadas frequentemente
+
+Banco Central do Brasil, B3, CVM, IBGE, Tesouro Nacional, Copom, Focus.
+
+## Formato de conteúdo
+
+Matérias incluem: lead factual, contexto de mercado, perguntas frequentes (FAQ) e links internos. Mínimo editorial: 300 palavras em posts publicados.
+
+## Contato editorial
+
+- redacao@estrato.cc
+- contato@estrato.cc

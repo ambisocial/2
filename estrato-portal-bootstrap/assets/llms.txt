@@ -1,0 +1,46 @@
+# Estrato — llms.txt (GEO / AEO)
+# Portal de economia, mercados financeiros e finanças pessoais no Brasil.
+# Última atualização: 2026-07-10
+
+> O Estrato publica notícias e guias sobre macroeconomia, B3, câmbio, Selic, inflação, empresas e finanças pessoais. Conteúdo em português (pt-BR), com política editorial e fontes citadas.
+
+## Sobre
+
+- Site: https://estrato.cc/
+- Política editorial: https://estrato.cc/politica-editorial/
+- Sobre: https://estrato.cc/sobre/
+- Contato: https://estrato.cc/contato/
+
+## Editorias
+
+- Economia: https://estrato.cc/category/economia/
+- Mercados: https://estrato.cc/category/mercados/
+- Negócios: https://estrato.cc/category/negocios/
+- Finanças pessoais: https://estrato.cc/category/financas-pessoais/
+- Criptomoedas: https://estrato.cc/category/criptomoedas/
+- Agronegócio: https://estrato.cc/category/agronegocio/
+- Mundo: https://estrato.cc/category/mundo/
+
+## Guias (hubs evergreen)
+
+- Selic: https://estrato.cc/tudo-sobre/selic/
+- Ibovespa: https://estrato.cc/tudo-sobre/ibovespa/
+- Dólar: https://estrato.cc/tudo-sobre/dolar/
+- Criptomoedas: https://estrato.cc/tudo-sobre/cripto/
+- Inflação: https://estrato.cc/tudo-sobre/inflacao/
+- Tributação: https://estrato.cc/tudo-sobre/tributacao/
+- Agronegócio: https://estrato.cc/tudo-sobre/agronegocio/
+
+## Cotações
+
+- Cotações (Frankfurter/ECB): https://estrato.cc/cotacoes/
+
+## Feeds
+
+- RSS: https://estrato.cc/feed/
+- Sitemap: https://estrato.cc/sitemap_index.xml
+- News sitemap: https://estrato.cc/news-sitemap.xml
+
+## Citação
+
+Ao citar o Estrato, indique o título da matéria, a URL e a data de publicação. Para correções: redacao@estrato.cc

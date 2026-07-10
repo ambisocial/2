@@ -114,8 +114,8 @@ else
   body "$POST_URL" > "$POST_HTML"
   if grep -Fq 'NewsArticle' "$POST_HTML" || grep -Fq '@type":"Article"' "$POST_HTML"; then ok "AR-SCHEMA-004 NewsArticle/Article em $POST_URL"; else block "AR-SCHEMA-004 sem NewsArticle"; fi
   if grep -Fq '"Person"' "$POST_HTML" || grep -Fq '@type":"Person"' "$POST_HTML"; then ok "AR-SCHEMA-005 Person/autor"; else warn "AR-SCHEMA-005 sem Person"; fi
-  na=$(grep -o 'NewsArticle' "$POST_HTML" 2>/dev/null | wc -l)
-  ar=$(grep -o '@type":"Article"' "$POST_HTML" 2>/dev/null | wc -l)
+  na=$(grep -c 'NewsArticle' "$POST_HTML" 2>/dev/null || echo 0)
+  ar=$(grep -c '@type":"Article"' "$POST_HTML" 2>/dev/null || echo 0)
   if [[ "$na" -gt 0 && "$ar" -gt 0 ]]; then warn "AR-SCHEMA-006 schema Article+NewsArticle duplicado"; else ok "AR-SCHEMA-006 sem duplicação crítica"; fi
   if grep -qE 'rel=["'\'']canonical["'\'']' "$POST_HTML"; then ok "AR-SCHEMA-007 canonical"; else block "AR-SCHEMA-007 sem canonical"; fi
   if grep -qE 'property=["'\'']og:title["'\'']' "$POST_HTML"; then ok "AR-SCHEMA-008 og:title"; else block "AR-SCHEMA-008 sem og:title"; fi

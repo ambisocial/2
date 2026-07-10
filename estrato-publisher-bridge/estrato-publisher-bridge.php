@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Publisher Bridge
  * Description: Recebe artigos do pipeline Victor (scout/curator/writer/publisher) via REST API.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_BRIDGE_VERSION', '1.3.0' );
+define( 'ESTRATO_BRIDGE_VERSION', '1.4.0' );
 define( 'ESTRATO_BRIDGE_SECRET_OPTION', 'estrato_bridge_secret' );
 define( 'ESTRATO_BRIDGE_BACKFILL_HOOK', 'estrato_thumbnail_backfill_event' );
 define( 'ESTRATO_BRIDGE_ORIGINAL_META', '_estrato_original_image_url' );
@@ -206,6 +206,22 @@ function estrato_bridge_publish_post( $request ) {
 		$force_image = ! $thumb_id || estrato_bridge_attachment_is_stock( $thumb_id );
 		estrato_bridge_set_featured_image_from_url( $post_id, $image_url, $force_image );
 		update_post_meta( $post_id, ESTRATO_BRIDGE_ORIGINAL_META, esc_url_raw( $image_url ) );
+	} elseif ( ! has_post_thumbnail( $post_id ) ) {
+		estrato_bridge_set_fallback_thumbnail( $post_id );
+	}
+
+	if ( function_exists( 'estrato_content_post_word_count' ) ) {
+		$words = estrato_content_post_word_count( $post_id );
+		if ( $words < 200 ) {
+			wp_update_post(
+				array(
+					'ID'          => $post_id,
+					'post_status' => 'draft',
+				)
+			);
+		} elseif ( function_exists( 'estrato_content_sync_yoast_index' ) ) {
+			estrato_content_sync_yoast_index( $post_id, $words );
+		}
 	}
 
 	return new WP_REST_Response(
@@ -524,6 +540,31 @@ function estrato_bridge_extract_image_from_html( $html ) {
 }
 
 /**
+ * Thumbnail padrão (Yoast OG) quando não há imagem da fonte.
+ *
+ * @param int $post_id
+ * @return bool
+ */
+function estrato_bridge_set_fallback_thumbnail( $post_id ) {
+	$post_id = (int) $post_id;
+	if ( ! $post_id || has_post_thumbnail( $post_id ) ) {
+		return false;
+	}
+
+	$social = get_option( 'wpseo_social', array() );
+	$og_id  = ! empty( $social['og_default_image_id'] ) ? (int) $social['og_default_image_id'] : 0;
+	if ( ! $og_id ) {
+		$og_id = (int) get_theme_mod( 'custom_logo' );
+	}
+	if ( ! $og_id ) {
+		return false;
+	}
+
+	set_post_thumbnail( $post_id, $og_id );
+	return true;
+}
+
+/**
  * Preenche imagens destacadas em posts sem thumbnail (somente originais).
  *
  * @param int $limit Máximo de posts por execução.
@@ -563,7 +604,11 @@ function estrato_bridge_backfill_featured_images( $limit = 50 ) {
 		);
 
 		if ( ! $image_url ) {
-			$stats['failed']++;
+			if ( estrato_bridge_set_fallback_thumbnail( $post->ID ) ) {
+				$stats['set']++;
+			} else {
+				$stats['failed']++;
+			}
 			continue;
 		}
 

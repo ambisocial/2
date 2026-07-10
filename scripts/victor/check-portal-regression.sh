@@ -143,6 +143,14 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   if [[ "$no_bio" == "0" ]]; then ok "AR-EEAT-006 todos autores com bio"; elif [[ "$no_bio" -ge 0 ]]; then warn "AR-EEAT-006 $no_bio posts de autores sem bio"; else warn "AR-EEAT-006 função indisponível"; fi
   sem=$($WP post list --category_name=sem-categoria --post_status=publish --format=count 2>/dev/null || echo 0)
   if [[ "$sem" -eq 0 ]]; then ok "AR-CONTENT-003 zero sem-categoria"; else warn "AR-CONTENT-003 $sem posts sem-categoria"; fi
+  thin=$($WP eval 'echo function_exists("estrato_regression_thin_posts") ? estrato_regression_thin_posts() : -1;' 2>/dev/null || echo -1)
+  if [[ "$thin" == "0" ]]; then ok "AR-CONTENT-001 zero posts <200 palavras"; elif [[ "$thin" -ge 0 ]]; then block "AR-CONTENT-001 $thin posts <200 palavras"; else warn "AR-CONTENT-001 helper indisponível"; fi
+  ratio=$($WP eval 'echo function_exists("estrato_regression_word_ratio") ? estrato_regression_word_ratio() : -1;' 2>/dev/null || echo -1)
+  if awk -v r="$ratio" 'BEGIN{exit !(r>=0.80)}' 2>/dev/null; then ok "AR-CONTENT-002 ratio 300+ palavras=$ratio"; else warn "AR-CONTENT-002 ratio 300+=$ratio (meta 0.80)"; fi
+  no_thumb=$($WP eval 'echo function_exists("estrato_regression_posts_without_thumbnail") ? estrato_regression_posts_without_thumbnail() : -1;' 2>/dev/null || echo -1)
+  if [[ "$no_thumb" == "0" ]]; then ok "AR-CONTENT-004 todos com featured image"; elif [[ "$no_thumb" -ge 0 ]]; then block "AR-CONTENT-004 $no_thumb posts sem thumbnail"; else warn "AR-CONTENT-004 helper indisponível"; fi
+  no_src=$($WP eval 'echo function_exists("estrato_regression_pipeline_without_source") ? estrato_regression_pipeline_without_source() : -1;' 2>/dev/null || echo -1)
+  if [[ "$no_src" -le 5 && "$no_src" -ge 0 ]]; then ok "AR-CONTENT-005 pipeline sem source=$no_src"; else warn "AR-CONTENT-005 pipeline sem source=$no_src (meta ≤5)"; fi
   logo=$($WP eval 'echo (int) get_theme_mod("custom_logo");' 2>/dev/null || echo "")
   if [[ -n "$logo" && "$logo" != "0" ]]; then ok "AR-VISUAL-001 custom_logo=$logo"; else block "AR-VISUAL-001 sem custom_logo"; fi
   accent=$($WP eval 'echo (string) get_theme_mod("pressgrid_accent_color");' 2>/dev/null || echo "")

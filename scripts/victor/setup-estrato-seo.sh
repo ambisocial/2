@@ -48,6 +48,8 @@ if [[ -f "$REPO/scripts/victor/setup-estrato-nginx-news-sitemap.sh" ]]; then
   bash "$REPO/scripts/victor/setup-estrato-nginx-news-sitemap.sh" || true
 fi
 
+systemctl restart php8.3-fpm-estrato.cc 2>/dev/null || systemctl restart php8.3-fpm 2>/dev/null || true
+
 # Limpeza legado + sem-categoria
 if [[ -f "$REPO/scripts/victor/archive-legacy-posts.php" ]]; then
   echo "--- archive legacy posts ---"

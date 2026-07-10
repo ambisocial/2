@@ -49,7 +49,7 @@ echo "## A. robots.txt"
 code=$(http_status "$BASE/robots.txt")
 if [[ "$code" == "200" ]]; then ok "AR-ROBOTS-001 robots.txt HTTP 200"; else block "AR-ROBOTS-001 robots.txt HTTP $code"; fi
 
-robots=$(body "$BASE/robots.txt")
+robots=$(body "$BASE/robots.txt?nocache=$(date +%s)")
 if echo "$robots" | grep -q "sitemap_index.xml"; then ok "AR-ROBOTS-002 sitemap declarado"; else block "AR-ROBOTS-002 sitemap ausente"; fi
 if echo "$robots" | grep -qi "Just a moment"; then block "AR-ROBOTS-006 Cloudflare challenge em robots"; else ok "AR-ROBOTS-006 sem CF challenge"; fi
 if echo "$robots" | grep -q "wp-admin"; then ok "AR-ROBOTS-003 bloqueia wp-admin"; else warn "AR-ROBOTS-003 falta Disallow wp-admin"; fi
@@ -65,7 +65,7 @@ done
 code=$(http_status "$BASE/news-sitemap.xml")
 if [[ "$code" == "200" ]]; then ok "AR-SITEMAP-003 news-sitemap.xml OK"; else warn "AR-SITEMAP-003 news-sitemap.xml ausente (HTTP $code)"; fi
 
-old=$(body "$BASE/post-sitemap.xml" | grep -c "2018\|2019\|2020\|2021\|2022\|2023" || true)
+old=$(body "$BASE/post-sitemap.xml" | grep -oE '<loc>[^<]+</loc>' | grep -c "2018\|2019\|2020\|2021\|2022\|2023" || true)
 if [[ "$old" -gt 0 ]]; then warn "AR-SITEMAP-004 sitemap contém $old URLs pré-2024"; else ok "AR-SITEMAP-004 sem URLs legadas antigas"; fi
 
 # ─── C. SCHEMA & META (home) ─────────────────────────────────────

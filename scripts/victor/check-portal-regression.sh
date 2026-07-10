@@ -96,10 +96,10 @@ home=$(body "$BASE/?estrato_check=$(date +%s)")
 if [[ ${#home} -lt 1000 ]]; then
   home=$(curl -s --max-time 25 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "${CURL_HOST[@]}" "$BASE/" 2>/dev/null || true)
 fi
-if echo "$home" | grep -q "application/ld+json"; then ok "AR-SCHEMA home tem JSON-LD"; else block "AR-SCHEMA home sem JSON-LD"; fi
-if echo "$home" | grep -q "WebSite"; then ok "AR-SCHEMA-001 WebSite"; else block "AR-SCHEMA-001 sem WebSite"; fi
-if echo "$home" | grep -qE "Organization|NewsMediaOrganization"; then ok "AR-SCHEMA-002 Organization"; else block "AR-SCHEMA-002 sem Organization"; fi
-if echo "$home" | grep -q "NewsMediaOrganization"; then ok "AR-SCHEMA-003 NewsMediaOrganization"; else warn "AR-SCHEMA-003 preferir NewsMediaOrganization"; fi
+if echo "$home" | grep -Fq 'application/ld+json'; then ok "AR-SCHEMA home tem JSON-LD"; else block "AR-SCHEMA home sem JSON-LD"; fi
+if echo "$home" | grep -Fq 'WebSite'; then ok "AR-SCHEMA-001 WebSite"; else block "AR-SCHEMA-001 sem WebSite"; fi
+if echo "$home" | grep -Fq 'NewsMediaOrganization' || echo "$home" | grep -Fq 'Organization'; then ok "AR-SCHEMA-002 Organization"; else block "AR-SCHEMA-002 sem Organization"; fi
+if echo "$home" | grep -Fq 'NewsMediaOrganization'; then ok "AR-SCHEMA-003 NewsMediaOrganization"; else warn "AR-SCHEMA-003 preferir NewsMediaOrganization"; fi
 if echo "$home" | grep -q "Свързани\|Сподели:"; then block "AR-VISUAL-003 strings búlgaras na home"; else ok "AR-VISUAL-003 sem búlgaro"; fi
 
 # ─── D. SCHEMA & META (post) ─────────────────────────────────────
@@ -109,9 +109,9 @@ if [[ -z "$POST_URL" ]]; then
   block "Nenhum post publicado"
 else
   post=$(body "$POST_URL")
-  if echo "$post" | grep -qE "NewsArticle|\"Article\""; then ok "AR-SCHEMA-004 NewsArticle/Article em $POST_URL"; else block "AR-SCHEMA-004 sem NewsArticle"; fi
-  if echo "$post" | grep -qE '"Person"|@type":"Person"'; then ok "AR-SCHEMA-005 Person/autor"; else warn "AR-SCHEMA-005 sem Person"; fi
-  na=$(echo "$post" | grep -o "NewsArticle" | wc -l)
+  if echo "$post" | grep -Fq 'NewsArticle' || echo "$post" | grep -Fq '@type":"Article"'; then ok "AR-SCHEMA-004 NewsArticle/Article em $POST_URL"; else block "AR-SCHEMA-004 sem NewsArticle"; fi
+  if echo "$post" | grep -Fq '"Person"' || echo "$post" | grep -Fq '@type":"Person"'; then ok "AR-SCHEMA-005 Person/autor"; else warn "AR-SCHEMA-005 sem Person"; fi
+  na=$(echo "$post" | grep -o 'NewsArticle' | wc -l)
   ar=$(echo "$post" | grep -o '@type":"Article"' | wc -l)
   if [[ "$na" -gt 0 && "$ar" -gt 0 ]]; then warn "AR-SCHEMA-006 schema Article+NewsArticle duplicado"; else ok "AR-SCHEMA-006 sem duplicação crítica"; fi
   if echo "$post" | grep -qE 'rel=["'\'']canonical["'\'']'; then ok "AR-SCHEMA-007 canonical"; else block "AR-SCHEMA-007 sem canonical"; fi

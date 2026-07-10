@@ -384,6 +384,21 @@ bash scripts/victor/check-portal-regression.sh
 | S10.2 | Relatório semanal GSC por categoria |
 | S10.3 | Rotina mensal: revisar feeds + thin posts |
 
+**Status:** `setup-estrato-ops.sh` · CI `estrato-anti-regression.yml`
+
+### Comandos operação
+
+```bash
+# Relatório semanal manual
+sudo -u www-data wp --path=/var/www/estrato.cc eval-file scripts/victor/report-gsc-weekly.php
+
+# Manutenção mensal manual
+sudo -u www-data wp --path=/var/www/estrato.cc eval-file scripts/victor/ops-monthly-maintenance.php
+
+# Setup completo Sprint 10
+bash scripts/victor/setup-estrato-ops.sh
+```
+
 ---
 
 ## Ritual de cada sprint
@@ -418,6 +433,9 @@ bash scripts/victor/setup-estrato-taxonomy.sh
 
 # Sprint 9 — curadoria RSS
 bash scripts/victor/setup-estrato-rss-curation.sh
+
+# Sprint 10 — operação contínua
+bash scripts/victor/setup-estrato-ops.sh
 ```
 
 ---

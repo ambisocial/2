@@ -11,6 +11,8 @@ on:
       - 'assets/branding/**'
       - 'scripts/build-portal-packages.sh'
       - 'scripts/victor/setup-estrato-portal-branding.sh'
+      - 'scripts/victor/**'
+      - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       portal:

@@ -247,6 +247,19 @@ else
   warn "WP-CLI indisponível — pulando AR-RSS-*"
 fi
 
+# ─── J. OPERAÇÃO (Sprint 10) ─────────────────────────────────────
+echo "## J. operação contínua"
+if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
+  crons=$($WP eval 'echo function_exists("estrato_regression_ops_crons_scheduled") && estrato_regression_ops_crons_scheduled() ? 1 : 0;' 2>/dev/null || echo 0)
+  if [[ "$crons" == "1" ]]; then ok "AR-OPS-001 crons semanal/mensal agendados"; else warn "AR-OPS-001 crons ops não agendados"; fi
+  w_age=$($WP eval 'echo function_exists("estrato_regression_ops_weekly_report_age_days") ? estrato_regression_ops_weekly_report_age_days() : -1;' 2>/dev/null || echo -1)
+  if [[ "$w_age" -ge 0 && "$w_age" -le 8 ]]; then ok "AR-OPS-002 relatório semanal (${w_age}d)"; elif [[ "$w_age" -ge 0 ]]; then warn "AR-OPS-002 relatório semanal antigo (${w_age}d)"; else warn "AR-OPS-002 sem relatório semanal"; fi
+  m_age=$($WP eval 'echo function_exists("estrato_regression_ops_monthly_age_days") ? estrato_regression_ops_monthly_age_days() : -1;' 2>/dev/null || echo -1)
+  if [[ "$m_age" -ge 0 && "$m_age" -le 35 ]]; then ok "AR-OPS-003 manutenção mensal (${m_age}d)"; elif [[ "$m_age" -ge 0 ]]; then warn "AR-OPS-003 manutenção mensal antiga (${m_age}d)"; else warn "AR-OPS-003 sem manutenção mensal"; fi
+else
+  warn "WP-CLI indisponível — pulando AR-OPS-*"
+fi
+
 # ─── G. PERFORMANCE ──────────────────────────────────────────────
 echo "## G. performance & segurança"
 code=$(http_status "$BASE/")

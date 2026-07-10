@@ -18,6 +18,8 @@ $dry_run = '1' === getenv( 'ESTRATO_DRY_RUN' );
  * @return bool
  */
 function estrato_gate_fix_uncategorized_post( $post_id ) {
+	global $dry_run;
+
 	$post = get_post( $post_id );
 	if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) {
 		return false;

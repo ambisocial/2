@@ -5,6 +5,13 @@ set -euo pipefail
 
 DOMAIN="${ESTRATO_DOMAIN:-estrato.cc}"
 BASE="https://${DOMAIN}"
+# No Victor, consulta origem direta (evita CF challenge em curl servidor→servidor).
+if [[ -f /var/www/estrato.cc/wp-config.php ]]; then
+  BASE="https://187.127.12.186"
+  CURL_HOST=( -H "Host: ${DOMAIN}" -k )
+else
+  CURL_HOST=()
+fi
 WP="${WP_CLI:-sudo -u www-data wp --path=/var/www/estrato.cc}"
 STRICT="${1:-}"
 YAML="${ESTRATO_REGRESSION_YAML:-/var/www/estrato/repo/portals/estrato-anti-regression.yaml}"
@@ -21,11 +28,11 @@ block(){ echo "  🛑 BLOCKER: $1"; FAIL=$((FAIL+1)); BLOCKERS=$((BLOCKERS+1)); 
 
 http_status() {
   local url="$1"
-  curl -sI -o /dev/null -w "%{http_code}" --max-time 15 "$url" 2>/dev/null || echo "000"
+  curl -sI -o /dev/null -w "%{http_code}" --max-time 15 "${CURL_HOST[@]}" "$url" 2>/dev/null || echo "000"
 }
 
 body() {
-  curl -sL --max-time 20 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "$1" 2>/dev/null || true
+  curl -sL --max-time 20 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "${CURL_HOST[@]}" "$1" 2>/dev/null || true
 }
 
 latest_post_url() {
@@ -110,9 +117,9 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   if [[ "$users" -ge 7 ]]; then ok "AR-EEAT-005 $users usuários"; else warn "AR-EEAT-005 apenas $users usuários (meta: 7+)"; fi
   sem=$($WP post list --category_name=sem-categoria --post_status=publish --format=count 2>/dev/null || echo 0)
   if [[ "$sem" -eq 0 ]]; then ok "AR-CONTENT-003 zero sem-categoria"; else warn "AR-CONTENT-003 $sem posts sem-categoria"; fi
-  logo=$($WP theme mod get custom_logo 2>/dev/null | awk 'NR==2{print $1}')
-  if [[ -n "$logo" && "$logo" != "false" && "$logo" =~ ^[0-9]+$ ]]; then ok "AR-VISUAL-001 custom_logo=$logo"; else block "AR-VISUAL-001 sem custom_logo"; fi
-  accent=$($WP theme mod get pressgrid_accent_color 2>/dev/null | awk 'NR==2{print $1}')
+  logo=$($WP eval 'echo (int) get_theme_mod("custom_logo");' 2>/dev/null || echo "")
+  if [[ -n "$logo" && "$logo" != "0" ]]; then ok "AR-VISUAL-001 custom_logo=$logo"; else block "AR-VISUAL-001 sem custom_logo"; fi
+  accent=$($WP eval 'echo (string) get_theme_mod("pressgrid_accent_color");' 2>/dev/null || echo "")
   if [[ "$accent" == "#9AFF33" || "$accent" == "#9aff33" ]]; then ok "AR-VISUAL-002 accent $accent"; else warn "AR-VISUAL-002 accent=$accent (esperado #9AFF33)"; fi
 else
   warn "WP-CLI indisponível — pulando checks WordPress"

@@ -30,6 +30,9 @@ fi
 echo "--- enrich all thin ---"
 $WP eval-file "$REPO/scripts/victor/enrich-all-thin-posts.php" 2>/dev/null || true
 
+echo "--- enrich mid (200-299) ---"
+$WP eval-file "$REPO/scripts/victor/enrich-mid-posts.php" 2>/dev/null || true
+
 # Rodadas adicionais por offset (posts novos)
 echo "--- enrich thin posts (offset) ---"
 for offset in $(seq 0 100 900); do

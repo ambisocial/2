@@ -162,7 +162,7 @@ fi
 # ─── F. NAVEGAÇÃO & AEO ──────────────────────────────────────────
 echo "## F. navegação & AEO"
 if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
-  primary=$($WP menu location list --format=json 2>/dev/null | grep -o '"primary":[0-9]*' | grep -o '[0-9]*' || echo "")
+  primary=$($WP eval '$l=get_theme_mod("nav_menu_locations"); echo isset($l["primary"]) ? (int)$l["primary"] : 0;' 2>/dev/null || echo 0)
   if [[ -n "$primary" && "$primary" != "0" ]]; then ok "AR-NAV-001 menu primary=$primary"; else block "AR-NAV-001 sem menu primary"; fi
   menu_count=$($WP menu item list estrato-principal --format=count 2>/dev/null || echo 0)
   if [[ "$menu_count" -ge 8 ]]; then ok "AR-NAV-002 menu $menu_count itens"; else block "AR-NAV-002 menu apenas $menu_count itens (meta 8+)"; fi

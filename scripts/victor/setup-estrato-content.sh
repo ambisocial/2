@@ -29,7 +29,7 @@ fi
 # Enriquecer posts finos em rodadas
 echo "--- enrich thin posts ---"
 for offset in $(seq 0 100 900); do
-  out=$($WP eval-file "$REPO/scripts/victor/enrich-thin-posts.php" -- --batch=100 --offset="$offset" 2>/dev/null || true)
+  out=$(ESTRATO_ENRICH_BATCH=100 ESTRATO_ENRICH_OFFSET="$offset" $WP eval-file "$REPO/scripts/victor/enrich-thin-posts.php" 2>/dev/null || true)
   echo "offset=$offset $out"
   updated=$(echo "$out" | grep -o '"updated": [0-9]*' | grep -o '[0-9]*' || echo 0)
   processed=$(echo "$out" | grep -o '"processed": [0-9]*' | head -1 | grep -o '[0-9]*' || echo 0)
@@ -40,7 +40,7 @@ done
 # Linker interno WP
 echo "--- internal links ---"
 for _ in $(seq 1 12); do
-  out=$($WP eval-file "$REPO/scripts/victor/wp-internal-linker.php" -- --batch=80 2>/dev/null || true)
+  out=$(ESTRATO_LINKER_BATCH=80 $WP eval-file "$REPO/scripts/victor/wp-internal-linker.php" 2>/dev/null || true)
   echo "$out"
   updated=$(echo "$out" | grep -o '"updated": [0-9]*' | grep -o '[0-9]*' || echo 0)
   [[ "${updated:-0}" -eq 0 ]] && break
@@ -50,6 +50,9 @@ done
 echo "--- thumbnail backfill ---"
 if [[ -f "$REPO/scripts/victor/backfill-featured-images.php" ]]; then
   $WP eval-file "$REPO/scripts/victor/backfill-featured-images.php" 2>/dev/null || true
+fi
+if [[ -f "$REPO/scripts/victor/backfill-fallback-thumbnails.php" ]]; then
+  $WP eval-file "$REPO/scripts/victor/backfill-fallback-thumbnails.php" 2>/dev/null || true
 fi
 
 $WP yoast index --reindex --skip-confirmation 2>/dev/null || true

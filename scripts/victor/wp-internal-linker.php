@@ -9,12 +9,7 @@ if ( ! function_exists( 'estrato_content_inject_internal_links' ) ) {
 	exit( 1 );
 }
 
-$batch = 80;
-foreach ( array_slice( $GLOBALS['argv'] ?? array(), 1 ) as $arg ) {
-	if ( preg_match( '/^--batch=(\d+)$/', $arg, $m ) ) {
-		$batch = (int) $m[1];
-	}
-}
+$batch = (int) ( getenv( 'ESTRATO_LINKER_BATCH' ) ?: 80 );
 
 $updated = 0;
 $checked = 0;

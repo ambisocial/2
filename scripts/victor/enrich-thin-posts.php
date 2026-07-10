@@ -9,17 +9,8 @@ if ( ! function_exists( 'estrato_content_enrich_post' ) ) {
 	exit( 1 );
 }
 
-$batch  = 100;
-$offset = 0;
-
-foreach ( array_slice( $GLOBALS['argv'] ?? array(), 1 ) as $arg ) {
-	if ( preg_match( '/^--batch=(\d+)$/', $arg, $m ) ) {
-		$batch = (int) $m[1];
-	}
-	if ( preg_match( '/^--offset=(\d+)$/', $arg, $m ) ) {
-		$offset = (int) $m[1];
-	}
-}
+$batch  = (int) ( getenv( 'ESTRATO_ENRICH_BATCH' ) ?: 100 );
+$offset = (int) ( getenv( 'ESTRATO_ENRICH_OFFSET' ) ?: 0 );
 
 $ids = get_posts(
 	array(

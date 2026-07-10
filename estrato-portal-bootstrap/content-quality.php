@@ -202,6 +202,30 @@ function estrato_content_inject_internal_links( $content, $post_id ) {
 }
 
 /**
+ * Parágrafo extra para posts entre 200–299 palavras.
+ *
+ * @param string $title
+ * @param string $category_slug
+ * @return string
+ */
+function estrato_content_build_extension_block( $title, $category_slug = '' ) {
+	$area = estrato_content_category_label( $category_slug );
+	return '<h2>Análise complementar</h2><p>'
+		. esc_html(
+			sprintf(
+				'O desdobramento de “%s” reforça a importância de monitorar indicadores de %s nas próximas divulgações. Gestores costumam revisar exposição a juros, câmbio e setores cíclicos quando notícias como esta ganham tração na imprensa e nas redes de distribuição de research.',
+				wp_trim_words( $title, 10, '…' ),
+				$area
+			)
+		)
+		. '</p><p>'
+		. esc_html(
+			'No Estrato, atualizamos esta cobertura quando surgem novos dados oficiais ou movimentos relevantes de mercado. Consulte nossa seção de mercados e a política editorial para entender critérios de atualização e correção.'
+		)
+		. '</p>';
+}
+
+/**
  * Enriquece post publicado abaixo da meta de palavras.
  *
  * @param int $post_id
@@ -247,6 +271,11 @@ function estrato_content_enrich_post( $post_id ) {
 
 	$content = estrato_content_inject_internal_links( $content, $post_id );
 	$words   = estrato_content_word_count( $content );
+
+	if ( $words < ESTRATO_TARGET_WORDS && $words >= ESTRATO_MIN_PUBLISH_WORDS ) {
+		$content .= "\n" . estrato_content_build_extension_block( $post->post_title, $cat_slug );
+		$words    = estrato_content_word_count( $content );
+	}
 
 	$status = $post->post_status;
 	$drafted = false;

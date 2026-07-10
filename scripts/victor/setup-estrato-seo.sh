@@ -11,6 +11,7 @@ echo "=== estrato.cc SEO setup (Sprint 1) ==="
 # Plugins atualizados
 if [[ -d "$REPO/estrato-portal-bootstrap" ]]; then
   rsync -a "$REPO/estrato-portal-bootstrap/" "$WEB/wp-content/plugins/estrato-portal-bootstrap/"
+  cp "$REPO/estrato-portal-bootstrap/estrato-news-sitemap.php" "$WEB/estrato-news-sitemap.php" 2>/dev/null || true
 fi
 
 $WP plugin activate wordpress-seo estrato-portal-bootstrap --quiet
@@ -41,6 +42,11 @@ done
 
 # Rewrite news-sitemap.xml
 $WP rewrite flush --hard
+
+# Nginx direct route para news-sitemap.xml
+if [[ -f "$REPO/scripts/victor/setup-estrato-nginx-news-sitemap.sh" ]]; then
+  bash "$REPO/scripts/victor/setup-estrato-nginx-news-sitemap.sh" || true
+fi
 
 # Limpeza legado + sem-categoria
 if [[ -f "$REPO/scripts/victor/archive-legacy-posts.php" ]]; then

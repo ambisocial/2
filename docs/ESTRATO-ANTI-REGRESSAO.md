@@ -199,7 +199,7 @@ Cada linha é uma regra que o Estrato **deve** manter após implementada.
 bash /var/www/estrato/repo/scripts/victor/check-portal-regression.sh
 ```
 
-### Modo estrito (falha em qualquer ❌)
+### Modo estrito (falha em qualquer ❌ ou ⚠️)
 
 ```bash
 bash scripts/victor/check-portal-regression.sh --strict

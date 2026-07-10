@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Publisher Bridge
  * Description: Recebe artigos do pipeline Victor (scout/curator/writer/publisher) via REST API.
- * Version: 1.5.0
+ * Version: 1.5.1
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_BRIDGE_VERSION', '1.4.0' );
+define( 'ESTRATO_BRIDGE_VERSION', '1.5.1' );
 define( 'ESTRATO_BRIDGE_SECRET_OPTION', 'estrato_bridge_secret' );
 define( 'ESTRATO_BRIDGE_BACKFILL_HOOK', 'estrato_thumbnail_backfill_event' );
 define( 'ESTRATO_BRIDGE_ORIGINAL_META', '_estrato_original_image_url' );
@@ -145,6 +145,17 @@ function estrato_bridge_publish_post( $request ) {
 		}
 	}
 
+	if ( empty( $category_ids ) ) {
+		$fallback_slug = function_exists( 'estrato_gate_default_category_slug' )
+			? estrato_gate_default_category_slug( '' )
+			: 'economia';
+		$fallback      = get_term_by( 'slug', $fallback_slug, 'category' );
+		if ( $fallback ) {
+			$category_ids[]  = (int) $fallback->term_id;
+			$category_slug   = $fallback_slug;
+		}
+	}
+
 	$author_id = 1;
 	if ( function_exists( 'estrato_eeat_resolve_author_id' ) && $category_slug ) {
 		$author_id = estrato_eeat_resolve_author_id( $category_slug );
@@ -183,6 +194,10 @@ function estrato_bridge_publish_post( $request ) {
 
 	if ( is_wp_error( $post_id ) ) {
 		return $post_id;
+	}
+
+	if ( $category_ids && $existing_id ) {
+		wp_set_post_categories( $post_id, $category_ids, false );
 	}
 
 	if ( $guid ) {

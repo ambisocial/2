@@ -329,6 +329,8 @@ bash scripts/victor/check-portal-regression.sh
 ✅ Logo + accent + menu financeiro
 ```
 
+**Status 2026-07-10:** Gate Fase 1 **aprovado** no Victor — `49 pass · 0 warn · 0 fail` (`setup-estrato-gate.sh`).
+
 **Somente após este gate → iniciar Sprint 8.**
 
 ---

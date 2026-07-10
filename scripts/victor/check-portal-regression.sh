@@ -87,8 +87,18 @@ done
 code=$(http_status "$BASE/news-sitemap.xml")
 if [[ "$code" == "200" ]]; then ok "AR-SITEMAP-003 news-sitemap.xml OK"; else warn "AR-SITEMAP-003 news-sitemap.xml ausente (HTTP $code)"; fi
 
-old=$(body "$BASE/post-sitemap.xml" | grep -oE '<loc>[^<]+</loc>' | grep -c "2018\|2019\|2020\|2021\|2022\|2023" || true)
-if [[ "$old" -gt 0 ]]; then warn "AR-SITEMAP-004 sitemap contém $old URLs pré-2024"; else ok "AR-SITEMAP-004 sem URLs legadas antigas"; fi
+# AR-SITEMAP-004: posts publicados antes de 2024 (não anos em slugs como "messi-2022").
+old=0
+if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
+  old=$($WP eval 'echo function_exists("estrato_regression_pre2024_posts") ? estrato_regression_pre2024_posts() : -1;' 2>/dev/null || echo -1)
+  if [[ "$old" -lt 0 ]]; then
+    old=$($WP eval 'echo count(get_posts(array("post_type"=>"post","post_status"=>"publish","posts_per_page"=>-1,"fields"=>"ids","date_query"=>array(array("before"=>"2024-01-01 00:00:00","inclusive"=>false,"column"=>"post_date")))));' 2>/dev/null || echo 0)
+  fi
+else
+  old=$(body "$BASE/post-sitemap.xml" | grep -oE '<loc>[^<]+</loc>' | sed 's/<loc>//;s/<\/loc>//' \
+    | grep -cE '/(201[89]|202[0-3])(/|$)' || true)
+fi
+if [[ "$old" -gt 0 ]]; then warn "AR-SITEMAP-004 $old posts pré-2024 ainda publicados"; else ok "AR-SITEMAP-004 sem posts legados pré-2024"; fi
 
 # ─── C. SCHEMA & META (home) ─────────────────────────────────────
 echo "## C. schema & meta (home)"
@@ -203,7 +213,7 @@ if [[ "$code" == "200" ]]; then ok "AR-NAV página /cotacoes/ OK"; else warn "AR
 echo "## G. performance & segurança"
 code=$(http_status "$BASE/")
 if [[ "$code" == "200" ]]; then ok "AR-PERF-001 HTTPS 200"; else block "AR-PERF-001 HTTPS $code"; fi
-hdr=$(curl -sI --max-time 10 "$BASE/" | grep -i "x-content-type-options" || true)
+hdr=$(curl -sI --max-time 10 "${CURL_HOST[@]}" "$BASE/" | grep -i "x-content-type-options" || true)
 if echo "$hdr" | grep -qi nosniff; then ok "AR-PERF-002 X-Content-Type-Options"; else warn "AR-PERF-002 sem nosniff"; fi
 
 # ─── RESUMO ─────────────────────────────────────────────────────
@@ -217,6 +227,10 @@ if [[ "$BLOCKERS" -gt 0 ]]; then
 fi
 if [[ "$FAIL" -gt 0 && "$STRICT" == "--strict" ]]; then
   echo "RESULT: FAIL (strict mode)"
+  exit 1
+fi
+if [[ "$WARN" -gt 0 && "$STRICT" == "--strict" ]]; then
+  echo "RESULT: FAIL (strict: $WARN warnings)"
   exit 1
 fi
 if [[ "$WARN" -gt 0 ]]; then

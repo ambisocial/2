@@ -1,6 +1,6 @@
 <?php
 /**
- * Arquiva posts legados: noindex para pré-2024 e URLs com anos 2018–2023.
+ * Arquiva posts legados: noindex para pré-2024 e permalinks com path /YYYY/.
  * Uso: ESTRATO_DRY_RUN=1 wp eval-file archive-legacy-posts.php
  *
  * @package EstratoVictor
@@ -11,6 +11,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $dry_run = '1' === getenv( 'ESTRATO_DRY_RUN' );
+
+/**
+ * Detecta permalinks com segmento de data legado (/2022/), não anos em slugs (ex.: messi-2022).
+ *
+ * @param string $url
+ * @return bool
+ */
+function estrato_archive_url_has_legacy_date_path( $url ) {
+	return (bool) preg_match( '#/(201[89]|202[0-3])(/|$)#', $url );
+}
 
 /**
  * @param int $post_id
@@ -26,32 +36,12 @@ function estrato_archive_should_noindex( $post_id ) {
 		return true;
 	}
 
-	$slug = $post->post_name;
-	if ( preg_match( '/(?:^|[^\d])(201[89]|202[0-3])(?:[^\d]|$)/', $slug ) ) {
-		return true;
-	}
-
-	if ( preg_match( '/\d{2}-\d{2}-(201[89]|202[0-3])/', $slug ) ) {
-		return true;
-	}
-
 	$permalink = get_permalink( $post );
-	if ( $permalink && estrato_archive_url_has_legacy_year( $permalink ) ) {
+	if ( $permalink && estrato_archive_url_has_legacy_date_path( $permalink ) ) {
 		return true;
 	}
 
 	return false;
-}
-
-/**
- * @param string $url
- * @return bool
- */
-function estrato_archive_url_has_legacy_year( $url ) {
-	return (bool) preg_match( '#/(201[89]|202[0-3])(/|$)#', $url )
-		|| (bool) preg_match( '#(201[89]|202[0-3])/#', $url )
-		|| (bool) preg_match( '#\d{2}-\d{2}-(201[89]|202[0-3])#', $url )
-		|| (bool) preg_match( '#-(201[89]|202[0-3])(/|$)#', $url );
 }
 
 $ids = get_posts(
@@ -68,7 +58,7 @@ $ids = get_posts(
 $marked   = 0;
 $skipped  = 0;
 $pre_2024 = 0;
-$slug_old = 0;
+$path_old = 0;
 
 foreach ( $ids as $post_id ) {
 	if ( ! estrato_archive_should_noindex( $post_id ) ) {
@@ -80,7 +70,7 @@ foreach ( $ids as $post_id ) {
 	if ( strtotime( $post->post_date ) < strtotime( '2024-01-01 00:00:00' ) ) {
 		++$pre_2024;
 	} else {
-		++$slug_old;
+		++$path_old;
 	}
 
 	if ( $dry_run ) {
@@ -91,14 +81,12 @@ foreach ( $ids as $post_id ) {
 	update_post_meta( $post_id, '_yoast_wpseo_meta-robots-noindex', '1' );
 	update_post_meta( $post_id, '_yoast_wpseo_meta-robots-nofollow', '0' );
 
-	if ( strtotime( $post->post_date ) < strtotime( '2021-01-01 00:00:00' ) ) {
-		wp_update_post(
-			array(
-				'ID'          => $post_id,
-				'post_status' => 'draft',
-			)
-		);
-	}
+	wp_update_post(
+		array(
+			'ID'          => $post_id,
+			'post_status' => 'draft',
+		)
+	);
 
 	++$marked;
 }
@@ -108,4 +96,4 @@ if ( ! $dry_run && class_exists( 'WPSEO_Sitemaps_Cache' ) ) {
 }
 
 $mode = $dry_run ? 'DRY-RUN' : 'APPLIED';
-echo "{$mode}: noindex/draft em {$marked} posts (pre-2024: {$pre_2024}, slug legado: {$slug_old}), skipped {$skipped}\n";
+echo "{$mode}: noindex/draft em {$marked} posts (pre-2024: {$pre_2024}, path legado: {$path_old}), skipped {$skipped}\n";

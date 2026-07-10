@@ -228,6 +228,25 @@ else
   warn "WP-CLI indisponível — pulando AR-TAX-*"
 fi
 
+# ─── I. RSS CURADORIA (Sprint 9) ─────────────────────────────────
+echo "## I. RSS curadoria"
+if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
+  dupes=$($WP eval 'echo function_exists("estrato_rss_count_duplicate_feed_urls") ? estrato_rss_count_duplicate_feed_urls() : -1;' 2>/dev/null || echo -1)
+  if [[ "$dupes" == "0" ]]; then ok "AR-RSS-001 zero URLs de feed duplicadas"; elif [[ "$dupes" -gt 0 ]]; then warn "AR-RSS-001 $dupes URLs duplicadas"; else warn "AR-RSS-001 helper indisponível"; fi
+  rss_json=$($WP option get estrato_rss_settings --format=json 2>/dev/null || echo "{}")
+  if echo "$rss_json" | grep -q '"items_per_feed":2' && echo "$rss_json" | grep -q '"max_per_run":15'; then
+    ok "AR-RSS-002 pipeline_primary 2/feed max 15"
+  else
+    warn "AR-RSS-002 settings RSS fora do pipeline_primary"
+  fi
+  ratio=$($WP eval 'echo function_exists("estrato_rss_feed_health_ratio") ? estrato_rss_feed_health_ratio() : -1;' 2>/dev/null || echo -1)
+  if awk -v r="$ratio" 'BEGIN{exit !(r>=0.70)}' 2>/dev/null; then ok "AR-RSS-003 saúde feeds=$ratio"; elif awk -v r="$ratio" 'BEGIN{exit !(r>=0)}' 2>/dev/null; then warn "AR-RSS-003 saúde feeds=$ratio (meta 0.70)"; else warn "AR-RSS-003 saúde feeds não validada"; fi
+  menu_n=$($WP menu item list estrato-principal --format=count 2>/dev/null || echo 0)
+  if [[ "$menu_n" -ge 8 ]]; then ok "AR-RSS-004 menu $menu_n itens"; else warn "AR-RSS-004 menu $menu_n itens"; fi
+else
+  warn "WP-CLI indisponível — pulando AR-RSS-*"
+fi
+
 # ─── G. PERFORMANCE ──────────────────────────────────────────────
 echo "## G. performance & segurança"
 code=$(http_status "$BASE/")

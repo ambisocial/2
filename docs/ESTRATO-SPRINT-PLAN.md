@@ -358,6 +358,8 @@ bash scripts/victor/check-portal-regression.sh
 | S8.5 | `category_description` SEO revisada com dados de GSC |
 | S8.6 | PressGrid sections 1:1 com categorias finais |
 
+**Status 2026-07-10:** concluído — `setup-estrato-taxonomy.sh`.
+
 ### Sprint 9 — Curadoria RSS por categoria
 
 **Referências:** BPMoney (feeds segmentados), InfoMoney (fontes tier-1), G1 (economia)
@@ -371,6 +373,8 @@ bash scripts/victor/check-portal-regression.sh
 | S9.5 | `pipeline_primary`: manter 2 items/feed, 15 max, hourly |
 | S9.6 | Rebuild menu `estrato_rss_rebuild_menus()` |
 | S9.7 | Indexação bot **categoria por categoria** (mercados → negócios → …) |
+
+**Status 2026-07-10:** concluído — `setup-estrato-rss-curation.sh` · 21 feeds ativos · saúde ~95%.
 
 ### Sprint 10 — Operação contínua
 
@@ -408,6 +412,12 @@ bash scripts/victor/check-portal-regression.sh --strict | tee sprint-N-after.log
 
 # Gate Fase 1 (Sprint 7)
 bash scripts/victor/setup-estrato-gate.sh
+
+# Sprint 8 — taxonomia
+bash scripts/victor/setup-estrato-taxonomy.sh
+
+# Sprint 9 — curadoria RSS
+bash scripts/victor/setup-estrato-rss-curation.sh
 ```
 
 ---

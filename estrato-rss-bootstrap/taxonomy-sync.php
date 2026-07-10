@@ -95,6 +95,12 @@ function estrato_rss_sync_portal_taxonomy() {
 	$subcats    = estrato_rss_create_subcategories( $taxonomy, $categories );
 	estrato_rss_noindex_legacy_terms( $taxonomy );
 
+	if ( function_exists( 'estrato_rss_apply_curation' ) ) {
+		$curation = estrato_rss_apply_curation( false );
+	} else {
+		$curation = array();
+	}
+
 	estrato_rss_run_after_init(
 		function () use ( $categories ) {
 			estrato_rss_rebuild_menus( $categories );
@@ -105,6 +111,7 @@ function estrato_rss_sync_portal_taxonomy() {
 		'ok'            => true,
 		'categories'    => count( $categories ),
 		'subcategories' => $subcats,
+		'curation'      => $curation,
 	);
 }
 

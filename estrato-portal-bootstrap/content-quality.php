@@ -114,6 +114,15 @@ function estrato_content_build_aeo_blocks( $title, $excerpt, $content, $category
 			)
 		)
 		. '</p>'
+		. '<h2>Impacto prático</h2>'
+		. '<p>'
+		. esc_html(
+			sprintf(
+				'Para o investidor de varejo e para empresas expostas a %s, o efeito mais imediato costuma aparecer em precificação de ativos, custo de capital e revisão de projeções. Acompanhar comunicados oficiais e a reação do mercado nas sessões seguintes ajuda a separar ruído de mudança estrutural de cenário.',
+				$area
+			)
+		)
+		. '</p>'
 		. '<h2>Perguntas frequentes</h2>' . $faq_html;
 }
 
@@ -211,7 +220,9 @@ function estrato_content_enrich_post( $post_id ) {
 	$content = $post->post_content;
 	$words   = estrato_content_word_count( $content );
 
-	if ( $words >= ESTRATO_TARGET_WORDS && false !== strpos( $content, 'estrato-internal-links' ) ) {
+	if ( $words >= ESTRATO_TARGET_WORDS
+		&& false !== strpos( $content, ESTRATO_AEO_MARKER )
+		&& false !== strpos( $content, 'estrato-internal-links' ) ) {
 		return array(
 			'updated' => false,
 			'words'   => $words,
@@ -277,6 +288,9 @@ function estrato_content_sync_yoast_index( $post_id, $words ) {
  * @param int $post_id
  */
 function estrato_content_on_publish( $post_id ) {
+	if ( defined( 'ESTRATO_ENRICHING' ) && ESTRATO_ENRICHING ) {
+		return;
+	}
 	$post = get_post( $post_id );
 	if ( ! $post || 'post' !== $post->post_type ) {
 		return;

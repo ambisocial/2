@@ -26,8 +26,12 @@ if [[ -f "$REPO/scripts/victor/patch-writer-s4.py" ]]; then
   python3 "$REPO/scripts/victor/patch-writer-s4.py" || echo "writer patch skipped"
 fi
 
-# Enriquecer posts finos em rodadas
-echo "--- enrich thin posts ---"
+# Enriquecer todos os posts <300 palavras
+echo "--- enrich all thin ---"
+$WP eval-file "$REPO/scripts/victor/enrich-all-thin-posts.php" 2>/dev/null || true
+
+# Rodadas adicionais por offset (posts novos)
+echo "--- enrich thin posts (offset) ---"
 for offset in $(seq 0 100 900); do
   out=$(ESTRATO_ENRICH_BATCH=100 ESTRATO_ENRICH_OFFSET="$offset" $WP eval-file "$REPO/scripts/victor/enrich-thin-posts.php" 2>/dev/null || true)
   echo "offset=$offset $out"

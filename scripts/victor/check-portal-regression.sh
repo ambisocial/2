@@ -161,17 +161,31 @@ fi
 
 # ─── F. NAVEGAÇÃO & AEO ──────────────────────────────────────────
 echo "## F. navegação & AEO"
+if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
+  primary=$($WP menu location list --format=json 2>/dev/null | grep -o '"primary":[0-9]*' | grep -o '[0-9]*' || echo "")
+  if [[ -n "$primary" && "$primary" != "0" ]]; then ok "AR-NAV-001 menu primary=$primary"; else block "AR-NAV-001 sem menu primary"; fi
+  menu_count=$($WP menu item list estrato-principal --format=count 2>/dev/null || echo 0)
+  if [[ "$menu_count" -ge 8 ]]; then ok "AR-NAV-002 menu $menu_count itens"; else block "AR-NAV-002 menu apenas $menu_count itens (meta 8+)"; fi
+  breaking=$($WP eval 'echo (int) get_theme_mod("pressgrid_breaking_news_category");' 2>/dev/null || echo 0)
+  forex=$($WP eval 'echo get_theme_mod("pressgrid_forex_force") ? "1" : "0";' 2>/dev/null || echo 0)
+  if [[ -n "$breaking" && "$breaking" != "0" ]] || [[ "$forex" == "1" ]]; then ok "AR-VISUAL-004 ticker/forex ativo"; else warn "AR-VISUAL-004 sem ticker mercados/forex"; fi
+else
+  warn "WP-CLI indisponível — pulando AR-NAV-001/002"
+fi
+
 code=$(http_status "$BASE/feed/")
 if [[ "$code" == "200" ]]; then ok "AR-NAV-004 RSS feed OK"; else warn "AR-NAV-004 RSS HTTP $code"; fi
 code=$(http_status "$BASE/llms.txt")
 if [[ "$code" == "200" ]]; then ok "AR-AEO-001 llms.txt OK"; else warn "AR-AEO-001 llms.txt ausente"; fi
 
 hubs_ok=0
-for hub in selic ibovespa dolar; do
+for hub in selic ibovespa dolar cripto inflacao tributacao agronegocio; do
   c=$(http_status "$BASE/tudo-sobre/$hub/")
   [[ "$c" == "200" ]] && hubs_ok=$((hubs_ok+1))
 done
-if [[ "$hubs_ok" -ge 3 ]]; then ok "AR-NAV-003 $hubs_ok hubs /tudo-sobre/"; else warn "AR-NAV-003 apenas $hubs_ok/3 hubs"; fi
+if [[ "$hubs_ok" -ge 7 ]]; then ok "AR-NAV-003 $hubs_ok/7 hubs /tudo-sobre/"; elif [[ "$hubs_ok" -ge 3 ]]; then ok "AR-NAV-003 $hubs_ok hubs /tudo-sobre/ (mín 3)"; else warn "AR-NAV-003 apenas $hubs_ok/7 hubs"; fi
+code=$(http_status "$BASE/cotacoes/")
+if [[ "$code" == "200" ]]; then ok "AR-NAV página /cotacoes/ OK"; else warn "AR-NAV /cotacoes/ HTTP $code"; fi
 
 # ─── G. PERFORMANCE ──────────────────────────────────────────────
 echo "## G. performance & segurança"

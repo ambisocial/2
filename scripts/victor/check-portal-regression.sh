@@ -40,11 +40,21 @@ body() {
   curl -s $follow --max-time 20 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "${CURL_HOST[@]}" "$1" 2>/dev/null || true
 }
 
+# No Victor, reescreve URLs estrato.cc → IP origem.
+normalize_url() {
+  local url="$1"
+  if [[ -f /var/www/estrato.cc/wp-config.php && "$url" == https://${DOMAIN}* ]]; then
+    echo "${BASE}${url#https://${DOMAIN}}"
+  else
+    echo "$url"
+  fi
+}
+
 latest_post_url() {
   local url
   url=$($WP post list --post_type=post --post_status=publish --orderby=date --order=desc --field=url --format=csv 2>/dev/null | head -1)
   if [[ -n "$url" && "$url" == http* ]]; then
-    echo "$url"
+    normalize_url "$url"
     return
   fi
   curl -sL --max-time 20 "$BASE/post-sitemap.xml" 2>/dev/null \
@@ -99,7 +109,7 @@ else
   if echo "$post" | grep -qE "NewsArticle|\"Article\""; then ok "AR-SCHEMA-004 NewsArticle/Article em $POST_URL"; else block "AR-SCHEMA-004 sem NewsArticle"; fi
   if echo "$post" | grep -q '"Person"'; then ok "AR-SCHEMA-005 Person/autor"; else warn "AR-SCHEMA-005 sem Person"; fi
   na=$(echo "$post" | grep -o "NewsArticle" | wc -l)
-  ar=$(echo "$post" | grep -o '"Article"' | wc -l)
+  ar=$(echo "$post" | grep -o '@type":"Article"' | wc -l)
   if [[ "$na" -gt 0 && "$ar" -gt 0 ]]; then warn "AR-SCHEMA-006 schema Article+NewsArticle duplicado"; else ok "AR-SCHEMA-006 sem duplicação crítica"; fi
   if echo "$post" | grep -qE 'rel=["'\'']canonical["'\'']'; then ok "AR-SCHEMA-007 canonical"; else block "AR-SCHEMA-007 sem canonical"; fi
   if echo "$post" | grep -qE 'property=["'\'']og:title["'\'']'; then ok "AR-SCHEMA-008 og:title"; else block "AR-SCHEMA-008 sem og:title"; fi

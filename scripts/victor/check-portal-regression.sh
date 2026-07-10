@@ -125,7 +125,8 @@ fi
 
 cat_code=$(http_status "$BASE/category/economia/")
 cat_html=$(body "$BASE/category/economia/?nocache=$(date +%s)")
-if echo "$cat_html" | grep -qi "Archives"; then warn "AR-SCHEMA-010 title categoria com 'Archives'"; else ok "AR-SCHEMA-010 title categoria pt_BR"; fi
+cat_title=$(echo "$cat_html" | grep -oiE '<title[^>]*>[^<]+</title>' | head -1)
+if echo "$cat_title" | grep -qi "Archives"; then warn "AR-SCHEMA-010 title categoria com 'Archives'"; else ok "AR-SCHEMA-010 title categoria pt_BR"; fi
 
 # ─── E. E-E-A-T ──────────────────────────────────────────────────
 echo "## E. E-E-A-T / institucional"

@@ -209,6 +209,25 @@ if [[ "$hubs_ok" -ge 7 ]]; then ok "AR-NAV-003 $hubs_ok/7 hubs /tudo-sobre/"; el
 code=$(http_status "$BASE/cotacoes/")
 if [[ "$code" == "200" ]]; then ok "AR-NAV página /cotacoes/ OK"; else warn "AR-NAV /cotacoes/ HTTP $code"; fi
 
+# ─── H. TAXONOMIA (Sprint 8) ─────────────────────────────────────
+echo "## H. taxonomia financeira"
+if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
+  for slug in economia mercados negocios financas-pessoais criptomoedas agronegocio mundo; do
+    cnt=$($WP post list --category_name="$slug" --post_status=publish --format=count 2>/dev/null || echo 0)
+    if [[ "$cnt" -eq 0 ]]; then warn "AR-TAX-001 $slug sem posts publicados"; else ok "AR-TAX-001 $slug posts=$cnt"; fi
+  done
+  legacy=0
+  for slug in politica tecnologia brasil; do
+    n=$($WP post list --category_name="$slug" --post_status=publish --format=count 2>/dev/null || echo 0)
+    legacy=$((legacy + n))
+  done
+  if [[ "$legacy" -eq 0 ]]; then ok "AR-TAX-002 zero posts em categorias legado"; else warn "AR-TAX-002 $legacy posts em politica/tecnologia/brasil"; fi
+  pg_secs=$($WP eval 'echo function_exists("estrato_regression_pressgrid_finance_sections") ? estrato_regression_pressgrid_finance_sections() : -1;' 2>/dev/null || echo -1)
+  if [[ "$pg_secs" -ge 7 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções por editoria"; elif [[ "$pg_secs" -ge 4 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções (mín 4)"; elif [[ "$pg_secs" -ge 0 ]]; then warn "AR-TAX-003 PressGrid apenas $pg_secs seções editoria"; else warn "AR-TAX-003 helper indisponível"; fi
+else
+  warn "WP-CLI indisponível — pulando AR-TAX-*"
+fi
+
 # ─── G. PERFORMANCE ──────────────────────────────────────────────
 echo "## G. performance & segurança"
 code=$(http_status "$BASE/")

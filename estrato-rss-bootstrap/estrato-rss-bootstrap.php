@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.4.1
+ * Version: 1.5.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_RSS_VERSION', '1.4.1' );
+define( 'ESTRATO_RSS_VERSION', '1.5.0' );
 define( 'ESTRATO_RSS_OPTION_PRESET', 'estrato_rss_preset' );
 define( 'ESTRATO_RSS_DEMO_META', 'jannah_demo_data' );
 define( 'ESTRATO_RSS_CRON_HOOK', 'estrato_rss_import_event' );
@@ -24,6 +24,8 @@ add_action( ESTRATO_RSS_CRON_HOOK, 'estrato_rss_run_import' );
 add_action( 'admin_notices', 'estrato_rss_admin_notice' );
 add_action( 'admin_menu', 'estrato_rss_admin_menu' );
 add_action( 'plugins_loaded', 'estrato_rss_maybe_upgrade' );
+
+require_once __DIR__ . '/taxonomy-sync.php';
 
 /**
  * Default plugin settings.
@@ -194,74 +196,77 @@ function estrato_rss_get_presets() {
 		),
 	);
 
-	$brasil_financeiro = array(
-		'economia'          => array(
-			'name'        => 'Economia',
-			'description' => 'Macroeconomia, inflação, PIB e política fiscal e monetária.',
-			'feeds'       => array(
-				array( 'title' => 'G1 Economia', 'url' => 'https://g1.globo.com/rss/g1/economia/' ),
-				array( 'title' => 'InfoMoney', 'url' => 'https://www.infomoney.com.br/feed/' ),
-				array( 'title' => 'Exame', 'url' => 'https://exame.com/feed/' ),
-				array( 'title' => 'Money Times', 'url' => 'https://www.moneytimes.com.br/feed/' ),
-				array( 'title' => 'Folha Em cima da Hora', 'url' => 'https://feeds.folha.uol.com.br/emcimadahora/rss091.xml' ),
+	$brasil_financeiro = estrato_rss_taxonomy_to_preset( estrato_rss_load_finance_taxonomy() );
+	if ( empty( $brasil_financeiro ) ) {
+		$brasil_financeiro = array(
+			'economia'          => array(
+				'name'        => 'Economia',
+				'description' => 'Macroeconomia, inflação, PIB e política fiscal e monetária.',
+				'feeds'       => array(
+					array( 'title' => 'G1 Economia', 'url' => 'https://g1.globo.com/rss/g1/economia/' ),
+					array( 'title' => 'InfoMoney', 'url' => 'https://www.infomoney.com.br/feed/' ),
+					array( 'title' => 'Exame', 'url' => 'https://exame.com/feed/' ),
+					array( 'title' => 'Money Times', 'url' => 'https://www.moneytimes.com.br/feed/' ),
+					array( 'title' => 'Folha Em cima da Hora', 'url' => 'https://feeds.folha.uol.com.br/emcimadahora/rss091.xml' ),
+				),
 			),
-		),
-		'mercados'          => array(
-			'name'        => 'Mercados',
-			'description' => 'Bolsa, juros, câmbio, commodities e movimentos de mercado.',
-			'feeds'       => array(
-				array( 'title' => 'Folha Mercado', 'url' => 'https://feeds.folha.uol.com.br/mercado/rss091.xml' ),
-				array( 'title' => 'Investing.com Brasil', 'url' => 'https://br.investing.com/rss/news.rss' ),
-				array( 'title' => 'MarketWatch', 'url' => 'https://feeds.marketwatch.com/marketwatch/topstories/' ),
-				array( 'title' => 'CNBC Top News', 'url' => 'https://www.cnbc.com/id/100003114/device/rss/rss.html' ),
-				array( 'title' => 'Reuters Business', 'url' => 'https://feeds.reuters.com/reuters/businessNews' ),
+			'mercados'          => array(
+				'name'        => 'Mercados',
+				'description' => 'Bolsa, juros, câmbio, commodities e movimentos de mercado.',
+				'feeds'       => array(
+					array( 'title' => 'Folha Mercado', 'url' => 'https://feeds.folha.uol.com.br/mercado/rss091.xml' ),
+					array( 'title' => 'Investing.com Brasil', 'url' => 'https://br.investing.com/rss/news.rss' ),
+					array( 'title' => 'MarketWatch', 'url' => 'https://feeds.marketwatch.com/marketwatch/topstories/' ),
+					array( 'title' => 'CNBC Top News', 'url' => 'https://www.cnbc.com/id/100003114/device/rss/rss.html' ),
+					array( 'title' => 'Reuters Business', 'url' => 'https://feeds.reuters.com/reuters/businessNews' ),
+				),
 			),
-		),
-		'negocios'          => array(
-			'name'        => 'Negócios',
-			'description' => 'Empresas, fusões, M&A e setor corporativo.',
-			'feeds'       => array(
-				array( 'title' => 'G1 PME & Negócios', 'url' => 'https://g1.globo.com/rss/g1/economia/pme/' ),
-				array( 'title' => 'Valor Investe Empresas', 'url' => 'https://valorinveste.globo.com/empresas/rss.xml' ),
-				array( 'title' => 'Financial Times', 'url' => 'https://www.ft.com/rss/home' ),
+			'negocios'          => array(
+				'name'        => 'Negócios',
+				'description' => 'Empresas, fusões, M&A e setor corporativo.',
+				'feeds'       => array(
+					array( 'title' => 'G1 PME & Negócios', 'url' => 'https://g1.globo.com/rss/g1/economia/pme/' ),
+					array( 'title' => 'Valor Investe Empresas', 'url' => 'https://valorinveste.globo.com/empresas/rss.xml' ),
+					array( 'title' => 'Financial Times', 'url' => 'https://www.ft.com/rss/home' ),
+				),
 			),
-		),
-		'financas-pessoais' => array(
-			'name'        => 'Finanças Pessoais',
-			'description' => 'Investimentos, orçamento, crédito e planejamento financeiro.',
-			'feeds'       => array(
-				array( 'title' => 'Valor Investe', 'url' => 'https://valorinveste.globo.com/rss.xml' ),
-				array( 'title' => 'Melhor Investimento', 'url' => 'https://www.melhorinvestimento.net/feed' ),
-				array( 'title' => 'InfoMoney Finanças Pessoais', 'url' => 'https://www.infomoney.com.br/tudo-sobre/financas-pessoais/feed/' ),
+			'financas-pessoais' => array(
+				'name'        => 'Finanças Pessoais',
+				'description' => 'Investimentos, orçamento, crédito e planejamento financeiro.',
+				'feeds'       => array(
+					array( 'title' => 'Valor Investe', 'url' => 'https://valorinveste.globo.com/rss.xml' ),
+					array( 'title' => 'Melhor Investimento', 'url' => 'https://www.melhorinvestimento.net/feed' ),
+					array( 'title' => 'InfoMoney Finanças Pessoais', 'url' => 'https://www.infomoney.com.br/tudo-sobre/financas-pessoais/feed/' ),
+				),
 			),
-		),
-		'criptomoedas'      => array(
-			'name'        => 'Criptomoedas',
-			'description' => 'Bitcoin, altcoins, regulação e mercado cripto.',
-			'feeds'       => array(
-				array( 'title' => 'Livecoins', 'url' => 'https://livecoins.com.br/feed/' ),
-				array( 'title' => 'Portal do Bitcoin', 'url' => 'https://portaldobitcoin.uol.com.br/feed/' ),
-				array( 'title' => 'CriptoFácil', 'url' => 'https://www.criptofacil.com/feed/' ),
+			'criptomoedas'      => array(
+				'name'        => 'Criptomoedas',
+				'description' => 'Bitcoin, altcoins, regulação e mercado cripto.',
+				'feeds'       => array(
+					array( 'title' => 'Livecoins', 'url' => 'https://livecoins.com.br/feed/' ),
+					array( 'title' => 'Portal do Bitcoin', 'url' => 'https://portaldobitcoin.uol.com.br/feed/' ),
+					array( 'title' => 'CriptoFácil', 'url' => 'https://www.criptofacil.com/feed/' ),
+				),
 			),
-		),
-		'agronegocio'       => array(
-			'name'        => 'Agronegócio',
-			'description' => 'Safra, commodities agrícolas, clima e exportações.',
-			'feeds'       => array(
-				array( 'title' => 'G1 Agronegócios', 'url' => 'https://g1.globo.com/rss/g1/economia/agronegocios/' ),
-				array( 'title' => 'Agrolink', 'url' => 'https://www.agrolink.com.br/rss/noticias.xml' ),
+			'agronegocio'       => array(
+				'name'        => 'Agronegócio',
+				'description' => 'Safra, commodities agrícolas, clima e exportações.',
+				'feeds'       => array(
+					array( 'title' => 'G1 Agronegócios', 'url' => 'https://g1.globo.com/rss/g1/economia/agronegocios/' ),
+					array( 'title' => 'Agrolink', 'url' => 'https://www.agrolink.com.br/rss/noticias.xml' ),
+				),
 			),
-		),
-		'mundo'             => array(
-			'name'        => 'Internacional',
-			'description' => 'Economia global, geopolítica e mercados no exterior.',
-			'feeds'       => array(
-				array( 'title' => 'BBC Business', 'url' => 'https://feeds.bbci.co.uk/news/business/rss.xml' ),
-				array( 'title' => 'Financial Times', 'url' => 'https://www.ft.com/rss/home' ),
-				array( 'title' => 'Reuters Business', 'url' => 'https://feeds.reuters.com/reuters/businessNews' ),
+			'mundo'             => array(
+				'name'        => 'Internacional',
+				'description' => 'Economia global, geopolítica e mercados no exterior.',
+				'feeds'       => array(
+					array( 'title' => 'BBC Business', 'url' => 'https://feeds.bbci.co.uk/news/business/rss.xml' ),
+					array( 'title' => 'Financial Times', 'url' => 'https://www.ft.com/rss/home' ),
+					array( 'title' => 'Reuters Business', 'url' => 'https://feeds.reuters.com/reuters/businessNews' ),
+				),
 			),
-		),
-	);
+		);
+	}
 
 	return array(
 		'brasil-geral'      => $brasil_geral,
@@ -307,6 +312,10 @@ function estrato_rss_apply_preset( $preset ) {
 	}
 	update_option( ESTRATO_RSS_OPTION_PRESET, $preset, false );
 	update_option( ESTRATO_RSS_OPTION_FEEDS, $presets[ $preset ], false );
+	if ( 'brasil-financeiro' === $preset && function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
+		estrato_rss_sync_portal_taxonomy();
+		return $preset;
+	}
 	$categories = estrato_rss_create_categories();
 	estrato_rss_run_after_init(
 		function () use ( $categories ) {
@@ -322,12 +331,14 @@ function estrato_rss_apply_preset( $preset ) {
  * @return array<int, string>
  */
 function estrato_rss_get_menu_order() {
-	$orders = array(
-		'brasil-financeiro' => array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' ),
-		'brasil-geral'      => array( 'economia', 'mercados', 'negocios', 'brasil', 'politica', 'tecnologia', 'mundo', 'criptomoedas', 'agronegocio' ),
-	);
 	$preset = estrato_rss_get_active_preset();
-	return $orders[ $preset ] ?? $orders['brasil-financeiro'];
+	if ( 'brasil-financeiro' === $preset ) {
+		return estrato_rss_get_finance_menu_order();
+	}
+	$orders = array(
+		'brasil-geral' => array( 'economia', 'mercados', 'negocios', 'brasil', 'politica', 'tecnologia', 'mundo', 'criptomoedas', 'agronegocio' ),
+	);
+	return $orders[ $preset ] ?? estrato_rss_get_finance_menu_order();
 }
 
 /**

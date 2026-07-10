@@ -81,6 +81,11 @@ if ( function_exists( 'estrato_rss_apply_preset' ) ) {
 	echo "rss preset: $preset\n";
 }
 
+if ( function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
+	$sync = estrato_rss_sync_portal_taxonomy();
+	echo 'taxonomy sync: ' . wp_json_encode( $sync ) . "\n";
+}
+
 if ( ! empty( $config['title'] ) ) {
 	update_option( 'blogname', sanitize_text_field( $config['title'] ) );
 }

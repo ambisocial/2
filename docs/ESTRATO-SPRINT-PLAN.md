@@ -331,6 +331,12 @@ bash scripts/victor/check-portal-regression.sh
 
 **Status 2026-07-10:** Gate Fase 1 **aprovado** no Victor — `49 pass · 0 warn · 0 fail` (`setup-estrato-gate.sh`).
 
+### Sprint 8 — status
+
+| Tarefa | Artefato |
+|--------|----------|
+| S8.1–S8.6 | `setup-estrato-taxonomy.sh`, `portals/estrato-finance-taxonomy.php` |
+
 **Somente após este gate → iniciar Sprint 8.**
 
 ---
@@ -399,6 +405,9 @@ bash scripts/victor/setup-estrato-portal-branding.sh
 
 # Após sprint (validação)
 bash scripts/victor/check-portal-regression.sh --strict | tee sprint-N-after.log
+
+# Gate Fase 1 (Sprint 7)
+bash scripts/victor/setup-estrato-gate.sh
 ```
 
 ---

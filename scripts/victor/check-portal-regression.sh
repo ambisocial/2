@@ -92,15 +92,17 @@ if [[ "$old" -gt 0 ]]; then warn "AR-SITEMAP-004 sitemap contém $old URLs pré-
 
 # ─── C. SCHEMA & META (home) ─────────────────────────────────────
 echo "## C. schema & meta (home)"
-home=$(body "$BASE/?estrato_check=$(date +%s)")
-if [[ ${#home} -lt 1000 ]]; then
-  home=$(curl -s --max-time 25 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "${CURL_HOST[@]}" "$BASE/" 2>/dev/null || true)
+HOME_HTML=$(mktemp)
+body "$BASE/?estrato_check=$(date +%s)" > "$HOME_HTML"
+if [[ ! -s "$HOME_HTML" ]]; then
+  curl -s --max-time 25 -H "Cache-Control: no-cache" -A "EstratoRegressionCheck/1.0" "${CURL_HOST[@]}" "$BASE/" > "$HOME_HTML" 2>/dev/null || true
 fi
-if echo "$home" | grep -Fq 'application/ld+json'; then ok "AR-SCHEMA home tem JSON-LD"; else block "AR-SCHEMA home sem JSON-LD"; fi
-if echo "$home" | grep -Fq 'WebSite'; then ok "AR-SCHEMA-001 WebSite"; else block "AR-SCHEMA-001 sem WebSite"; fi
-if echo "$home" | grep -Fq 'NewsMediaOrganization' || echo "$home" | grep -Fq 'Organization'; then ok "AR-SCHEMA-002 Organization"; else block "AR-SCHEMA-002 sem Organization"; fi
-if echo "$home" | grep -Fq 'NewsMediaOrganization'; then ok "AR-SCHEMA-003 NewsMediaOrganization"; else warn "AR-SCHEMA-003 preferir NewsMediaOrganization"; fi
-if echo "$home" | grep -q "Свързани\|Сподели:"; then block "AR-VISUAL-003 strings búlgaras na home"; else ok "AR-VISUAL-003 sem búlgaro"; fi
+if grep -Fq 'application/ld+json' "$HOME_HTML"; then ok "AR-SCHEMA home tem JSON-LD"; else block "AR-SCHEMA home sem JSON-LD"; fi
+if grep -Fq 'WebSite' "$HOME_HTML"; then ok "AR-SCHEMA-001 WebSite"; else block "AR-SCHEMA-001 sem WebSite"; fi
+if grep -Fq 'NewsMediaOrganization' "$HOME_HTML" || grep -Fq 'Organization' "$HOME_HTML"; then ok "AR-SCHEMA-002 Organization"; else block "AR-SCHEMA-002 sem Organization"; fi
+if grep -Fq 'NewsMediaOrganization' "$HOME_HTML"; then ok "AR-SCHEMA-003 NewsMediaOrganization"; else warn "AR-SCHEMA-003 preferir NewsMediaOrganization"; fi
+if grep -Fq 'Свързани' "$HOME_HTML" || grep -Fq 'Сподели:' "$HOME_HTML"; then block "AR-VISUAL-003 strings búlgaras na home"; else ok "AR-VISUAL-003 sem búlgaro"; fi
+rm -f "$HOME_HTML"
 
 # ─── D. SCHEMA & META (post) ─────────────────────────────────────
 echo "## D. schema & meta (último post)"
@@ -108,15 +110,17 @@ POST_URL=$(latest_post_url)
 if [[ -z "$POST_URL" ]]; then
   block "Nenhum post publicado"
 else
-  post=$(body "$POST_URL")
-  if echo "$post" | grep -Fq 'NewsArticle' || echo "$post" | grep -Fq '@type":"Article"'; then ok "AR-SCHEMA-004 NewsArticle/Article em $POST_URL"; else block "AR-SCHEMA-004 sem NewsArticle"; fi
-  if echo "$post" | grep -Fq '"Person"' || echo "$post" | grep -Fq '@type":"Person"'; then ok "AR-SCHEMA-005 Person/autor"; else warn "AR-SCHEMA-005 sem Person"; fi
-  na=$(echo "$post" | grep -o 'NewsArticle' | wc -l)
-  ar=$(echo "$post" | grep -o '@type":"Article"' | wc -l)
+  POST_HTML=$(mktemp)
+  body "$POST_URL" > "$POST_HTML"
+  if grep -Fq 'NewsArticle' "$POST_HTML" || grep -Fq '@type":"Article"' "$POST_HTML"; then ok "AR-SCHEMA-004 NewsArticle/Article em $POST_URL"; else block "AR-SCHEMA-004 sem NewsArticle"; fi
+  if grep -Fq '"Person"' "$POST_HTML" || grep -Fq '@type":"Person"' "$POST_HTML"; then ok "AR-SCHEMA-005 Person/autor"; else warn "AR-SCHEMA-005 sem Person"; fi
+  na=$(grep -o 'NewsArticle' "$POST_HTML" | wc -l)
+  ar=$(grep -o '@type":"Article"' "$POST_HTML" | wc -l)
   if [[ "$na" -gt 0 && "$ar" -gt 0 ]]; then warn "AR-SCHEMA-006 schema Article+NewsArticle duplicado"; else ok "AR-SCHEMA-006 sem duplicação crítica"; fi
-  if echo "$post" | grep -qE 'rel=["'\'']canonical["'\'']'; then ok "AR-SCHEMA-007 canonical"; else block "AR-SCHEMA-007 sem canonical"; fi
-  if echo "$post" | grep -qE 'property=["'\'']og:title["'\'']'; then ok "AR-SCHEMA-008 og:title"; else block "AR-SCHEMA-008 sem og:title"; fi
-  if echo "$post" | grep -q 'article:published_time'; then ok "AR-SCHEMA-009 article:published_time"; else warn "AR-SCHEMA-009 sem article:published_time"; fi
+  if grep -qE 'rel=["'\'']canonical["'\'']' "$POST_HTML"; then ok "AR-SCHEMA-007 canonical"; else block "AR-SCHEMA-007 sem canonical"; fi
+  if grep -qE 'property=["'\'']og:title["'\'']' "$POST_HTML"; then ok "AR-SCHEMA-008 og:title"; else block "AR-SCHEMA-008 sem og:title"; fi
+  if grep -q 'article:published_time' "$POST_HTML"; then ok "AR-SCHEMA-009 article:published_time"; else warn "AR-SCHEMA-009 sem article:published_time"; fi
+  rm -f "$POST_HTML"
 fi
 
 cat_code=$(http_status "$BASE/category/economia/")

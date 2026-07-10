@@ -27,6 +27,10 @@ if [[ -f "$REPO/scripts/victor/setup-sprint8-taxonomy.php" ]]; then
   $WP eval-file "$REPO/scripts/victor/setup-sprint8-taxonomy.php"
 fi
 
+if [[ -f "$REPO/scripts/victor/setup-sprint11-taxonomy-v2.php" ]]; then
+  $WP eval-file "$REPO/scripts/victor/setup-sprint11-taxonomy-v2.php"
+fi
+
 if [[ -f "$REPO/scripts/victor/setup-sprint7-gate.php" ]]; then
   $WP eval-file "$REPO/scripts/victor/setup-sprint7-gate.php" || true
 fi

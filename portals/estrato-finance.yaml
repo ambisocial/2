@@ -27,7 +27,16 @@ content:
   pipeline_enabled: true
   taxonomy_file: portals/estrato-finance-taxonomy.php
 
-# 7 editorias financeiras (fonte canônica: estrato-finance-taxonomy.php)
+# 7 editorias financeiras (fonte canônica: estrato-finance-taxonomy.php, schema v2)
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-finance-taxonomy.php
+  template: portals/estrato-finance-taxonomy.template.yaml
+  layers:
+    - categories    # editorias (menu principal)
+    - subcategories # tópicos dentro da editoria
+    - columns       # colunas de nicho com marca e cores próprias
+
 categories:
   - economia
   - mercados

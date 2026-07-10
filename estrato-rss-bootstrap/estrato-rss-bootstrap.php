@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.6.0
+ * Version: 1.7.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_RSS_VERSION', '1.6.0' );
+define( 'ESTRATO_RSS_VERSION', '1.7.0' );
 define( 'ESTRATO_RSS_OPTION_PRESET', 'estrato_rss_preset' );
 define( 'ESTRATO_RSS_DEMO_META', 'jannah_demo_data' );
 define( 'ESTRATO_RSS_CRON_HOOK', 'estrato_rss_import_event' );
@@ -27,6 +27,7 @@ add_action( 'plugins_loaded', 'estrato_rss_maybe_upgrade' );
 
 require_once __DIR__ . '/taxonomy-sync.php';
 require_once __DIR__ . '/rss-curation.php';
+require_once __DIR__ . '/rss-keywords.php';
 
 /**
  * Default plugin settings.
@@ -750,6 +751,13 @@ function estrato_rss_extract_image_url( $item, $html_content = '' ) {
 function estrato_rss_run_import( $first_run = false ) {
 	if ( ! function_exists( 'fetch_feed' ) ) {
 		require_once ABSPATH . WPINC . '/feed.php';
+	}
+
+	$taxonomy  = function_exists( 'estrato_rss_load_finance_taxonomy' ) ? estrato_rss_load_finance_taxonomy() : array();
+	$schema_v2 = ! empty( $taxonomy['schema_version'] ) && (int) $taxonomy['schema_version'] >= 2;
+	$matrix    = get_option( ESTRATO_RSS_IMPORT_MATRIX_OPTION, array() );
+	if ( $schema_v2 && is_array( $matrix ) && ! empty( $matrix ) && function_exists( 'estrato_rss_run_import_matrix' ) ) {
+		return estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy );
 	}
 
 	$settings   = estrato_rss_get_settings();

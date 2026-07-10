@@ -19,9 +19,10 @@ require_once __DIR__ . '/nav-visual.php';
 require_once __DIR__ . '/seo-aeo.php';
 require_once __DIR__ . '/gate-safeguards.php';
 require_once __DIR__ . '/taxonomy.php';
+require_once __DIR__ . '/portal-taxonomy.php';
 require_once __DIR__ . '/ops.php';
 
-define( 'ESTRATO_PORTAL_VERSION', '1.10.0' );
+define( 'ESTRATO_PORTAL_VERSION', '1.11.0' );
 define( 'ESTRATO_PORTAL_CONFIG_OPTION', 'estrato_portal_config' );
 
 register_activation_hook( __FILE__, 'estrato_portal_activate' );

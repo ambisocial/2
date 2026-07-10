@@ -224,6 +224,12 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   if [[ "$legacy" -eq 0 ]]; then ok "AR-TAX-002 zero posts em categorias legado"; else warn "AR-TAX-002 $legacy posts em politica/tecnologia/brasil"; fi
   pg_secs=$($WP eval 'echo function_exists("estrato_regression_pressgrid_finance_sections") ? estrato_regression_pressgrid_finance_sections() : -1;' 2>/dev/null || echo -1)
   if [[ "$pg_secs" -ge 7 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções por editoria"; elif [[ "$pg_secs" -ge 4 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções (mín 4)"; elif [[ "$pg_secs" -ge 0 ]]; then warn "AR-TAX-003 PressGrid apenas $pg_secs seções editoria"; else warn "AR-TAX-003 helper indisponível"; fi
+  branded=$($WP eval 'echo function_exists("estrato_regression_branded_editorias_count") ? estrato_regression_branded_editorias_count() : -1;' 2>/dev/null || echo -1)
+  if [[ "$branded" -ge 7 ]]; then ok "AR-TAX-004 $branded/7 editorias com branding"; elif [[ "$branded" -ge 4 ]]; then ok "AR-TAX-004 $branded editorias com branding (mín 4)"; elif [[ "$branded" -ge 0 ]]; then warn "AR-TAX-004 apenas $branded editorias com branding"; else warn "AR-TAX-004 branding editorias indisponível"; fi
+  schema_v=$($WP eval '$t=function_exists("estrato_rss_load_finance_taxonomy")?estrato_rss_load_finance_taxonomy():array(); echo (int)($t["schema_version"]??0);' 2>/dev/null || echo 0)
+  if [[ "$schema_v" -ge 2 ]]; then ok "AR-TAX-005 schema taxonomia v$schema_v"; else warn "AR-TAX-005 schema taxonomia v$schema_v (meta v2)"; fi
+  matrix_n=$($WP eval 'echo count(get_option("estrato_rss_import_matrix", array()));' 2>/dev/null || echo -1)
+  if [[ "$matrix_n" -ge 7 ]]; then ok "AR-TAX-006 matriz RSS $matrix_n nós"; elif [[ "$matrix_n" -ge 0 ]]; then warn "AR-TAX-006 matriz RSS $matrix_n nós"; else warn "AR-TAX-006 matriz RSS indisponível"; fi
 else
   warn "WP-CLI indisponível — pulando AR-TAX-*"
 fi

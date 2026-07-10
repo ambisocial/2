@@ -384,7 +384,7 @@ bash scripts/victor/check-portal-regression.sh
 | S10.2 | Relatório semanal GSC por categoria |
 | S10.3 | Rotina mensal: revisar feeds + thin posts |
 
-**Status:** `setup-estrato-ops.sh` · CI `estrato-anti-regression.yml`
+**Status:** concluído — `setup-estrato-ops.sh` · CI `estrato-anti-regression.yml` · Victor **65 checks PASS**.
 
 ### Comandos operação
 

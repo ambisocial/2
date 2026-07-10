@@ -19,6 +19,9 @@ function estrato_portal_pressgrid_pt_br_map() {
 	return array(
 		'Home'                                                                           => 'Início',
 		'Breadcrumbs'                                                                    => 'Navegação',
+		'By'                                                                             => 'Por',
+		'Navigate'                                                                       => 'Institucional',
+		'Updated: %s'                                                                    => 'Atualizado: %s',
 		'Свързани статии'                                                                 => 'Matérias relacionadas',
 		'Сподели:'                                                                       => 'Compartilhar:',
 		'Сподели'                                                                        => 'Compartilhar',

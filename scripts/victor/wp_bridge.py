@@ -22,6 +22,22 @@ STOCK_IMAGE_HOSTS = (
     'pollinations.ai',
 )
 
+# Mapeamento categoria pipeline → slug de autor WP (Sprint 3).
+CATEGORY_AUTHOR_SLUGS = {
+    'economia': 'ana-economia',
+    'mercados': 'marcos-mercados',
+    'negocios': 'lucia-negocios',
+    'financas-pessoais': 'pedro-financas',
+    'criptomoedas': 'rafa-cripto',
+    'agronegocio': 'julia-agro',
+    'mundo': 'henrique-mundo',
+}
+
+
+def _author_slug_for_category(category: str) -> str:
+    slug = (category or 'negocios').strip().lower()
+    return CATEGORY_AUTHOR_SLUGS.get(slug, 'lucia-negocios')
+
 
 def _is_stock_image(url: str) -> bool:
     if not url:
@@ -45,6 +61,7 @@ def publish_to_wordpress(portal_slug, article):
         'content': article.get('conteudo') or '',
         'excerpt': article.get('resumo') or '',
         'category': article.get('categoria') or 'negocios',
+        'author_slug': _author_slug_for_category(article.get('categoria') or 'negocios'),
         'source_url': article.get('fonte_url') or '',
         'external_id': str(article.get('id') or article.get('slug') or ''),
         'status': 'publish',

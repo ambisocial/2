@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Publisher Bridge
  * Description: Recebe artigos do pipeline Victor (scout/curator/writer/publisher) via REST API.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_BRIDGE_VERSION', '1.2.0' );
+define( 'ESTRATO_BRIDGE_VERSION', '1.3.0' );
 define( 'ESTRATO_BRIDGE_SECRET_OPTION', 'estrato_bridge_secret' );
 define( 'ESTRATO_BRIDGE_BACKFILL_HOOK', 'estrato_thumbnail_backfill_event' );
 define( 'ESTRATO_BRIDGE_ORIGINAL_META', '_estrato_original_image_url' );
@@ -136,19 +136,33 @@ function estrato_bridge_publish_post( $request ) {
 	}
 
 	$category_ids = array();
+	$category_slug = '';
 	if ( ! empty( $params['category'] ) ) {
-		$slug = sanitize_title( $params['category'] );
-		$term = get_term_by( 'slug', $slug, 'category' );
+		$category_slug = sanitize_title( $params['category'] );
+		$term          = get_term_by( 'slug', $category_slug, 'category' );
 		if ( $term ) {
 			$category_ids[] = (int) $term->term_id;
 		}
+	}
+
+	$author_id = 1;
+	if ( function_exists( 'estrato_eeat_resolve_author_id' ) && $category_slug ) {
+		$author_id = estrato_eeat_resolve_author_id( $category_slug );
+	}
+	if ( ! empty( $params['author_slug'] ) ) {
+		$by_slug = get_user_by( 'slug', sanitize_title( $params['author_slug'] ) );
+		if ( $by_slug ) {
+			$author_id = (int) $by_slug->ID;
+		}
+	} elseif ( ! empty( $params['author_id'] ) ) {
+		$author_id = (int) $params['author_id'];
 	}
 
 	$post_data = array(
 		'post_title'   => $title,
 		'post_content' => $content,
 		'post_status'  => ! empty( $params['status'] ) ? sanitize_key( $params['status'] ) : 'publish',
-		'post_author'  => 1,
+		'post_author'  => $author_id,
 	);
 
 	if ( ! empty( $params['excerpt'] ) ) {

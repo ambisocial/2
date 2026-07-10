@@ -132,12 +132,15 @@ if echo "$cat_title" | grep -qi "Archives"; then warn "AR-SCHEMA-010 title categ
 echo "## E. E-E-A-T / institucional"
 for path in sobre politica-editorial contato politica-de-privacidade; do
   code=$(http_status "$BASE/$path/")
-  if [[ "$code" == "200" ]]; then ok "AR-EEAT página /$path/ OK"; else warn "AR-EEAT página /$path/ HTTP $code (esperado 200)"; fi
+  if [[ "$code" == "200" ]]; then ok "AR-EEAT página /$path/ OK"; else block "AR-EEAT-$path HTTP $code (esperado 200)"; fi
 done
 
 if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   users=$($WP user list --format=count 2>/dev/null || echo 0)
-  if [[ "$users" -ge 7 ]]; then ok "AR-EEAT-005 $users usuários"; else warn "AR-EEAT-005 apenas $users usuários (meta: 7+)"; fi
+  real_authors=$($WP user list --role=author --format=count 2>/dev/null || echo 0)
+  if [[ "$users" -ge 7 && "$real_authors" -ge 7 ]]; then ok "AR-EEAT-005 $users usuários ($real_authors autores)"; else warn "AR-EEAT-005 $users usuários / $real_authors autores (meta: 7+)"; fi
+  no_bio=$($WP eval 'echo function_exists("estrato_regression_authors_without_bio") ? estrato_regression_authors_without_bio() : -1;' 2>/dev/null || echo -1)
+  if [[ "$no_bio" == "0" ]]; then ok "AR-EEAT-006 todos autores com bio"; elif [[ "$no_bio" -ge 0 ]]; then warn "AR-EEAT-006 $no_bio posts de autores sem bio"; else warn "AR-EEAT-006 função indisponível"; fi
   sem=$($WP post list --category_name=sem-categoria --post_status=publish --format=count 2>/dev/null || echo 0)
   if [[ "$sem" -eq 0 ]]; then ok "AR-CONTENT-003 zero sem-categoria"; else warn "AR-CONTENT-003 $sem posts sem-categoria"; fi
   logo=$($WP eval 'echo (int) get_theme_mod("custom_logo");' 2>/dev/null || echo "")

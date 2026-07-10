@@ -54,7 +54,7 @@ if [[ -f "$REPO/scripts/victor/fix-uncategorized.php" ]]; then
 fi
 
 # Purge Yoast sitemap cache
-$WP yoast index --reindex 2>/dev/null || $WP eval 'if ( class_exists("WPSEO_Sitemaps_Cache") ) { WPSEO_Sitemaps_Cache::clear(); echo "sitemap cache cleared\n"; }'
+$WP yoast index --reindex --skip-confirmation 2>/dev/null || $WP eval 'if ( class_exists("WPSEO_Sitemaps_Cache") ) { WPSEO_Sitemaps_Cache::clear(); echo "sitemap cache cleared\n"; }'
 
 echo "--- validação rápida ---"
 curl -s "https://estrato.cc/robots.txt" | tail -15

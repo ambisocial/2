@@ -10,7 +10,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Regras adicionais após o bloco Yoast.
+ * Regras dentro do bloco Yoast + sitemap news.
+ *
+ * @param object $robots_txt_helper Yoast Robots_Txt_Helper.
+ */
+function estrato_seo_register_yoast_robots_rules( $robots_txt_helper ) {
+	if ( ! is_object( $robots_txt_helper ) ) {
+		return;
+	}
+
+	if ( method_exists( $robots_txt_helper, 'add_disallow' ) ) {
+		$robots_txt_helper->add_disallow( '*', '/wp-admin/' );
+		$robots_txt_helper->add_disallow( '*', '/wp-login.php' );
+		$robots_txt_helper->add_disallow( '*', '/xmlrpc.php' );
+	}
+
+	if ( method_exists( $robots_txt_helper, 'add_allow' ) ) {
+		$robots_txt_helper->add_allow( '*', '/wp-admin/admin-ajax.php' );
+	}
+
+	$domain = wp_parse_url( home_url(), PHP_URL_HOST );
+	if ( $domain && method_exists( $robots_txt_helper, 'add_sitemap' ) ) {
+		$robots_txt_helper->add_sitemap( "https://{$domain}/news-sitemap.xml" );
+	}
+}
+add_action( 'Yoast\WP\SEO\register_robots_rules', 'estrato_seo_register_yoast_robots_rules', 20 );
+
+/**
+ * Fallback: append após Yoast (prioridade acima do filter Yoast 99999).
  *
  * @param string $output
  * @param bool   $public
@@ -18,6 +45,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function estrato_seo_filter_robots_txt( $output, $public ) {
 	if ( ! $public ) {
+		return $output;
+	}
+
+	if ( false !== stripos( $output, 'wp-admin' ) && false !== stripos( $output, 'news-sitemap' ) ) {
 		return $output;
 	}
 
@@ -37,34 +68,24 @@ function estrato_seo_filter_robots_txt( $output, $public ) {
 
 	return rtrim( $output ) . "\n" . $extra;
 }
-add_filter( 'robots_txt', 'estrato_seo_filter_robots_txt', 20, 2 );
+add_filter( 'robots_txt', 'estrato_seo_filter_robots_txt', 1000000, 2 );
 
 /**
- * Registra endpoint news-sitemap.xml.
+ * Serve news-sitemap.xml antes do template 404.
  */
-function estrato_seo_register_news_sitemap_rewrite() {
-	add_rewrite_rule( '^news-sitemap\.xml$', 'index.php?estrato_news_sitemap=1', 'top' );
+function estrato_seo_maybe_render_news_sitemap() {
+	$uri = isset( $_SERVER['REQUEST_URI'] ) ? strtok( (string) $_SERVER['REQUEST_URI'], '?' ) : '';
+	if ( '/news-sitemap.xml' !== $uri ) {
+		return;
+	}
+	estrato_seo_output_news_sitemap();
 }
-add_action( 'init', 'estrato_seo_register_news_sitemap_rewrite' );
-
-/**
- * @param array<string, mixed> $vars
- * @return array<string, mixed>
- */
-function estrato_seo_news_sitemap_query_var( $vars ) {
-	$vars[] = 'estrato_news_sitemap';
-	return $vars;
-}
-add_filter( 'query_vars', 'estrato_seo_news_sitemap_query_var' );
+add_action( 'template_redirect', 'estrato_seo_maybe_render_news_sitemap', 0 );
 
 /**
  * Renderiza Google News sitemap (últimas 48h).
  */
-function estrato_seo_render_news_sitemap() {
-	if ( ! get_query_var( 'estrato_news_sitemap' ) ) {
-		return;
-	}
-
+function estrato_seo_output_news_sitemap() {
 	$posts = get_posts(
 		array(
 			'post_type'              => 'post',
@@ -89,6 +110,7 @@ function estrato_seo_render_news_sitemap() {
 		$language = 'pt';
 	}
 
+	status_header( 200 );
 	header( 'Content-Type: application/xml; charset=UTF-8', true );
 	header( 'X-Robots-Tag: noindex, follow', true );
 
@@ -122,7 +144,6 @@ function estrato_seo_render_news_sitemap() {
 	echo '</urlset>';
 	exit;
 }
-add_action( 'template_redirect', 'estrato_seo_render_news_sitemap' );
 
 /**
  * @param int $post_id
@@ -132,16 +153,3 @@ function estrato_seo_post_is_noindex( $post_id ) {
 	$noindex = get_post_meta( $post_id, '_yoast_wpseo_meta-robots-noindex', true );
 	return '1' === (string) $noindex;
 }
-
-/**
- * Flush rewrite rules quando o plugin é ativado/atualizado.
- */
-function estrato_seo_maybe_flush_rewrites() {
-	$version = get_option( 'estrato_seo_rewrite_version', '' );
-	if ( ESTRATO_PORTAL_VERSION !== $version ) {
-		estrato_seo_register_news_sitemap_rewrite();
-		flush_rewrite_rules( false );
-		update_option( 'estrato_seo_rewrite_version', ESTRATO_PORTAL_VERSION, false );
-	}
-}
-add_action( 'init', 'estrato_seo_maybe_flush_rewrites', 99 );

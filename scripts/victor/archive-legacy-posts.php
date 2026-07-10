@@ -1,7 +1,7 @@
 <?php
 /**
- * Arquiva posts legados: noindex para pré-2024 e slugs com anos 2018–2023.
- * Uso: wp eval-file archive-legacy-posts.php [--dry-run]
+ * Arquiva posts legados: noindex para pré-2024 e URLs com anos 2018–2023.
+ * Uso: ESTRATO_DRY_RUN=1 wp eval-file archive-legacy-posts.php
  *
  * @package EstratoVictor
  */
@@ -27,16 +27,31 @@ function estrato_archive_should_noindex( $post_id ) {
 	}
 
 	$slug = $post->post_name;
-	if ( preg_match( '/(?:^|[^0-9])(201[89]|202[0-3])(?:[^0-9]|$)/', $slug ) ) {
+	if ( preg_match( '/(?:^|[^\d])(201[89]|202[0-3])(?:[^\d]|$)/', $slug ) ) {
+		return true;
+	}
+
+	if ( preg_match( '/\d{2}-\d{2}-(201[89]|202[0-3])/', $slug ) ) {
 		return true;
 	}
 
 	$permalink = get_permalink( $post );
-	if ( $permalink && preg_match( '#/(201[89]|202[0-3])/[^/]+/?$#', $permalink ) ) {
+	if ( $permalink && estrato_archive_url_has_legacy_year( $permalink ) ) {
 		return true;
 	}
 
 	return false;
+}
+
+/**
+ * @param string $url
+ * @return bool
+ */
+function estrato_archive_url_has_legacy_year( $url ) {
+	return (bool) preg_match( '#/(201[89]|202[0-3])(/|$)#', $url )
+		|| (bool) preg_match( '#(201[89]|202[0-3])/#', $url )
+		|| (bool) preg_match( '#\d{2}-\d{2}-(201[89]|202[0-3])#', $url )
+		|| (bool) preg_match( '#-(201[89]|202[0-3])(/|$)#', $url );
 }
 
 $ids = get_posts(
@@ -76,7 +91,6 @@ foreach ( $ids as $post_id ) {
 	update_post_meta( $post_id, '_yoast_wpseo_meta-robots-noindex', '1' );
 	update_post_meta( $post_id, '_yoast_wpseo_meta-robots-nofollow', '0' );
 
-	// Posts muito antigos (2018–2020) → rascunho para limpar listagens.
 	if ( strtotime( $post->post_date ) < strtotime( '2021-01-01 00:00:00' ) ) {
 		wp_update_post(
 			array(

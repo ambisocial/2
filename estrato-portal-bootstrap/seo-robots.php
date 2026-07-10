@@ -71,14 +71,35 @@ function estrato_seo_filter_robots_txt( $output, $public ) {
 add_filter( 'robots_txt', 'estrato_seo_filter_robots_txt', 1000000, 2 );
 
 /**
- * Serve news-sitemap.xml antes do template 404.
+ * Registra /news-sitemap.xml (compatível com rewrite Yoast).
+ */
+function estrato_seo_register_news_sitemap_rewrite() {
+	add_rewrite_rule( '^news-sitemap\.xml$', 'index.php?estrato_news_sitemap=1', 'top' );
+}
+add_action( 'init', 'estrato_seo_register_news_sitemap_rewrite' );
+
+/**
+ * @param array<int, string> $vars
+ * @return array<int, string>
+ */
+function estrato_seo_news_sitemap_query_var( $vars ) {
+	$vars[] = 'estrato_news_sitemap';
+	return $vars;
+}
+add_filter( 'query_vars', 'estrato_seo_news_sitemap_query_var' );
+
+/**
+ * Serve news-sitemap.xml via rewrite ou REQUEST_URI direto.
  */
 function estrato_seo_maybe_render_news_sitemap() {
-	$uri = isset( $_SERVER['REQUEST_URI'] ) ? strtok( (string) $_SERVER['REQUEST_URI'], '?' ) : '';
-	if ( '/news-sitemap.xml' !== $uri ) {
-		return;
+	if ( get_query_var( 'estrato_news_sitemap' ) ) {
+		estrato_seo_output_news_sitemap();
 	}
-	estrato_seo_output_news_sitemap();
+
+	$uri = isset( $_SERVER['REQUEST_URI'] ) ? strtok( (string) $_SERVER['REQUEST_URI'], '?' ) : '';
+	if ( '/news-sitemap.xml' === $uri ) {
+		estrato_seo_output_news_sitemap();
+	}
 }
 add_action( 'template_redirect', 'estrato_seo_maybe_render_news_sitemap', 0 );
 

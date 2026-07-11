@@ -88,6 +88,14 @@ if [[ -f scripts/victor/validate-rss-feeds.py ]]; then
   python3 -m py_compile scripts/victor/validate-rss-feeds.py 2>/dev/null && ok "validate-rss-feeds.py syntax OK" || fail "validate-rss-feeds.py syntax error"
 fi
 
+if [[ -f scripts/victor/sync-firesfera-feeds.py ]]; then
+  python3 -m py_compile scripts/victor/sync-firesfera-feeds.py 2>/dev/null && ok "sync-firesfera-feeds.py syntax OK" || fail "sync-firesfera-feeds.py syntax error"
+fi
+
+if [[ -f portals/firesfera-feeds.json ]]; then
+  ok "firesfera-feeds.json manifest presente"
+fi
+
 # Removido bloco antigo de dup único finance
 true
 

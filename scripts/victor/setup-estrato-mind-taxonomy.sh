@@ -13,6 +13,11 @@ if [[ -f "$REPO/scripts/victor/validate-rss-feeds.py" ]]; then
   python3 "$REPO/scripts/victor/validate-rss-feeds.py" "$REPO/portals/estrato-mind-taxonomy.php" || true
 fi
 
+# 0b) Atualizar FIRESFERA (opcional — re-sync diretório AA40)
+if [[ "${SYNC_FIRESFERA:-0}" == "1" && -f "$REPO/scripts/victor/sync-firesfera-feeds.py" ]]; then
+  python3 "$REPO/scripts/victor/sync-firesfera-feeds.py" --apply "$REPO/portals/estrato-mind-taxonomy.php" || true
+fi
+
 # 1) CI estático
 if [[ -f "$REPO/scripts/victor/check-portal-regression-ci.sh" ]]; then
   bash "$REPO/scripts/victor/check-portal-regression-ci.sh" || true

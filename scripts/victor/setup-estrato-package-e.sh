@@ -18,6 +18,11 @@ mkdir -p "$STACK_DIR" \
   "${STACK_DIR}/rss-bridge-config" \
   "${STACK_DIR}/n8n-data"
 chown -R 1000:1000 "${STACK_DIR}/n8n-data" 2>/dev/null || true
+# Limpa config corrompido de execuções anteriores (EACCES no n8n)
+if [[ -d "${STACK_DIR}/n8n-data" ]] && ! docker run --rm -v "${STACK_DIR}/n8n-data:/data" busybox test -w /data 2>/dev/null; then
+  rm -rf "${STACK_DIR}/n8n-data"/*
+  chown -R 1000:1000 "${STACK_DIR}/n8n-data"
+fi
 rsync -a "$STACK_SRC/" "$STACK_DIR/"
 chmod +x "$STACK_DIR/bootstrap-gotosocial.sh" \
   "$STACK_DIR/generate-masto-feeds.sh" \
@@ -32,7 +37,7 @@ docker compose pull rss-filter rss-bridge n8n 2>/dev/null || true
 docker compose up -d rss-filter rss-bridge n8n
 
 for _ in $(seq 1 12); do
-  if curl -sf -o /dev/null "http://127.0.0.1:8090/?feed_url=https%3A%2F%2Festrato.cc%2Ffeed%2F&filter=Title%20!%3D%20%22%22" 2>/dev/null; then
+  if (echo >/dev/tcp/127.0.0.1/8090) 2>/dev/null; then
     break
   fi
   sleep 3

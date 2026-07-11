@@ -16,6 +16,11 @@ fi
 
 sudo -u www-data "$WP" --path="$ROOT" eval-file "$SCRIPT"
 
+# Limpar OPcache após deploy de plugins (evita feed 500 com bytecode antigo).
+if systemctl is-active php8.3-fpm >/dev/null 2>&1; then
+  systemctl reload php8.3-fpm 2>/dev/null || systemctl restart php8.3-fpm 2>/dev/null || true
+fi
+
 echo "--- validar feed ---"
 CODE=$(curl -sS -o /tmp/estrato-feed.xml -w '%{http_code}' "https://estrato.cc/feed/" || echo 000)
 if [[ "$CODE" != "200" ]]; then

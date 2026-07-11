@@ -224,6 +224,9 @@ function estrato_rss_create_subcategories( $taxonomy, $parents ) {
 				++$count;
 			}
 			estrato_taxonomy_persist_term_meta( $term_id, ESTRATO_TERM_TYPE_SUBCATEGORY, $sub, $taxonomy );
+			if ( function_exists( 'estrato_eeat_ensure_author_for_term' ) ) {
+				estrato_eeat_ensure_author_for_term( $term_id, $full_slug, $parent_slug, $sub_slug, $sub, 'subcategory' );
+			}
 		}
 	}
 	return $count;
@@ -291,6 +294,10 @@ function estrato_rss_create_columns( $taxonomy, $parents ) {
 			$col['branding']['brand_name'] = $col['brand_name'];
 		}
 		estrato_taxonomy_persist_term_meta( $term_id, ESTRATO_TERM_TYPE_COLUMN, $col, $taxonomy );
+		if ( function_exists( 'estrato_eeat_ensure_author_for_term' ) ) {
+			$sub_key = ! empty( $col['subcategory'] ) ? sanitize_key( $col['subcategory'] ) : $col_slug;
+			estrato_eeat_ensure_author_for_term( $term_id, $full_slug, $parent_slug, $sub_key, $col, 'column' );
+		}
 	}
 	return $count;
 }

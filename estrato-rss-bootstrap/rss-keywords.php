@@ -184,11 +184,24 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 				}
 
 				$cat_ids = array( $term_id );
+				$sub_id  = 0;
 				if ( ESTRATO_TERM_TYPE_EDITORIA === $node_type && $parent_slug ) {
 					$sub_id = estrato_rss_match_subcategory_term( $term_id, $title, $body, $taxonomy, $parent_slug );
 					if ( $sub_id > 0 && ! in_array( $sub_id, $cat_ids, true ) ) {
 						$cat_ids[] = $sub_id;
 					}
+				}
+
+				$author_id = 1;
+				if ( $sub_id > 0 && function_exists( 'estrato_eeat_resolve_author_id_for_terms' ) ) {
+					$sub_term = get_term( $sub_id, 'category' );
+					if ( $sub_term && ! is_wp_error( $sub_term ) ) {
+						$author_id = estrato_eeat_resolve_author_id_for_terms( $sub_term->slug, '' );
+					}
+				} elseif ( function_exists( 'estrato_eeat_resolve_author_id' ) && $parent_slug ) {
+					$author_id = estrato_eeat_resolve_author_id( $parent_slug );
+				} elseif ( ESTRATO_TERM_TYPE_SUBCATEGORY === $node_type && function_exists( 'estrato_eeat_resolve_author_id_for_terms' ) ) {
+					$author_id = estrato_eeat_resolve_author_id_for_terms( $node_slug, '' );
 				}
 
 				$link = esc_url( $item->get_permalink() );
@@ -207,7 +220,7 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 						'post_title'    => $title,
 						'post_content'  => $body . $footer,
 						'post_status'   => 'publish',
-						'post_author'   => 1,
+						'post_author'   => $author_id,
 						'post_category' => $cat_ids,
 						'post_date'     => $item->get_date( 'Y-m-d H:i:s' ) ? $item->get_date( 'Y-m-d H:i:s' ) : current_time( 'mysql' ),
 					),

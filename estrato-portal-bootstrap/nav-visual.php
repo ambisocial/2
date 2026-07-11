@@ -10,25 +10,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Byline "Por Nome, Especialidade" no single.
+ * Byline "Por Nome, Especialidade" no single (não altera feed/RSS).
  *
- * @param string $name
- * @param int    $user_id
+ * @param string $name Display name.
  * @return string
  */
-function estrato_nav_author_byline( $name, $user_id ) {
-	if ( ! is_singular( 'post' ) || ! $user_id ) {
+function estrato_nav_author_byline( $name ) {
+	if ( is_feed() || ! is_singular( 'post' ) ) {
 		return $name;
 	}
 
-	$job = get_user_meta( (int) $user_id, 'estrato_job_title', true );
+	global $authordata;
+	$user_id = isset( $authordata->ID ) ? (int) $authordata->ID : 0;
+	if ( ! $user_id ) {
+		return $name;
+	}
+
+	$job = get_user_meta( $user_id, 'estrato_job_title', true );
 	if ( ! $job ) {
-		$job = get_user_meta( (int) $user_id, 'wpseo_job_title', true );
+		$job = get_user_meta( $user_id, 'wpseo_job_title', true );
 	}
 
 	return $job ? $name . ', ' . sanitize_text_field( $job ) : $name;
 }
-add_filter( 'the_author', 'estrato_nav_author_byline', 10, 2 );
+add_filter( 'the_author', 'estrato_nav_author_byline', 10, 1 );
 
 /**
  * Grid de posts por categoria (home / hubs).

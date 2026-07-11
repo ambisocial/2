@@ -88,6 +88,14 @@ return array(
 				'macro' => array(
 					'name'        => 'Macroeconomia',
 					'description' => 'PIB, inflação, fiscal e indicadores agregados da economia brasileira.',
+					'author'      => array(
+						'first_name'   => 'Carolina',
+						'last_name'    => 'Fischer',
+						'display_name' => 'Carolina Fischer',
+						'job_title'    => 'Repórter de macroeconomia · Economia',
+						'gender'       => 'woman',
+						'bio'          => 'Formada em Economia pela USP, cobre PIB, fiscal e indicadores agregados há mais de uma década. No Estrato, traduz dados do IBGE e do Focus para o investidor e para famílias.',
+					),
 					'keywords'    => array(
 						'include' => array( 'pib', 'inflação', 'inflacao', 'ipca', 'fiscal', 'déficit', 'deficit' ),
 						'exclude' => array(),
@@ -96,6 +104,14 @@ return array(
 				'selic' => array(
 					'name'        => 'Selic e juros',
 					'description' => 'Copom, taxa Selic, curva de juros e expectativas do mercado.',
+					'author'      => array(
+						'first_name'   => 'Rafael',
+						'last_name'    => 'Moraes',
+						'display_name' => 'Rafael Moraes',
+						'job_title'    => 'Repórter de política monetária · Economia',
+						'gender'       => 'man',
+						'bio'          => 'Especialista em política monetária e mercado de juros. Acompanha cada decisão do Copom e a reação da curva DI. Antes do Estrato, passou por mesas de renda fixa em São Paulo.',
+					),
 					'keywords'    => array(
 						'include' => array( 'selic', 'copom', 'juros', 'taxa básica', 'focus' ),
 						'exclude' => array(),
@@ -125,6 +141,14 @@ return array(
 				'ibovespa' => array(
 					'name'        => 'Ibovespa',
 					'description' => 'Índice B3, blue chips, fluxo e destaques da bolsa brasileira.',
+					'author'      => array(
+						'first_name'   => 'Beatriz',
+						'last_name'    => 'Nogueira',
+						'display_name' => 'Beatriz Nogueira',
+						'job_title'    => 'Repórter de mercado acionário · Mercados',
+						'gender'       => 'woman',
+						'bio'          => 'Cobre pregão, blue chips e fluxo estrangeiro na B3. No Estrato, contextualiza cada sessão do Ibovespa para quem investe em ações no Brasil.',
+					),
 					'keywords'    => array(
 						'include' => array( 'ibovespa', 'b3', 'ações', 'acoes', 'bolsa' ),
 						'exclude' => array(),
@@ -133,6 +157,14 @@ return array(
 				'cambio'   => array(
 					'name'        => 'Câmbio',
 					'description' => 'Dólar, euro e pares relevantes para importadores, exportadores e investidores.',
+					'author'      => array(
+						'first_name'   => 'Thiago',
+						'last_name'    => 'Carvalho',
+						'display_name' => 'Thiago Carvalho',
+						'job_title'    => 'Repórter de câmbio · Mercados',
+						'gender'       => 'man',
+						'bio'          => 'Analista de câmbio e fluxo externo. Monitora PTAX, dólar à vista e fatores que movem o real — do Fed às commodities.',
+					),
 					'keywords'    => array(
 						'include' => array( 'dólar', 'dolar', 'câmbio', 'cambio', 'euro', 'ptax' ),
 						'exclude' => array(),

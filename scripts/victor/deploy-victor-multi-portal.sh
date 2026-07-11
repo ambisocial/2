@@ -190,7 +190,7 @@ apply_portal() {
 
   export ESTRATO_PORTAL="$portal_id"
   if [[ -f "${REPO}/scripts/victor/apply-portal-config.php" ]]; then
-    sudo -u www-data wp --path="$web" eval-file "${REPO}/scripts/victor/apply-portal-config.php" 2>&1 || true
+    sudo -u www-data env ESTRATO_PORTAL="$portal_id" wp --path="$web" eval-file "${REPO}/scripts/victor/apply-portal-config.php" 2>&1 || true
   else
     sudo -u www-data wp --path="$web" eval "
       if ( function_exists( 'estrato_rss_apply_preset' ) ) {

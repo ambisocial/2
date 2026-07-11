@@ -67,7 +67,8 @@ foreach ( $slugs as $slug ) {
 }
 
 $lines[] = '';
-$lines[] = '*Colunas GSC: importar via `estrato_gsc_manual_metrics` ou Search Console → Performance → export CSV.';
+$last_sync = get_option( 'estrato_gsc_last_sync', '' );
+$lines[] = '*Colunas GSC: `python3 scripts/victor/sync-gsc-metrics.py` (última sync: ' . ( $last_sync ? $last_sync : 'nunca' ) . ').';
 $lines[] = '';
 $lines[] = '## Ações recomendadas';
 if ( $feed >= 0 && $feed < 0.8 ) {

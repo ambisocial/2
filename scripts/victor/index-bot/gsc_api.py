@@ -26,6 +26,14 @@ def site_url() -> str:
     return os.getenv('GSC_SITE_URL', 'sc-domain:estrato.cc').strip()
 
 
+def sa_email() -> str:
+    try:
+        data = json.loads(key_path().read_text(encoding='utf-8'))
+        return str(data.get('client_email', 'service-account'))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return 'service-account'
+
+
 def build_service():
     try:
         from google.oauth2 import service_account
@@ -63,8 +71,8 @@ def resolve_site_url() -> str:
     if urls:
         return sorted(urls)[0]
     raise SystemExit(
-        f'Nenhuma propriedade GSC acessível. Adicione {key_path().read_text() and "SA"} '
-        'em Search Console → Usuários. sites=' + ', '.join(sorted(urls))
+        f'Nenhuma propriedade GSC acessível. Adicione {sa_email()} '
+        'em Search Console → Usuários (acesso total). sites=' + ', '.join(sorted(urls))
     )
 
 
@@ -132,7 +140,15 @@ def main() -> None:
 
     cmd = sys.argv[1]
     if cmd == 'sites':
-        for s in list_sites():
+        sites = list_sites()
+        if not sites:
+            print(
+                'Nenhuma propriedade GSC. Adicione em Search Console → Usuários:\n'
+                f'  {sa_email()}\n'
+                'Permissão: Usuário com acesso total (propriedade estrato.cc)'
+            )
+            raise SystemExit(1)
+        for s in sites:
             print(f"{s.get('siteUrl')} → {s.get('permissionLevel')}")
         return
 

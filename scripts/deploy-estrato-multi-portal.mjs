@@ -11,6 +11,7 @@
  *   PORTAL=estrato-mind   DOMAIN=mente.estrato.cc node scripts/deploy-estrato-multi-portal.mjs
  *   PORTAL=estrato-science DOMAIN=science.estrato.cc node scripts/deploy-estrato-multi-portal.mjs
  *   PORTAL=estrato-sustain DOMAIN=sustain.estrato.cc node scripts/deploy-estrato-multi-portal.mjs
+ *   PORTAL=estrato-culture DOMAIN=culture.estrato.cc node scripts/deploy-estrato-multi-portal.mjs
  */
 import axios from 'axios';
 import fs from 'fs';

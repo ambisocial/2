@@ -66,6 +66,18 @@ else
   fail "estrato-sustain.yaml ausente"
 fi
 
+if [[ -f portals/estrato-culture-taxonomy.php ]]; then
+  ok "estrato-culture-taxonomy.php presente"
+else
+  fail "estrato-culture-taxonomy.php ausente"
+fi
+
+if [[ -f portals/estrato-culture.yaml ]]; then
+  ok "estrato-culture.yaml presente"
+else
+  fail "estrato-culture.yaml ausente"
+fi
+
 for sh in scripts/victor/check-portal-regression.sh \
           scripts/victor/setup-estrato-gate.sh \
           scripts/victor/setup-estrato-taxonomy.sh \
@@ -74,7 +86,8 @@ for sh in scripts/victor/check-portal-regression.sh \
           scripts/victor/setup-estrato-mind-taxonomy.sh \
           scripts/victor/setup-estrato-lifestyle-taxonomy.sh \
           scripts/victor/setup-estrato-science-taxonomy.sh \
-          scripts/victor/setup-estrato-sustain-taxonomy.sh; do
+          scripts/victor/setup-estrato-sustain-taxonomy.sh \
+          scripts/victor/setup-estrato-culture-taxonomy.sh; do
   if [[ -f "$sh" ]]; then
     bash -n "$sh" && ok "bash -n $sh"
   else
@@ -106,7 +119,7 @@ sys.exit(1 if d else 0)" 2>/dev/null
   fi
 }
 
-for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php portals/estrato-sustain-taxonomy.php; do
+for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php portals/estrato-sustain-taxonomy.php portals/estrato-culture-taxonomy.php; do
   if [[ -f "$tax" ]]; then
     if command -v php >/dev/null 2>&1; then
       php -l "$tax" >/dev/null 2>&1 && ok "php -l $(basename "$tax")" || fail "php -l $tax"

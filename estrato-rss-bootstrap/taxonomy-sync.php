@@ -19,7 +19,7 @@ define( 'ESTRATO_RSS_IMPORT_MATRIX_OPTION', 'estrato_rss_import_matrix' );
  * @return array<int, string>
  */
 function estrato_rss_taxonomy_presets() {
-	return array( 'brasil-financeiro', 'brasil-mind', 'brasil-lifestyle', 'brasil-science', 'brasil-sustain' );
+	return array( 'brasil-financeiro', 'brasil-mind', 'brasil-lifestyle', 'brasil-science', 'brasil-sustain', 'brasil-culture' );
 }
 
 /**
@@ -33,6 +33,7 @@ function estrato_rss_preset_to_taxonomy_basename( $preset ) {
 		'brasil-lifestyle'  => 'estrato-lifestyle-taxonomy',
 		'brasil-science'    => 'estrato-science-taxonomy',
 		'brasil-sustain'    => 'estrato-sustain-taxonomy',
+		'brasil-culture'    => 'estrato-culture-taxonomy',
 	);
 	$preset = sanitize_key( $preset );
 	return $map[ $preset ] ?? 'estrato-finance-taxonomy';
@@ -122,6 +123,13 @@ function estrato_rss_load_sustain_taxonomy() {
 }
 
 /**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_culture_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-culture' );
+}
+
+/**
  * Converte taxonomia do portal em mapa de preset RSS (editorias — sem subcategorias/colunas).
  *
  * @param array<string, mixed> $taxonomy
@@ -204,6 +212,16 @@ function estrato_rss_get_sustain_menu_order() {
 	return estrato_rss_get_taxonomy_menu_order(
 		estrato_rss_load_sustain_taxonomy(),
 		array( 'agro-sustentavel', 'economia-alternativa', 'vida-nomade' )
+	);
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_culture_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order(
+		estrato_rss_load_culture_taxonomy(),
+		array( 'jogos-imaginacao', 'narrativas-som' )
 	);
 }
 

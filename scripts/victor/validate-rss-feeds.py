@@ -151,7 +151,21 @@ def count_items(xml_bytes: bytes) -> tuple[int, int]:
 
 
 def fetch_feed(url: str, timeout: int = 20) -> tuple[int, bytes, str]:
-    req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/rss+xml, application/atom+xml, */*"})
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/rss+xml, application/atom+xml, */*",
+    }
+    # Alguns WordPress BR rejeitam UA genérico (406 Not Acceptable).
+    if any(
+        host in url
+        for host in (
+            "rebobinados.com.br",
+            "meepledivino.blog.br",
+            "leitorcabuloso.com.br",
+        )
+    ):
+        headers["User-Agent"] = "WordPress/6.0; +https://estrato.cc"
+    req = Request(url, headers=headers)
     ctx = ssl.create_default_context()
     # Alguns feeds BR (ex.: UFRN) têm cadeia SSL incompleta no ambiente de CI.
     if url.startswith("https://neuro.ufrn.br/"):

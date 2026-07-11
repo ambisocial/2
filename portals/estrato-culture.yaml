@@ -1,0 +1,55 @@
+# Portal Entretenimento, cultura pop e narrativas de nicho
+id: estrato-culture
+domain: culture.estrato.cc
+title: Estrato Culture
+tagline: Entretenimento, cultura pop e narrativas de nicho
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-culture
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-culture-taxonomy.php
+
+# 2 editorias × 4 nichos (fonte canônica: estrato-culture-taxonomy.php, schema v2)
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-culture-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - jogos-imaginacao
+  - narrativas-som
+
+branding:
+  primary_color: "#2D1B69"
+  accent_color: "#FF6B9D"
+  secondary_color: "#1A0F3D"
+  logo_file: estrato-logo.png
+  breaking_category: jogos-imaginacao
+  breaking_label: "Jogos"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/culture.estrato.cc

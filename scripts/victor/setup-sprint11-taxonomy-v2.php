@@ -42,6 +42,8 @@ if ( 'brasil-mind' === $preset && function_exists( 'estrato_rss_get_mind_menu_or
 	$order_fn = 'estrato_rss_get_science_menu_order';
 } elseif ( 'brasil-sustain' === $preset && function_exists( 'estrato_rss_get_sustain_menu_order' ) ) {
 	$order_fn = 'estrato_rss_get_sustain_menu_order';
+} elseif ( 'brasil-culture' === $preset && function_exists( 'estrato_rss_get_culture_menu_order' ) ) {
+	$order_fn = 'estrato_rss_get_culture_menu_order';
 }
 $order = $order_fn();
 foreach ( $order as $slug ) {

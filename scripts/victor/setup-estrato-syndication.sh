@@ -35,6 +35,7 @@ if command -v docker >/dev/null 2>&1; then
     "$STACK_DIR/generate-masto-feeds.sh" \
     "$STACK_DIR/setup-freshrss.sh" 2>/dev/null || true
   mkdir -p "$STACK_DIR/rss-bridge-config" "$STACK_DIR/n8n-data"
+  chown -R 1000:1000 "$STACK_DIR/n8n-data" 2>/dev/null || true
   bash "$STACK_DIR/generate-masto-feeds.sh" 2>/dev/null || true
   cd "$STACK_DIR"
   docker compose pull gotosocial freshrss rss-filter 2>/dev/null || true

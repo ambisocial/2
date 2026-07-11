@@ -17,14 +17,14 @@ echo "=== Estrato Pacote E: RSS-Bridge + n8n + filtros ($BRIDGE_HOST, $N8N_HOST)
 mkdir -p "$STACK_DIR" \
   "${STACK_DIR}/rss-bridge-config" \
   "${STACK_DIR}/n8n-data"
+chown -R 1000:1000 "${STACK_DIR}/n8n-data" 2>/dev/null || true
 rsync -a "$STACK_SRC/" "$STACK_DIR/"
 chmod +x "$STACK_DIR/bootstrap-gotosocial.sh" \
   "$STACK_DIR/generate-masto-feeds.sh" \
   "$STACK_DIR/setup-freshrss.sh" 2>/dev/null || true
 
-# masto-rss: feeds filtrados por editoria (+ opcional rss-filter)
-export MASTO_RSS_USE_FILTER=1
-export MASTO_RSS_FILTER_BASE=http://rss-filter
+# masto-rss: feeds filtrados por editoria (category feeds diretos)
+export MASTO_RSS_USE_FILTER=0
 bash "$STACK_DIR/generate-masto-feeds.sh"
 
 cd "$STACK_DIR"
@@ -32,7 +32,9 @@ docker compose pull rss-filter rss-bridge n8n 2>/dev/null || true
 docker compose up -d rss-filter rss-bridge n8n
 
 for _ in $(seq 1 12); do
-  curl -sf -o /dev/null "http://127.0.0.1:8090/?feed_url=https%3A%2F%2Festrato.cc%2Ffeed%2F" 2>/dev/null && break
+  if curl -sf -o /dev/null "http://127.0.0.1:8090/?feed_url=https%3A%2F%2Festrato.cc%2Ffeed%2F&filter=Title%20!%3D%20%22%22" 2>/dev/null; then
+    break
+  fi
   sleep 3
 done
 

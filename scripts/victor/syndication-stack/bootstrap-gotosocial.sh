@@ -22,8 +22,8 @@ set_bot_flag() {
 
 ensure_masto_feeds() {
   if [[ -x "${STACK_DIR}/generate-masto-feeds.sh" ]]; then
-    export MASTO_RSS_USE_FILTER=1
-    export MASTO_RSS_FILTER_BASE=http://rss-filter
+    # Feeds por editoria já filtram via category/; rss-filter exige filter não-vazio.
+    export MASTO_RSS_USE_FILTER=0
     bash "${STACK_DIR}/generate-masto-feeds.sh"
   fi
 }

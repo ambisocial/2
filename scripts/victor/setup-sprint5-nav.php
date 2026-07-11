@@ -297,12 +297,15 @@ update_option( 'widget_text', $widget_text, false );
 update_option( 'sidebars_widgets', $sidebars, false );
 WP_CLI::log( 'Footer 4 colunas configurado' );
 
-// Menu primário — garantir location
+// Menu primário — garantir location (secondary = Colunas, não duplicar primary)
 $menu = wp_get_nav_menu_object( 'Estrato Principal' );
 if ( $menu ) {
 	$locations = get_theme_mod( 'nav_menu_locations', array() );
-	$locations['primary']   = (int) $menu->term_id;
-	$locations['secondary'] = (int) $menu->term_id;
+	$locations['primary'] = (int) $menu->term_id;
+	$col_menu             = wp_get_nav_menu_object( 'Estrato Colunas' );
+	if ( $col_menu ) {
+		$locations['secondary'] = (int) $col_menu->term_id;
+	}
 	set_theme_mod( 'nav_menu_locations', $locations );
 }
 

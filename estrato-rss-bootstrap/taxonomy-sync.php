@@ -1,6 +1,6 @@
 <?php
 /**
- * Sincronização YAML/PHP → preset RSS brasil-financeiro (Sprint 8+ / schema v2).
+ * Sincronização YAML/PHP → presets RSS com taxonomia v2 (Sprint 8+).
  *
  * @package EstratoRssBootstrap
  */
@@ -14,12 +14,40 @@ require_once __DIR__ . '/taxonomy-helpers.php';
 define( 'ESTRATO_RSS_IMPORT_MATRIX_OPTION', 'estrato_rss_import_matrix' );
 
 /**
+ * Presets que carregam taxonomia canônica de portals/*-taxonomy.php.
+ *
+ * @return array<int, string>
+ */
+function estrato_rss_taxonomy_presets() {
+	return array( 'brasil-financeiro', 'brasil-mind' );
+}
+
+/**
+ * @param string $preset
  * @return string
  */
-function estrato_rss_taxonomy_file_path() {
+function estrato_rss_preset_to_taxonomy_basename( $preset ) {
+	$map = array(
+		'brasil-financeiro' => 'estrato-finance-taxonomy',
+		'brasil-mind'       => 'estrato-mind-taxonomy',
+	);
+	$preset = sanitize_key( $preset );
+	return $map[ $preset ] ?? 'estrato-finance-taxonomy';
+}
+
+/**
+ * @param string $basename ex.: estrato-finance-taxonomy
+ * @return string
+ */
+function estrato_rss_taxonomy_file_path( $basename = '' ) {
+	if ( ! $basename ) {
+		$basename = estrato_rss_preset_to_taxonomy_basename( estrato_rss_get_active_preset() );
+	}
+	$basename = preg_replace( '/[^a-z0-9\-]/', '', strtolower( (string) $basename ) );
+	$filename = $basename . '.php';
 	$candidates = array(
-		'/var/www/estrato/repo/portals/estrato-finance-taxonomy.php',
-		dirname( __DIR__ ) . '/portals/estrato-finance-taxonomy.php',
+		'/var/www/estrato/repo/portals/' . $filename,
+		dirname( __DIR__ ) . '/portals/' . $filename,
 	);
 	foreach ( $candidates as $path ) {
 		if ( is_readable( $path ) ) {
@@ -30,15 +58,40 @@ function estrato_rss_taxonomy_file_path() {
 }
 
 /**
+ * @param string $preset
  * @return array<string, mixed>
  */
-function estrato_rss_load_finance_taxonomy() {
-	$path = estrato_rss_taxonomy_file_path();
+function estrato_rss_load_taxonomy_by_preset( $preset ) {
+	$basename = estrato_rss_preset_to_taxonomy_basename( $preset );
+	$path     = estrato_rss_taxonomy_file_path( $basename );
 	if ( ! $path ) {
 		return array();
 	}
 	$data = include $path;
 	return is_array( $data ) ? $data : array();
+}
+
+/**
+ * Taxonomia do preset RSS ativo (portal config ou option).
+ *
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_active_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( estrato_rss_get_active_preset() );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_finance_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-financeiro' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_mind_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-mind' );
 }
 
 /**
@@ -66,36 +119,63 @@ function estrato_rss_taxonomy_to_preset( $taxonomy ) {
 }
 
 /**
+ * @param array<string, mixed> $taxonomy
+ * @param array<int, string>   $fallback
  * @return array<int, string>
  */
-function estrato_rss_get_finance_menu_order() {
-	$taxonomy = estrato_rss_load_finance_taxonomy();
+function estrato_rss_get_taxonomy_menu_order( $taxonomy, $fallback = array() ) {
 	if ( ! empty( $taxonomy['menu_order'] ) && is_array( $taxonomy['menu_order'] ) ) {
 		return array_values( array_map( 'sanitize_key', $taxonomy['menu_order'] ) );
 	}
-	return array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' );
+	return $fallback;
 }
 
 /**
- * Sincroniza preset ativo, categorias, subcategorias, colunas e matriz RSS.
+ * @return array<int, string>
+ */
+function estrato_rss_get_finance_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order(
+		estrato_rss_load_finance_taxonomy(),
+		array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' )
+	);
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_mind_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order(
+		estrato_rss_load_mind_taxonomy(),
+		array( 'aprendizado-cognicao', 'filosofia-autoconhecimento', 'financas-comportamentais' )
+	);
+}
+
+/**
+ * Sincroniza preset, categorias, subcategorias, colunas e matriz RSS.
  *
+ * @param string $preset Preset alvo (vazio = preset ativo).
  * @return array<string, mixed>
  */
-function estrato_rss_sync_portal_taxonomy() {
-	$taxonomy = estrato_rss_load_finance_taxonomy();
+function estrato_rss_sync_portal_taxonomy( $preset = '' ) {
+	$preset = $preset ? sanitize_key( $preset ) : estrato_rss_get_active_preset();
+	if ( ! in_array( $preset, estrato_rss_taxonomy_presets(), true ) ) {
+		$preset = 'brasil-financeiro';
+	}
+
+	$taxonomy = estrato_rss_load_taxonomy_by_preset( $preset );
 	if ( empty( $taxonomy ) ) {
-		return array( 'ok' => false, 'reason' => 'taxonomy_file_missing' );
+		return array( 'ok' => false, 'reason' => 'taxonomy_file_missing', 'preset' => $preset );
 	}
 
-	$preset = estrato_rss_taxonomy_to_preset( $taxonomy );
-	if ( empty( $preset ) ) {
-		return array( 'ok' => false, 'reason' => 'empty_preset' );
+	$preset_map = estrato_rss_taxonomy_to_preset( $taxonomy );
+	if ( empty( $preset_map ) ) {
+		return array( 'ok' => false, 'reason' => 'empty_preset', 'preset' => $preset );
 	}
 
-	update_option( ESTRATO_RSS_OPTION_PRESET, 'brasil-financeiro', false );
-	update_option( ESTRATO_RSS_OPTION_FEEDS, $preset, false );
+	update_option( ESTRATO_RSS_OPTION_PRESET, $preset, false );
+	update_option( ESTRATO_RSS_OPTION_FEEDS, $preset_map, false );
 
-	$categories = estrato_rss_create_categories_from_map( $preset, $taxonomy );
+	$categories = estrato_rss_create_categories_from_map( $preset_map, $taxonomy );
 	$subcats    = estrato_rss_create_subcategories( $taxonomy, $categories );
 	$columns    = estrato_rss_create_columns( $taxonomy, $categories );
 	estrato_rss_noindex_legacy_terms( $taxonomy );
@@ -117,7 +197,8 @@ function estrato_rss_sync_portal_taxonomy() {
 	);
 
 	return array(
-		'ok'            => true,
+		'ok'             => true,
+		'preset'         => $preset,
 		'schema_version' => (int) ( $taxonomy['schema_version'] ?? 1 ),
 		'categories'    => count( $categories ),
 		'subcategories' => $subcats,

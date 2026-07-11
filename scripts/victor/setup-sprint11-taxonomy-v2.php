@@ -13,11 +13,14 @@ if ( ! function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
 	WP_CLI::error( 'estrato-rss-bootstrap não carregado.' );
 }
 
-$taxonomy = estrato_rss_load_finance_taxonomy();
+$taxonomy = function_exists( 'estrato_rss_load_active_taxonomy' )
+	? estrato_rss_load_active_taxonomy()
+	: ( function_exists( 'estrato_rss_load_finance_taxonomy' ) ? estrato_rss_load_finance_taxonomy() : array() );
 $version  = (int) ( $taxonomy['schema_version'] ?? 0 );
-WP_CLI::log( "Schema taxonomia: v$version" );
+WP_CLI::log( "Schema taxonomia: v$version portal=" . ( $taxonomy['portal_id'] ?? 'estrato-finance' ) );
 
-$sync = estrato_rss_sync_portal_taxonomy();
+$preset = function_exists( 'estrato_rss_get_active_preset' ) ? estrato_rss_get_active_preset() : 'brasil-financeiro';
+$sync   = estrato_rss_sync_portal_taxonomy( $preset );
 if ( empty( $sync['ok'] ) ) {
 	WP_CLI::warning( 'Sync taxonomia: ' . ( $sync['reason'] ?? 'falhou' ) );
 } else {
@@ -30,7 +33,11 @@ if ( empty( $sync['ok'] ) ) {
 	) );
 }
 
-$order = estrato_rss_get_finance_menu_order();
+$order_fn = 'estrato_rss_get_finance_menu_order';
+if ( 'brasil-mind' === $preset && function_exists( 'estrato_rss_get_mind_menu_order' ) ) {
+	$order_fn = 'estrato_rss_get_mind_menu_order';
+}
+$order = $order_fn();
 foreach ( $order as $slug ) {
 	$term = get_term_by( 'slug', $slug, 'category' );
 	if ( ! $term ) {

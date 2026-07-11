@@ -24,11 +24,24 @@ else
   fail "estrato-finance-taxonomy.php ausente"
 fi
 
+if [[ -f portals/estrato-mind-taxonomy.php ]]; then
+  ok "estrato-mind-taxonomy.php presente"
+else
+  fail "estrato-mind-taxonomy.php ausente"
+fi
+
+if [[ -f portals/estrato-mind.yaml ]]; then
+  ok "estrato-mind.yaml presente"
+else
+  fail "estrato-mind.yaml ausente"
+fi
+
 for sh in scripts/victor/check-portal-regression.sh \
           scripts/victor/setup-estrato-gate.sh \
           scripts/victor/setup-estrato-taxonomy.sh \
           scripts/victor/setup-estrato-rss-curation.sh \
-          scripts/victor/setup-estrato-ops.sh; do
+          scripts/victor/setup-estrato-ops.sh \
+          scripts/victor/setup-estrato-mind-taxonomy.sh; do
   if [[ -f "$sh" ]]; then
     bash -n "$sh" && ok "bash -n $sh"
   else
@@ -45,22 +58,38 @@ else
   ok "php CLI ausente — pulando php -l (CI instala php-cli)"
 fi
 
-# Matriz RSS: sem URL duplicada no taxonomy file.
-if command -v php >/dev/null 2>&1; then
-  dup_cmd='php -r '\''$t=include "portals/estrato-finance-taxonomy.php";$s=[];$d=0;foreach(($t["categories"]??[]) as $c){foreach(($c["feeds"]??[]) as $f){$u=strtolower(rtrim($f["url"]??"", "/"));if($u==="")continue;if(isset($s[$u]))$d++;$s[$u]=1;}}exit($d>0?1:0);'\'''
-else
-  dup_cmd='python3 -c "import pathlib,re; t=open(\"portals/estrato-finance-taxonomy.php\").read(); urls=re.findall(r\"url\\s*=>\\s*'\''([^'\'']+)'\''\", t); seen=set(); d=0
+# Matriz RSS: sem URL duplicada nos taxonomy files.
+check_taxonomy_dupes() {
+  local file="$1"
+  if command -v php >/dev/null 2>&1; then
+    php -r '$t=include "'"$file"'";$s=[];$d=0;foreach(($t["categories"]??[]) as $c){foreach(($c["feeds"]??[]) as $f){$u=strtolower(rtrim($f["url"]??"", "/"));if($u==="")continue;if(isset($s[$u]))$d++;$s[$u]=1;}}exit($d>0?1:0);' 2>/dev/null
+  else
+    python3 -c "import re,sys; t=open('$file').read(); urls=re.findall(r\"'feeds'\\s*=>\\s*array\\([^]]*?url\\s*=>\\s*'([^']+)'\", t); seen=set(); d=0
 for u in urls:
- k=u.lower().rstrip(\"/\")
+ k=u.lower().rstrip('/')
  if k in seen: d+=1
  seen.add(k)
-import sys; sys.exit(1 if d else 0)"'
+sys.exit(1 if d else 0)" 2>/dev/null
+  fi
+}
+
+for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php; do
+  if [[ -f "$tax" ]]; then
+    if check_taxonomy_dupes "$tax"; then
+      ok "$(basename "$tax") sem feeds duplicados"
+    else
+      fail "$(basename "$tax") com URLs de feed duplicadas"
+    fi
+  fi
+done
+
+# Validador de feeds (syntax only — não faz HTTP no CI por padrão)
+if [[ -f scripts/victor/validate-rss-feeds.py ]]; then
+  python3 -m py_compile scripts/victor/validate-rss-feeds.py 2>/dev/null && ok "validate-rss-feeds.py syntax OK" || fail "validate-rss-feeds.py syntax error"
 fi
-if eval "$dup_cmd" 2>/dev/null; then
-  ok "taxonomy sem feeds duplicados"
-else
-  fail "taxonomy com URLs de feed duplicadas"
-fi
+
+# Removido bloco antigo de dup único finance
+true
 
 echo
 if [[ "$FAIL" -gt 0 ]]; then

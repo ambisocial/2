@@ -106,7 +106,7 @@ function estrato_rss_validate_feed_url( $url ) {
  * @return array<string, mixed>
  */
 function estrato_rss_apply_curation( $skip_validation = false ) {
-	$taxonomy = estrato_rss_load_finance_taxonomy();
+	$taxonomy = estrato_rss_load_active_taxonomy();
 	$deduped  = estrato_rss_dedupe_feed_matrix( $taxonomy );
 	$config   = $deduped['config'];
 	$health   = array();

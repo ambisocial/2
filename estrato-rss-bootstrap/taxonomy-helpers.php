@@ -242,8 +242,8 @@ function estrato_taxonomy_matrix_node( $slug, $node, $taxonomy, $type, $parent_t
  * @return array<int, string>
  */
 function estrato_taxonomy_get_column_order() {
-	$taxonomy = function_exists( 'estrato_rss_load_finance_taxonomy' )
-		? estrato_rss_load_finance_taxonomy()
+	$taxonomy = function_exists( 'estrato_rss_load_active_taxonomy' )
+		? estrato_rss_load_active_taxonomy()
 		: array();
 	if ( ! empty( $taxonomy['column_order'] ) && is_array( $taxonomy['column_order'] ) ) {
 		return array_values( array_map( 'sanitize_title', $taxonomy['column_order'] ) );

@@ -8,7 +8,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
 }
 
+$portal = getenv( 'ESTRATO_PORTAL' ) ?: 'estrato-finance';
+$portal = preg_replace( '/[^a-z0-9\-]/', '', strtolower( $portal ) );
+
 $paths = array(
+	"/var/www/estrato/repo/portals/{$portal}.yaml",
+	dirname( __DIR__, 2 ) . "/portals/{$portal}.yaml",
 	'/var/www/estrato/repo/portals/estrato-finance.yaml',
 	dirname( __DIR__, 2 ) . '/portals/estrato-finance.yaml',
 );
@@ -82,7 +87,8 @@ if ( function_exists( 'estrato_rss_apply_preset' ) ) {
 }
 
 if ( function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
-	$sync = estrato_rss_sync_portal_taxonomy();
+	$preset = $config['content']['rss_preset'] ?? 'brasil-financeiro';
+	$sync   = estrato_rss_sync_portal_taxonomy( $preset );
 	echo 'taxonomy sync: ' . wp_json_encode( $sync ) . "\n";
 }
 

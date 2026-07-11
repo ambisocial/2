@@ -199,6 +199,7 @@ function estrato_rss_get_presets() {
 	);
 
 	$brasil_financeiro = estrato_rss_taxonomy_to_preset( estrato_rss_load_finance_taxonomy() );
+	$brasil_mind       = estrato_rss_taxonomy_to_preset( estrato_rss_load_mind_taxonomy() );
 	if ( empty( $brasil_financeiro ) ) {
 		$brasil_financeiro = array(
 			'economia'          => array(
@@ -273,6 +274,7 @@ function estrato_rss_get_presets() {
 	return array(
 		'brasil-geral'      => $brasil_geral,
 		'brasil-financeiro' => $brasil_financeiro,
+		'brasil-mind'       => $brasil_mind,
 	);
 }
 
@@ -314,8 +316,8 @@ function estrato_rss_apply_preset( $preset ) {
 	}
 	update_option( ESTRATO_RSS_OPTION_PRESET, $preset, false );
 	update_option( ESTRATO_RSS_OPTION_FEEDS, $presets[ $preset ], false );
-	if ( 'brasil-financeiro' === $preset && function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
-		estrato_rss_sync_portal_taxonomy();
+	if ( in_array( $preset, estrato_rss_taxonomy_presets(), true ) && function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
+		estrato_rss_sync_portal_taxonomy( $preset );
 		return $preset;
 	}
 	$categories = estrato_rss_create_categories();
@@ -336,6 +338,9 @@ function estrato_rss_get_menu_order() {
 	$preset = estrato_rss_get_active_preset();
 	if ( 'brasil-financeiro' === $preset ) {
 		return estrato_rss_get_finance_menu_order();
+	}
+	if ( 'brasil-mind' === $preset ) {
+		return estrato_rss_get_mind_menu_order();
 	}
 	$orders = array(
 		'brasil-geral' => array( 'economia', 'mercados', 'negocios', 'brasil', 'politica', 'tecnologia', 'mundo', 'criptomoedas', 'agronegocio' ),
@@ -753,7 +758,7 @@ function estrato_rss_run_import( $first_run = false ) {
 		require_once ABSPATH . WPINC . '/feed.php';
 	}
 
-	$taxonomy  = function_exists( 'estrato_rss_load_finance_taxonomy' ) ? estrato_rss_load_finance_taxonomy() : array();
+	$taxonomy  = function_exists( 'estrato_rss_load_active_taxonomy' ) ? estrato_rss_load_active_taxonomy() : array();
 	$schema_v2 = ! empty( $taxonomy['schema_version'] ) && (int) $taxonomy['schema_version'] >= 2;
 	$matrix    = get_option( ESTRATO_RSS_IMPORT_MATRIX_OPTION, array() );
 	if ( $schema_v2 && is_array( $matrix ) && ! empty( $matrix ) && function_exists( 'estrato_rss_run_import_matrix' ) ) {

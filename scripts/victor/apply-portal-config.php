@@ -1,7 +1,7 @@
 <?php
 /**
- * Lê portals/estrato-finance.yaml e aplica config + branding no WordPress.
- * Uso: wp eval-file apply-portal-config.php
+ * Lê portals/estrato-*.yaml e aplica config + branding no WordPress.
+ * Uso: ESTRATO_PORTAL=estrato-mind wp eval-file apply-portal-config.php
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,44 +27,55 @@ foreach ( $paths as $path ) {
 }
 
 if ( ! $yaml_path ) {
-	echo "YAML não encontrado\n";
+	echo "YAML não encontrado para portal={$portal}\n";
 	return;
 }
 
-if ( ! function_exists( 'yaml_parse_file' ) ) {
-	$raw    = file_get_contents( $yaml_path ); // phpcs:ignore
-	$config = array();
+/**
+ * Parser YAML mínimo (sem extensão php-yaml).
+ *
+ * @param string $raw
+ * @return array<string, mixed>
+ */
+function estrato_parse_portal_yaml_minimal( $raw ) {
+	$config = array(
+		'content'  => array(),
+		'branding' => array(),
+	);
+	$section = '';
 	foreach ( preg_split( '/\r?\n/', $raw ) as $line ) {
-		if ( preg_match( '/^(\w+):\s*(.+)$/', trim( $line ), $m ) && false === strpos( $line, '  ' ) ) {
+		if ( preg_match( '/^content:\s*$/', $line ) ) {
+			$section = 'content';
+			continue;
+		}
+		if ( preg_match( '/^branding:\s*$/', $line ) ) {
+			$section = 'branding';
+			continue;
+		}
+		if ( preg_match( '/^(\w+):\s*(.+)$/', $line, $m ) && ! preg_match( '/^\s/', $line ) ) {
 			$config[ $m[1] ] = trim( $m[2], " \t\"'" );
+			$section           = '';
+			continue;
+		}
+		if ( preg_match( '/^\s{2}(\w+):\s*(.+)$/', $line, $m ) && $section ) {
+			$config[ $section ][ $m[1] ] = trim( $m[2], " \t\"'" );
 		}
 	}
-	$config = array(
-		'id'       => 'estrato-finance',
-		'title'    => 'Estrato',
-		'tagline'  => 'Economia, mercados e finanças',
-		'language' => 'pt_BR',
-		'timezone' => 'America/Sao_Paulo',
-		'content'  => array(
-			'mode'       => 'pipeline_primary',
-			'rss_preset' => 'brasil-financeiro',
-		),
-		'branding' => array(
-			'primary_color'     => '#000000',
-			'accent_color'      => '#9AFF33',
-			'secondary_color'   => '#1a1a1a',
-			'logo_file'         => 'estrato-logo.png',
-			'breaking_category' => 'mercados',
-		),
-	);
-} else {
-	$config = yaml_parse_file( $yaml_path );
+	return $config;
 }
 
-if ( ! is_array( $config ) ) {
-	echo "YAML inválido\n";
+if ( function_exists( 'yaml_parse_file' ) ) {
+	$config = yaml_parse_file( $yaml_path );
+} else {
+	$config = estrato_parse_portal_yaml_minimal( file_get_contents( $yaml_path ) ); // phpcs:ignore
+}
+
+if ( ! is_array( $config ) || empty( $config['content']['rss_preset'] ) ) {
+	echo "YAML inválido ou rss_preset ausente ({$portal})\n";
 	return;
 }
+
+echo "portal yaml: {$yaml_path}\n";
 
 if ( function_exists( 'estrato_portal_apply_config' ) ) {
 	estrato_portal_apply_config( $config );

@@ -9,14 +9,15 @@ services:
     volumes:
       - ./gotosocial:/gotosocial/storage
     environment:
-      GTS_HOST: 127.0.0.1:8085
+      GTS_HOST: ${GTS_PUBLIC_HOST:-127.0.0.1:8085}
       GTS_BIND_ADDRESS: 0.0.0.0
       GTS_PORT: 8080
       GTS_DB_TYPE: sqlite
       GTS_DB_ADDRESS: /gotosocial/storage/sqlite.db
+      GTS_PROTOCOL: ${GTS_PUBLIC_PROTOCOL:-http}
+      GTS_TRUSTED_PROXIES: ${GTS_TRUSTED_PROXIES:-127.0.0.1/32,::1}
       GTS_ACCOUNTS_REGISTRATION_OPEN: "false"
       GTS_ACCOUNTS_APPROVAL_REQUIRED: "false"
-      GTS_PROTOCOL: http
       TZ: America/Sao_Paulo
 
   masto-rss:

@@ -38,7 +38,7 @@ fi
 # Token via password grant (instância local).
 TOKEN_JSON=$(curl -sS -X POST "${GTS_URL}/oauth/token" \
   -H 'Content-Type: application/json' \
-  -d "{\"client_id\":\"$CLIENT_ID\",\"client_secret\":\"$CLIENT_SECRET\",\"grant_type\":\"password\",\"username\":\"$BOT_USER\",\"password\":\"$BOT_PASS\",\"scope\":\"read write\"}")
+  -d "{\"client_id\":\"$CLIENT_ID\",\"client_secret\":\"$CLIENT_SECRET\",\"grant_type\":\"password\",\"username\":\"$BOT_USER\",\"password\":\"$BOT_PASS\",\"scope\":\"read write\",\"redirect_uri\":\"urn:ietf:wg:oauth:2.0:oob\"}")
 
 ACCESS_TOKEN=$(echo "$TOKEN_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('access_token',''))")
 

@@ -14,6 +14,7 @@
  */
 return array(
 	'schema_version' => 2,
+	'portal_id'      => 'estrato-finance',
 	'menu_order'     => array(
 		'economia',
 		'mercados',
@@ -458,17 +459,7 @@ return array(
 				'include' => array( 'ibovespa', 'b3', 'ações', 'acoes', 'pregão', 'pregao' ),
 				'exclude' => array( 'cripto', 'bitcoin' ),
 			),
-			'feeds'              => array(
-				array(
-					'title'    => 'InfoMoney Mercados',
-					'url'      => 'https://www.infomoney.com.br/mercados/feed/',
-					'tier'     => 1,
-					'keywords' => array(
-						'include' => array( 'ibovespa', 'b3', 'ações', 'acoes' ),
-						'exclude' => array(),
-					),
-				),
-			),
+			'feeds'              => array(),
 		),
 		'painel-selic'  => array(
 			'brand_name'         => 'Painel Selic',
@@ -489,17 +480,7 @@ return array(
 				'include' => array( 'selic', 'copom', 'focus', 'juros', 'di', 'taxa básica' ),
 				'exclude' => array(),
 			),
-			'feeds'              => array(
-				array(
-					'title'    => 'G1 Economia',
-					'url'      => 'https://g1.globo.com/rss/g1/economia/',
-					'tier'     => 1,
-					'keywords' => array(
-						'include' => array( 'selic', 'copom', 'juros', 'focus', 'bcb' ),
-						'exclude' => array(),
-					),
-				),
-			),
+			'feeds'              => array(),
 		),
 	),
 );

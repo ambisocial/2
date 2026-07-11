@@ -111,6 +111,15 @@ $sections = array(
 		'custom_html' => '',
 	),
 	array(
+		'id'          => 'columns_strip',
+		'label'       => 'Colunas',
+		'enabled'     => true,
+		'layout'      => 'custom_html',
+		'category'    => 0,
+		'post_count'  => 0,
+		'custom_html' => '[estrato_home_columns]',
+	),
+	array(
 		'id'          => 'latest_posts',
 		'label'       => 'Últimas',
 		'enabled'     => true,
@@ -204,8 +213,11 @@ if ( ! empty( $cat_ids['mercados'] ) ) {
 $menu = wp_get_nav_menu_object( 'Estrato Principal' );
 if ( $menu ) {
 	$locations = get_theme_mod( 'nav_menu_locations', array() );
-	$locations['primary']   = (int) $menu->term_id;
-	$locations['secondary'] = (int) $menu->term_id;
+	$locations['primary'] = (int) $menu->term_id;
+	$col_menu             = wp_get_nav_menu_object( 'Estrato Colunas' );
+	if ( $col_menu ) {
+		$locations['secondary'] = (int) $col_menu->term_id;
+	}
 	set_theme_mod( 'nav_menu_locations', $locations );
 }
 

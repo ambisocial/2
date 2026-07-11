@@ -104,17 +104,40 @@ else
   ok "php CLI ausente — pulando php -l (CI instala php-cli)"
 fi
 
-# Matriz RSS: sem URL duplicada nos taxonomy files.
+# Matriz RSS: sem URL duplicada nos taxonomy files (editorias + subs + colunas).
 check_taxonomy_dupes() {
   local file="$1"
   if command -v php >/dev/null 2>&1; then
-    php -r '$t=include "'"$file"'";$s=[];$d=0;foreach(($t["categories"]??[]) as $c){foreach(($c["feeds"]??[]) as $f){$u=strtolower(rtrim($f["url"]??"", "/"));if($u==="")continue;if(isset($s[$u]))$d++;$s[$u]=1;}}exit($d>0?1:0);' 2>/dev/null
+    php -r '
+$t = include "'"$file"'";
+$s = array();
+$d = 0;
+$layers = array("categories", "subcategories", "columns");
+foreach ($layers as $layer) {
+  if (empty($t[$layer]) || !is_array($t[$layer])) continue;
+  foreach ($t[$layer] as $node) {
+    foreach (($node["feeds"] ?? array()) as $f) {
+      $u = strtolower(rtrim($f["url"] ?? "", "/"));
+      if ($u === "") continue;
+      if (isset($s[$u])) $d++;
+      $s[$u] = 1;
+    }
+  }
+}
+exit($d > 0 ? 1 : 0);
+' 2>/dev/null
   else
-    python3 -c "import re,sys; t=open('$file').read(); urls=re.findall(r\"'feeds'\\s*=>\\s*array\\([^]]*?url\\s*=>\\s*'([^']+)'\", t); seen=set(); d=0
+    python3 -c "
+import re, sys
+t = open('$file').read()
+urls = re.findall(r\"url\\s*=>\\s*'([^']+)'\", t)
+seen = set()
+d = 0
 for u in urls:
- k=u.lower().rstrip('/')
- if k in seen: d+=1
- seen.add(k)
+    k = u.lower().rstrip('/')
+    if k in seen:
+        d += 1
+    seen.add(k)
 sys.exit(1 if d else 0)" 2>/dev/null
   fi
 }

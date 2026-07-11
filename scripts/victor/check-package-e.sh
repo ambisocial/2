@@ -46,9 +46,9 @@ fi
 # n8n
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^estrato-n8n$'; then
   ok "n8n container"
-  CODE=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5678/ 2>/dev/null || echo 000)
+  CODE=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5679/ 2>/dev/null || echo 000)
   if [[ "$CODE" == "200" || "$CODE" == "302" || "$CODE" == "401" ]]; then
-    ok "n8n local :5678"
+    ok "n8n local :5679"
   else
     warn "n8n local HTTP ${CODE}"
   fi

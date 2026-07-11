@@ -105,7 +105,8 @@ check "/privacidade/ HTTP $CODE" test "$CODE" = "200"
 
 # 0.3 home columns strip
 check "Home contém Radar B3 ou estrato-columns-strip" bash -c "
-  curl -sk -H 'Host: estrato.cc' 'https://${VPS_IP}/' | grep -qiE 'Radar B3|estrato-columns-strip'
+  HTML=\$(curl -sk -H 'Host: estrato.cc' 'https://${VPS_IP}/' 2>/dev/null)
+  echo \"\$HTML\" | grep -qiE 'Radar B3|estrato-columns-strip'
 "
 
 # 0.5 portal_id
@@ -118,7 +119,9 @@ check "pressgrid_layout_sections tem colunas (custom_html)" bash -c "
   $WP eval '
     \$s = get_option(\"pressgrid_layout_sections\", array());
     foreach (\$s as \$row) {
-      if ((\$row[\"id\"] ?? \"\") === \"custom_html\" && strpos((\$row[\"custom_html\"] ?? \"\"), \"estrato_home_columns\") !== false) exit(0);
+      if ((\$row[\"id\"] ?? \"\") !== \"custom_html\") continue;
+      \$h = \$row[\"custom_html\"] ?? \"\";
+      if (strpos(\$h, \"estrato_home_columns\") !== false || strpos(\$h, \"estrato-columns-strip\") !== false || strpos(\$h, \"Radar B3\") !== false) exit(0);
     }
     exit(1);
   ' 2>/dev/null

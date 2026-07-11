@@ -100,6 +100,14 @@ if ( count( $cat_ids ) < 7 ) {
 $newsletter_html = '<div class="estrato-newsletter"><h2>Newsletter Estrato</h2><p>Receba os destaques de economia e mercados no seu e-mail.</p>[contact-form-7 id="4" title="Contact form 1"]</div>';
 $mais_lidas_html = '[estrato_mais_lidas count="7"]';
 
+$columns_html = '';
+if ( shortcode_exists( 'estrato_home_columns' ) ) {
+	$columns_html = do_shortcode( '[estrato_home_columns]' );
+}
+if ( ! $columns_html ) {
+	$columns_html = '[estrato_home_columns]';
+}
+
 $sections = array(
 	array(
 		'id'          => 'hero',
@@ -117,7 +125,7 @@ $sections = array(
 		'layout'      => 'custom_html',
 		'category'    => 0,
 		'post_count'  => 0,
-		'custom_html' => '[estrato_home_columns]',
+		'custom_html' => $columns_html,
 	),
 	array(
 		'id'          => 'latest_posts',

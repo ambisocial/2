@@ -42,7 +42,7 @@ add_filter( 'the_author', 'estrato_nav_author_byline', 10, 1 );
  * @return mixed
  */
 function estrato_pressgrid_layout_shortcodes( $sections ) {
-	if ( ! is_array( $sections ) || ! function_exists( 'is_front_page' ) || ! is_front_page() ) {
+	if ( ! is_array( $sections ) ) {
 		return $sections;
 	}
 	foreach ( $sections as &$section ) {

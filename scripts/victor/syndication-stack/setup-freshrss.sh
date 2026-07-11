@@ -49,14 +49,16 @@ if ! freshrss_cli list-users.php 2>/dev/null | grep -q "^${RSS_USER}$"; then
   echo "FreshRSS usuário ${RSS_USER} criado"
 fi
 
+OPML_FILE="${STACK_DIR}/estrato-feeds.opml"
+[[ -f "$OPML_FILE" ]] || OPML_FILE="${STACK_DIR}/estrato-feed.opml"
 FEED_COUNT=$(freshrss_cli user-info.php --user "$RSS_USER" --json 2>/dev/null \
   | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0].get('feeds',0) if d else 0)" 2>/dev/null || echo 0)
-if [[ "${FEED_COUNT:-0}" == "0" ]]; then
-  docker cp "${STACK_DIR}/estrato-feed.opml" estrato-freshrss:/tmp/estrato-feed.opml
+if [[ "${FEED_COUNT:-0}" -lt 7 ]]; then
+  docker cp "$OPML_FILE" estrato-freshrss:/tmp/estrato-feeds.opml
   freshrss_cli import-for-user.php \
     --user "$RSS_USER" \
-    --filename /tmp/estrato-feed.opml
-  echo "FreshRSS feed estrato.cc importado para ${RSS_USER}"
+    --filename /tmp/estrato-feeds.opml
+  echo "FreshRSS OPML multi-feed importado para ${RSS_USER}"
 fi
 
 freshrss_cli actualize-user.php --user "$RSS_USER" 2>/dev/null || true

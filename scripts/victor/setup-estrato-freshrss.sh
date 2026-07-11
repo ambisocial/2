@@ -16,7 +16,8 @@ echo "=== Estrato Pacote D: FreshRSS público ($RSS_HOST) ==="
 
 mkdir -p "$STACK_DIR"
 rsync -a "$STACK_SRC/" "$STACK_DIR/"
-chmod +x "$STACK_DIR/setup-freshrss.sh" 2>/dev/null || true
+chmod +x "$STACK_DIR/setup-freshrss.sh" \
+  "$STACK_DIR/generate-masto-feeds.sh" 2>/dev/null || true
 
 cd "$STACK_DIR"
 docker compose up -d freshrss

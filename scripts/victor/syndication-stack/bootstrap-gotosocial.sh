@@ -10,6 +10,30 @@ BOT_USER="${GTS_BOT_USER:-estrato_bot}"
 BOT_EMAIL="${GTS_BOT_EMAIL:-estrato-bot@authors.estrato.cc}"
 BOT_PASS="${GTS_BOT_PASS:-}"
 
+set_bot_flag() {
+  local token="$1"
+  curl -sS -X PATCH "${GTS_URL}/api/v1/accounts/update_credentials" \
+    -H "Authorization: Bearer ${token}" \
+    -F 'bot=true' \
+    -F 'locked=false' \
+    -F 'display_name=Estrato Bot' \
+    -F 'note=Bot de syndication RSS do portal estrato.cc.' >/dev/null || true
+}
+
+ensure_masto_feeds() {
+  if [[ -x "${STACK_DIR}/generate-masto-feeds.sh" ]]; then
+    export MASTO_RSS_USE_FILTER=1
+    export MASTO_RSS_FILTER_BASE=http://rss-filter
+    bash "${STACK_DIR}/generate-masto-feeds.sh"
+  fi
+}
+
+restart_masto_rss() {
+  ensure_masto_feeds
+  docker compose up -d rss-filter 2>/dev/null || true
+  docker compose up -d masto-rss
+}
+
 cd "$STACK_DIR"
 
 # Pacote C: OAuth deve usar o host público quando GoToSocial roda com GTS_PUBLIC_HOST.
@@ -39,7 +63,8 @@ if [[ -f "$ENV_FILE" ]]; then
   if [[ -n "${MASTODON_ACCESS_TOKEN:-}" ]]; then
     if curl -sf -H "Authorization: Bearer ${MASTODON_ACCESS_TOKEN}" \
       "${GTS_URL}/api/v1/accounts/verify_credentials" >/dev/null 2>&1; then
-      docker compose up -d masto-rss
+      set_bot_flag "$MASTODON_ACCESS_TOKEN"
+      restart_masto_rss
       echo "GoToSocial bot OK (token existente) — env em $ENV_FILE"
       exit 0
     fi
@@ -116,5 +141,6 @@ EOF
 fi
 chmod 600 "$ENV_FILE"
 
-docker compose up -d masto-rss
+set_bot_flag "$ACCESS_TOKEN"
+restart_masto_rss
 echo "GoToSocial bot OK — env em $ENV_FILE"

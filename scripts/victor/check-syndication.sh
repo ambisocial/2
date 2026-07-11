@@ -65,5 +65,25 @@ else
   warn "masto-rss não rodando"
 fi
 
+# masto-rss feeds por editoria
+STACK_DIR="${ESTRATO_SYNDICATION_DIR:-/opt/estrato-syndication}"
+if [[ -f "${STACK_DIR}/masto-rss-feeds.txt" ]]; then
+  LINES=$(grep -c . "${STACK_DIR}/masto-rss-feeds.txt" 2>/dev/null || echo 0)
+  if [[ "$LINES" -ge 1 ]]; then
+    ok "masto-rss-feeds (${LINES} editorias)"
+  else
+    warn "masto-rss-feeds.txt vazio"
+  fi
+else
+  warn "masto-rss-feeds.txt ausente"
+fi
+
+# rss-filter
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^estrato-rss-filter$'; then
+  ok "rss-filter container"
+else
+  warn "rss-filter não rodando"
+fi
+
 echo "--- $PASS ok / $WARN warn / $FAIL fail ---"
 if [[ "$STRICT" == "1" && "$FAIL" -gt 0 ]]; then exit 1; fi

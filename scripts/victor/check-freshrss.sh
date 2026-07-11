@@ -43,7 +43,11 @@ FEED_COUNT=$(docker exec -u www-data -w /var/www/FreshRSS estrato-freshrss \
   php ./cli/user-info.php --user "$RSS_USER" --json 2>/dev/null \
   | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0].get('feeds',0) if d else 0)" 2>/dev/null || echo 0)
 if [[ "${FEED_COUNT:-0}" -gt 0 ]]; then
-  ok "feed estrato.cc (${FEED_COUNT})"
+  if [[ "${FEED_COUNT:-0}" -ge 7 ]]; then
+    ok "feeds multi-editoria (${FEED_COUNT})"
+  else
+    ok "feed estrato.cc (${FEED_COUNT})"
+  fi
 else
   fail "nenhum feed em ${RSS_USER}"
 fi

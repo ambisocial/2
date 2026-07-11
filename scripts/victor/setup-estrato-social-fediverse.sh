@@ -16,7 +16,11 @@ echo "=== Estrato Pacote C: Fediverse público ($SOCIAL_HOST) ==="
 
 mkdir -p "$STACK_DIR"
 rsync -a "$STACK_SRC/" "$STACK_DIR/"
-chmod +x "$STACK_DIR/bootstrap-gotosocial.sh" 2>/dev/null || true
+chmod +x "$STACK_DIR/bootstrap-gotosocial.sh" \
+  "$STACK_DIR/generate-masto-feeds.sh" \
+  "$STACK_DIR/setup-freshrss.sh" 2>/dev/null || true
+mkdir -p "$STACK_DIR/rss-bridge-config" "$STACK_DIR/n8n-data"
+bash "$STACK_DIR/generate-masto-feeds.sh" 2>/dev/null || true
 
 # 1) DNS Cloudflare (A proxied, idempotente)
 if [[ -f "$CF_SECRETS" ]]; then

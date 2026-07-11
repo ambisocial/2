@@ -31,10 +31,14 @@ python3 "$REPO/scripts/victor/syndicate-outbound.py" --recent 10 || true
 if command -v docker >/dev/null 2>&1; then
   echo "--- docker stack ---"
   rsync -a "$STACK_SRC/" "$STACK_DIR/"
-  chmod +x "$STACK_DIR/bootstrap-gotosocial.sh" 2>/dev/null || true
+  chmod +x "$STACK_DIR/bootstrap-gotosocial.sh" \
+    "$STACK_DIR/generate-masto-feeds.sh" \
+    "$STACK_DIR/setup-freshrss.sh" 2>/dev/null || true
+  mkdir -p "$STACK_DIR/rss-bridge-config" "$STACK_DIR/n8n-data"
+  bash "$STACK_DIR/generate-masto-feeds.sh" 2>/dev/null || true
   cd "$STACK_DIR"
-  docker compose pull gotosocial freshrss 2>/dev/null || true
-  docker compose up -d gotosocial freshrss
+  docker compose pull gotosocial freshrss rss-filter 2>/dev/null || true
+  docker compose up -d gotosocial freshrss rss-filter
   mkdir -p "$STACK_DIR/gotosocial" && chown -R 1000:1000 "$STACK_DIR/gotosocial" 2>/dev/null || true
   for _ in $(seq 1 12); do
     if curl -sf "http://127.0.0.1:8085/.well-known/nodeinfo" >/dev/null 2>&1; then

@@ -31,11 +31,47 @@ services:
       MASTODON_CLIENT_ID: ${MASTODON_CLIENT_ID:-}
       MASTODON_CLIENT_SECRET: ${MASTODON_CLIENT_SECRET:-}
       MASTODON_ACCESS_TOKEN: ${MASTODON_ACCESS_TOKEN:-}
-      RSS_FEED_URL: https://estrato.cc/feed/
+      FEEDS_FILE: /config/masto-rss-feeds.txt
       CHECK_INTERVAL: "300"
       TOOT_VISIBILITY: unlisted
     volumes:
       - ./masto-rss-state:/state
+      - ./masto-rss-feeds.txt:/config/masto-rss-feeds.txt:ro
+
+  rss-filter:
+    image: ghcr.io/rverst/rss-filter:latest
+    container_name: estrato-rss-filter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:80"
+    environment:
+      DISABLE_AUTH: "true"
+      LISTEN_ADDR: ":80"
+
+  rss-bridge:
+    image: rssbridge/rss-bridge:latest
+    container_name: estrato-rss-bridge
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    volumes:
+      - ./rss-bridge-config:/config
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: estrato-n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      N8N_HOST: ${N8N_PUBLIC_HOST:-n8n.estrato.cc}
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: https://${N8N_PUBLIC_HOST:-n8n.estrato.cc}/
+      GENERIC_TIMEZONE: America/Sao_Paulo
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./n8n-data:/home/node/.n8n
 
   freshrss:
     image: freshrss/freshrss:1.24.0

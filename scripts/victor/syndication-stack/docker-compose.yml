@@ -2,6 +2,7 @@ services:
   gotosocial:
     image: superseriousbusiness/gotosocial:0.17.0
     container_name: estrato-gotosocial
+    user: 1000:1000
     restart: unless-stopped
     ports:
       - "127.0.0.1:8085:8080"
@@ -12,6 +13,7 @@ services:
       GTS_BIND_ADDRESS: 0.0.0.0
       GTS_PORT: 8080
       GTS_DB_TYPE: sqlite
+      GTS_DB_ADDRESS: /gotosocial/storage/sqlite.db
       GTS_ACCOUNTS_REGISTRATION_OPEN: "false"
       GTS_ACCOUNTS_APPROVAL_REQUIRED: "false"
       GTS_PROTOCOL: http

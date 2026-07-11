@@ -111,7 +111,7 @@ $sections = array(
 		'custom_html' => '',
 	),
 	array(
-		'id'          => 'columns_strip',
+		'id'          => 'custom_html',
 		'label'       => 'Colunas',
 		'enabled'     => true,
 		'layout'      => 'custom_html',

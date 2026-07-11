@@ -171,11 +171,26 @@ function estrato_shortcode_home_columns() {
 			. esc_html( $col['name'] ) . '</a></li>';
 	}
 	$html .= '</ul></nav>';
-	$html .= '<style>.estrato-columns-strip ul{display:flex;flex-wrap:wrap;gap:.75rem;list-style:none;margin:1rem 0;padding:0}'
-		. '.estrato-columns-strip a{display:inline-block;padding:.45rem .9rem;border-radius:4px;font-weight:600;text-decoration:none;background:var(--col-primary);color:var(--col-accent)}</style>';
 	return $html;
 }
 add_shortcode( 'estrato_home_columns', 'estrato_shortcode_home_columns' );
+
+/**
+ * CSS da strip de colunas (evita &lt;style&gt; removido por wp_kses_post no PressGrid).
+ */
+function estrato_enqueue_columns_strip_css() {
+	if ( ! is_front_page() ) {
+		return;
+	}
+	wp_register_style( 'estrato-columns-strip', false, array(), '1.0.0' );
+	wp_enqueue_style( 'estrato-columns-strip' );
+	wp_add_inline_style(
+		'estrato-columns-strip',
+		'.estrato-columns-strip ul{display:flex;flex-wrap:wrap;gap:.75rem;list-style:none;margin:1rem 0;padding:0}'
+		. '.estrato-columns-strip a{display:inline-block;padding:.45rem .9rem;border-radius:4px;font-weight:600;text-decoration:none;background:var(--col-primary);color:var(--col-accent)}'
+	);
+}
+add_action( 'wp_enqueue_scripts', 'estrato_enqueue_columns_strip_css', 20 );
 
 /**
  * @return int

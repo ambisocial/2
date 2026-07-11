@@ -113,12 +113,12 @@ check "Taxonomia tem portal_id estrato-finance" bash -c "
   grep -q \"portal_id.*estrato-finance\" \"$REPO/portals/estrato-finance-taxonomy.php\"
 "
 
-# Layout sections inclui columns_strip
-check "pressgrid_layout_sections tem columns_strip" bash -c "
+# Layout sections inclui custom_html colunas
+check "pressgrid_layout_sections tem colunas (custom_html)" bash -c "
   $WP eval '
     \$s = get_option(\"pressgrid_layout_sections\", array());
     foreach (\$s as \$row) {
-      if ((\$row[\"id\"] ?? \"\") === \"columns_strip\") exit(0);
+      if ((\$row[\"id\"] ?? \"\") === \"custom_html\" && strpos((\$row[\"custom_html\"] ?? \"\"), \"estrato_home_columns\") !== false) exit(0);
     }
     exit(1);
   ' 2>/dev/null

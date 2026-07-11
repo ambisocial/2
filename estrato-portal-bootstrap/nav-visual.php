@@ -36,6 +36,28 @@ function estrato_nav_author_byline( $name ) {
 add_filter( 'the_author', 'estrato_nav_author_byline', 10, 1 );
 
 /**
+ * PressGrid renderiza custom_html só quando id === custom_html e sem do_shortcode.
+ *
+ * @param mixed $sections
+ * @return mixed
+ */
+function estrato_pressgrid_layout_shortcodes( $sections ) {
+	if ( ! is_array( $sections ) || ! function_exists( 'is_front_page' ) || ! is_front_page() ) {
+		return $sections;
+	}
+	foreach ( $sections as &$section ) {
+		if ( empty( $section['custom_html'] ) || ! is_string( $section['custom_html'] ) ) {
+			continue;
+		}
+		if ( strpos( $section['custom_html'], '[' ) !== false ) {
+			$section['custom_html'] = do_shortcode( $section['custom_html'] );
+		}
+	}
+	return $sections;
+}
+add_filter( 'option_pressgrid_layout_sections', 'estrato_pressgrid_layout_shortcodes', 20 );
+
+/**
  * Grid de posts por categoria (home / hubs).
  *
  * @param array<string, mixed> $atts

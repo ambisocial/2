@@ -201,6 +201,7 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 				} elseif ( function_exists( 'estrato_eeat_resolve_author_id' ) && $parent_slug ) {
 					$author_id = estrato_eeat_resolve_author_id( $parent_slug );
 				} elseif ( ESTRATO_TERM_TYPE_SUBCATEGORY === $node_type && function_exists( 'estrato_eeat_resolve_author_id_for_terms' ) ) {
+					$node_slug = sanitize_key( (string) ( $node['slug'] ?? '' ) );
 					$author_id = estrato_eeat_resolve_author_id_for_terms( $node_slug, '' );
 				}
 

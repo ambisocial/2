@@ -1,0 +1,56 @@
+# Portal Estilos de vida, hobbies e consumo apaixonado
+id: estrato-lifestyle
+domain: lifestyle.estrato.cc
+title: Estrato Lifestyle
+tagline: Estilos de vida, hobbies e consumo apaixonado
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-lifestyle
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-lifestyle-taxonomy.php
+
+# 3 editorias × 6 nichos (fonte canônica: estrato-lifestyle-taxonomy.php, schema v2)
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-lifestyle-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - sabores-paixao
+  - movimento-ar-livre
+  - hobbies-colecao
+
+branding:
+  primary_color: "#2C1810"
+  accent_color: "#E8A838"
+  secondary_color: "#4A3728"
+  logo_file: estrato-logo.png
+  breaking_category: sabores-paixao
+  breaking_label: "Sabores"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/lifestyle.estrato.cc

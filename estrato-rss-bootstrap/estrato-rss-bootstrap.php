@@ -200,6 +200,7 @@ function estrato_rss_get_presets() {
 
 	$brasil_financeiro = estrato_rss_taxonomy_to_preset( estrato_rss_load_finance_taxonomy() );
 	$brasil_mind       = estrato_rss_taxonomy_to_preset( estrato_rss_load_mind_taxonomy() );
+	$brasil_lifestyle  = estrato_rss_taxonomy_to_preset( estrato_rss_load_lifestyle_taxonomy() );
 	if ( empty( $brasil_financeiro ) ) {
 		$brasil_financeiro = array(
 			'economia'          => array(
@@ -275,6 +276,7 @@ function estrato_rss_get_presets() {
 		'brasil-geral'      => $brasil_geral,
 		'brasil-financeiro' => $brasil_financeiro,
 		'brasil-mind'       => $brasil_mind,
+		'brasil-lifestyle'  => $brasil_lifestyle,
 	);
 }
 
@@ -341,6 +343,9 @@ function estrato_rss_get_menu_order() {
 	}
 	if ( 'brasil-mind' === $preset ) {
 		return estrato_rss_get_mind_menu_order();
+	}
+	if ( 'brasil-lifestyle' === $preset ) {
+		return estrato_rss_get_lifestyle_menu_order();
 	}
 	$orders = array(
 		'brasil-geral' => array( 'economia', 'mercados', 'negocios', 'brasil', 'politica', 'tecnologia', 'mundo', 'criptomoedas', 'agronegocio' ),

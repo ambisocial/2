@@ -36,6 +36,8 @@ if ( empty( $sync['ok'] ) ) {
 $order_fn = 'estrato_rss_get_finance_menu_order';
 if ( 'brasil-mind' === $preset && function_exists( 'estrato_rss_get_mind_menu_order' ) ) {
 	$order_fn = 'estrato_rss_get_mind_menu_order';
+} elseif ( 'brasil-lifestyle' === $preset && function_exists( 'estrato_rss_get_lifestyle_menu_order' ) ) {
+	$order_fn = 'estrato_rss_get_lifestyle_menu_order';
 }
 $order = $order_fn();
 foreach ( $order as $slug ) {

@@ -62,6 +62,8 @@ fi
 freshrss_cli actualize-user.php --user "$RSS_USER" 2>/dev/null || true
 docker exec estrato-freshrss cli/access-permissions.sh 2>/dev/null || true
 
-FEEDS=$(freshrss_cli user-info.php -h --user "$RSS_USER" 2>/dev/null | awk -F'|' '{print $6}' | tr -d ' ' || echo 0)
-ARTICLES=$(freshrss_cli user-info.php -h --user "$RSS_USER" 2>/dev/null | awk -F'|' '{print $8}' | tr -d ' ' || echo 0)
-echo "FreshRSS OK — ${RSS_USER}: ${FEEDS} feeds, ${ARTICLES} artigos não lidos"
+FEED_COUNT=$(freshrss_cli user-info.php --user "$RSS_USER" --json 2>/dev/null \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0].get('feeds',0) if d else 0)" 2>/dev/null || echo 0)
+UNREAD=$(freshrss_cli user-info.php --user "$RSS_USER" --json 2>/dev/null \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0].get('reads',0) if d else 0)" 2>/dev/null || echo 0)
+echo "FreshRSS OK — ${RSS_USER}: ${FEED_COUNT} feeds, ${UNREAD} lidos"

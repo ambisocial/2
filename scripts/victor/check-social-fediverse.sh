@@ -41,7 +41,7 @@ else
 fi
 
 # nginx local proxy
-if curl -sf -H "Host: ${SOCIAL_HOST}" "https://${VPS_IP}/.well-known/nodeinfo" >/dev/null 2>&1; then
+if curl -sf -k -H "Host: ${SOCIAL_HOST}" "https://${VPS_IP}/.well-known/nodeinfo" >/dev/null 2>&1; then
   ok "nginx reverse proxy local"
 else
   warn "nginx reverse proxy local indisponível"

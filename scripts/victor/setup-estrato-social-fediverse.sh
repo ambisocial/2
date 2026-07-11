@@ -48,8 +48,11 @@ fi
 # 2) TLS Let's Encrypt (DNS challenge)
 if [[ ! -f "/etc/letsencrypt/live/${SOCIAL_HOST}/fullchain.pem" ]]; then
   if [[ -f "$CF_SECRETS" ]] && command -v certbot >/dev/null 2>&1; then
+    echo "Aguardando propagação DNS (60s)..."
+    sleep 60
     certbot certonly --dns-cloudflare \
       --dns-cloudflare-credentials "$CF_SECRETS" \
+      --dns-cloudflare-propagation-seconds 90 \
       -d "$SOCIAL_HOST" \
       --non-interactive --agree-tos -m "$CERT_EMAIL" || echo "AVISO: certbot falhou (retry manual)"
   else

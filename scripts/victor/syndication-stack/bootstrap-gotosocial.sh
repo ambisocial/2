@@ -12,6 +12,15 @@ BOT_PASS="${GTS_BOT_PASS:-}"
 
 cd "$STACK_DIR"
 
+# Pacote C: OAuth deve usar o host público quando GoToSocial roda com GTS_PUBLIC_HOST.
+if [[ -f "$ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  if [[ -n "${GTS_PUBLIC_HOST:-}" && "${GTS_PUBLIC_PROTOCOL:-}" == "https" ]]; then
+    GTS_URL="${GTS_PUBLIC_PROTOCOL}://${GTS_PUBLIC_HOST}"
+  fi
+fi
+
 if ! docker compose ps gotosocial 2>/dev/null | grep -qE 'running|Up'; then
   echo "GoToSocial não está rodando"
   exit 1

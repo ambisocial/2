@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Publisher Bridge
  * Description: Recebe artigos do pipeline Victor (scout/curator/writer/publisher) via REST API.
- * Version: 1.5.1
+ * Version: 1.6.0
  * Author: Cursor Agent
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ESTRATO_BRIDGE_VERSION', '1.5.1' );
+define( 'ESTRATO_BRIDGE_VERSION', '1.6.0' );
 define( 'ESTRATO_BRIDGE_SECRET_OPTION', 'estrato_bridge_secret' );
 define( 'ESTRATO_BRIDGE_BACKFILL_HOOK', 'estrato_thumbnail_backfill_event' );
 define( 'ESTRATO_BRIDGE_ORIGINAL_META', '_estrato_original_image_url' );
@@ -69,6 +69,16 @@ function estrato_bridge_register_routes() {
 
 	register_rest_route(
 		'estrato/v1',
+		'/taxonomy-sync',
+		array(
+			'methods'             => 'POST',
+			'callback'            => 'estrato_bridge_taxonomy_sync',
+			'permission_callback' => 'estrato_bridge_permission',
+		)
+	);
+
+	register_rest_route(
+		'estrato/v1',
 		'/health',
 		array(
 			'methods'             => 'GET',
@@ -82,6 +92,41 @@ function estrato_bridge_register_routes() {
 			'permission_callback' => '__return_true',
 		)
 	);
+}
+
+/**
+ * Sincroniza taxonomia multi-categoria (editorias, subs, matriz RSS).
+ *
+ * @param WP_REST_Request $request
+ * @return WP_REST_Response|WP_Error
+ */
+function estrato_bridge_taxonomy_sync( $request ) {
+	if ( ! function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
+		return new WP_Error( 'rss_bootstrap_missing', 'estrato-rss-bootstrap não carregado', array( 'status' => 500 ) );
+	}
+	$params = $request->get_json_params();
+	if ( ! is_array( $params ) ) {
+		$params = array();
+	}
+	$preset = ! empty( $params['preset'] ) ? sanitize_key( $params['preset'] ) : '';
+	if ( ! $preset && function_exists( 'estrato_rss_get_active_preset' ) ) {
+		$preset = estrato_rss_get_active_preset();
+	}
+	if ( function_exists( 'estrato_rss_apply_content_mode' ) ) {
+		$mode = ! empty( $params['content_mode'] ) ? sanitize_key( $params['content_mode'] ) : 'pipeline_primary';
+		estrato_rss_apply_content_mode( $mode );
+	}
+	if ( function_exists( 'estrato_portal_apply_config' ) && ! empty( $params['portal_config'] ) && is_array( $params['portal_config'] ) ) {
+		estrato_portal_apply_config( $params['portal_config'] );
+	}
+	$sync = estrato_rss_sync_portal_taxonomy( $preset );
+	if ( empty( $sync['ok'] ) ) {
+		return new WP_Error( 'sync_failed', $sync['reason'] ?? 'sync_failed', array( 'status' => 500, 'data' => $sync ) );
+	}
+	if ( function_exists( 'estrato_rss_apply_curation' ) ) {
+		$sync['curation'] = estrato_rss_apply_curation( false );
+	}
+	return new WP_REST_Response( $sync, 200 );
 }
 
 /**

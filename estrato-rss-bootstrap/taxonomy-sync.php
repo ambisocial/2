@@ -45,10 +45,13 @@ function estrato_rss_taxonomy_file_path( $basename = '' ) {
 	}
 	$basename = preg_replace( '/[^a-z0-9\-]/', '', strtolower( (string) $basename ) );
 	$filename = $basename . '.php';
-	$candidates = array(
-		'/var/www/estrato/repo/portals/' . $filename,
-		dirname( __DIR__ ) . '/portals/' . $filename,
-	);
+	$candidates = array();
+	if ( defined( 'WP_CONTENT_DIR' ) ) {
+		$candidates[] = WP_CONTENT_DIR . '/estrato-portals/' . $filename;
+		$candidates[] = WP_CONTENT_DIR . '/plugins/portals/' . $filename;
+	}
+	$candidates[] = '/var/www/estrato/repo/portals/' . $filename;
+	$candidates[] = dirname( __DIR__ ) . '/portals/' . $filename;
 	foreach ( $candidates as $path ) {
 		if ( is_readable( $path ) ) {
 			return $path;

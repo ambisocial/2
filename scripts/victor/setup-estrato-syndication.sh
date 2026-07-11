@@ -69,7 +69,7 @@ if ! crontab -l 2>/dev/null | grep -qF 'syndicate-outbound.py'; then
   (crontab -l 2>/dev/null; echo "$CRON_SYN") | crontab -
   echo "Cron horário syndication (:05)"
 fi
-if ! crontab -l 2>/dev/null | grep -qF '--generate-msn-feed'; then
+if ! crontab -l 2>/dev/null | grep -qF 'generate-msn-feed'; then
   (crontab -l 2>/dev/null; echo "$CRON_MSN") | crontab -
   echo "Cron MSN feed (:30)"
 fi

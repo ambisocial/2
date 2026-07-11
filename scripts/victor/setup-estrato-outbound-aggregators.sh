@@ -53,13 +53,18 @@ CRON_SYN='5 * * * * python3 '"$REPO"'/scripts/victor/syndicate-outbound.py --rec
 CRON_MSN='*/30 * * * * python3 '"$REPO"'/scripts/victor/syndicate-outbound.py --generate-msn-feed >> '"$LOG_DIR"'/msn-feed.log 2>&1'
 CRON_MAPS='0 */6 * * * python3 '"$REPO"'/scripts/victor/syndicate-outbound.py --ping-sitemaps >> '"$LOG_DIR"'/sitemap-ping.log 2>&1'
 
-for entry in "$CRON_SYN" "$CRON_MSN" "$CRON_MAPS"; do
-  pattern=$(echo "$entry" | awk '{print $6}')
+install_cron() {
+  local pattern="$1"
+  local entry="$2"
   if ! crontab -l 2>/dev/null | grep -qF "$pattern"; then
     (crontab -l 2>/dev/null; echo "$entry") | crontab -
     echo "Cron instalado: $pattern"
   fi
-done
+}
+
+install_cron 'syndicate-outbound.py --recent' "$CRON_SYN"
+install_cron 'generate-msn-feed' "$CRON_MSN"
+install_cron 'syndicate-outbound.py --ping-sitemaps' "$CRON_MAPS"
 
 # GSC bot (se chave existir)
 if [[ -f /root/estrato-gsc-service-account.json ]]; then

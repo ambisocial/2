@@ -27,8 +27,8 @@ for PATH_URL in /feed/ /news-sitemap.xml /msn-feed.xml /sitemap_index.xml; do
 done
 
 # MSN feed spec básica
-MSN_BODY=$(curl -sS "${DOMAIN}/msn-feed.xml" 2>/dev/null || true)
-if echo "$MSN_BODY" | grep -q '<rss'; then
+MSN_BODY=$(curl -sS --max-time 20 "${DOMAIN}/msn-feed.xml" 2>/dev/null | head -c 50000 || true)
+if echo "$MSN_BODY" | grep -qF '<rss'; then
   ok "MSN feed RSS válido"
   if echo "$MSN_BODY" | grep -q 'xmlns:media'; then ok "MSN media namespace"; else warn "MSN sem media:"; fi
   if echo "$MSN_BODY" | grep -q '<item>'; then ok "MSN feed com items"; else warn "MSN feed sem items"; fi
@@ -89,7 +89,7 @@ if [[ "$CODE" == "200" ]]; then ok "PlatPhorm API reachable"; else warn "PlatPho
 
 # Crons
 if crontab -l 2>/dev/null | grep -qF 'syndicate-outbound.py'; then ok "cron syndication"; else warn "cron syndication ausente"; fi
-if crontab -l 2>/dev/null | grep -qF '--generate-msn-feed'; then ok "cron MSN feed"; else warn "cron MSN feed ausente"; fi
+if crontab -l 2>/dev/null | grep -qF 'generate-msn-feed'; then ok "cron MSN feed"; else warn "cron MSN feed ausente"; fi
 
 echo "--- $PASS ok / $WARN warn / $FAIL fail ---"
 if [[ "$STRICT" == "1" && "$FAIL" -gt 0 ]]; then exit 1; fi

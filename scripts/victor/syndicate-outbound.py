@@ -137,6 +137,7 @@ def ping_gsc(url: str) -> dict:
 
 
 def ping_sitemaps() -> dict:
+    """Google/Bing descontinuaram sitemap ping (2023). Mantemos tentativa informativa."""
     results: dict[str, dict] = {}
     for sm in SITEMAPS:
         encoded = urllib.parse.quote(sm, safe='')
@@ -148,10 +149,18 @@ def ping_sitemaps() -> dict:
             try:
                 with urllib.request.urlopen(f'{endpoint}{encoded}', timeout=15) as resp:
                     results[key] = {'ok': True, 'status': resp.status}
+            except urllib.error.HTTPError as exc:
+                results[key] = {
+                    'ok': False,
+                    'status': exc.code,
+                    'deprecated': exc.code in (404, 410),
+                    'error': str(exc),
+                }
             except Exception as exc:  # noqa: BLE001
                 results[key] = {'ok': False, 'error': str(exc)}
-    ok = any(r.get('ok') for r in results.values())
-    return {'ok': ok, 'results': results}
+    # IndexNow + GSC substituem ping; não falhar por deprecação.
+    ok = True
+    return {'ok': ok, 'deprecated': True, 'note': 'use IndexNow + GSC', 'results': results}
 
 
 def ping_freespoke(article: dict) -> dict:
@@ -320,6 +329,10 @@ def _wp_post_meta(post_id: int) -> dict:
 
 def generate_msn_feed(limit: int = 50) -> dict:
     articles = wp_recent_articles(limit)
+    ET.register_namespace('media', 'http://search.yahoo.com/mrss/')
+    ET.register_namespace('dc', 'http://purl.org/dc/elements/1.1/')
+    ET.register_namespace('mi', 'http://schemas.ingestion.microsoft.com/common/')
+    ET.register_namespace('content', 'http://purl.org/rss/1.0/modules/content/')
     rss = ET.Element('rss', {
         'version': '2.0',
         'xmlns:media': 'http://search.yahoo.com/mrss/',

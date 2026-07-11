@@ -48,6 +48,12 @@ fi
 # FreshRSS
 if curl -sf -o /dev/null http://127.0.0.1:8088/i/ 2>/dev/null; then
   ok "FreshRSS local :8088"
+  if docker exec -u www-data -w /var/www/FreshRSS estrato-freshrss \
+    php ./cli/list-users.php 2>/dev/null | grep -q '^estrato-syndication$'; then
+    ok "FreshRSS usuário estrato-syndication"
+  else
+    warn "FreshRSS usuário estrato-syndication ausente"
+  fi
 else
   warn "FreshRSS local indisponível"
 fi

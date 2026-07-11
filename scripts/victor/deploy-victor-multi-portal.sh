@@ -140,6 +140,7 @@ provision_wordpress() {
 
   log "Provisionando WordPress: ${domain}"
   mkdir -p "$web"
+  chown www-data:www-data "$web"
   sudo -u www-data wp core download --path="$web" --locale=pt_BR --quiet
 
   # Credenciais do template (mesmo usuário MySQL do estrato.cc)

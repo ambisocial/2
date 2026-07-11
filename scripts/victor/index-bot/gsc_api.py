@@ -23,7 +23,7 @@ def key_path() -> Path:
 
 
 def site_url() -> str:
-    return os.getenv('GSC_SITE_URL', 'sc-domain:estrato.cc').strip()
+    return os.getenv('GSC_SITE_URL', 'https://estrato.cc/').strip()
 
 
 def sa_email() -> str:
@@ -65,7 +65,7 @@ def resolve_site_url() -> str:
     urls = {s.get('siteUrl', '') for s in sites}
     if configured in urls:
         return configured
-    for candidate in ('sc-domain:estrato.cc', 'https://estrato.cc/', 'https://www.estrato.cc/'):
+    for candidate in ('https://estrato.cc/', 'sc-domain:estrato.cc', 'https://www.estrato.cc/'):
         if candidate in urls:
             return candidate
     if urls:

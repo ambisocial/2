@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Pacote B — syndication outbound + stack Docker (FreshRSS, GoToSocial, masto-rss)
+set -euo pipefail
+
+REPO="${ESTRATO_REPO:-/var/www/estrato/repo}"
+WP="${ESTRATO_WP:-/var/www/estrato.cc}"
+STACK_SRC="$REPO/scripts/victor/syndication-stack"
+STACK_DIR="${ESTRATO_SYNDICATION_DIR:-/opt/estrato-syndication}"
+LOG_DIR="/var/log/estrato"
+
+echo "=== Estrato Pacote B: Syndication ==="
+mkdir -p "$LOG_DIR" "$STACK_DIR"
+
+# 1) Scripts Python
+install -m 755 "$REPO/scripts/victor/syndicate-outbound.py" "$REPO/scripts/victor/syndicate-outbound.py"
+touch "$LOG_DIR/syndicate.log"
+chmod 664 "$LOG_DIR/syndicate.log" 2>/dev/null || true
+
+# 2) Plugin syndication.php (deploy esperado via repo/plugins)
+if [[ -f "$WP/wp-content/plugins/estrato-portal-bootstrap/syndication.php" ]]; then
+  echo "Plugin syndication.php OK"
+else
+  echo "AVISO: syndication.php ausente no plugin — publique via deploy"
+fi
+
+# 3) Backfill últimos 10 posts
+echo "--- backfill syndication (10 posts) ---"
+python3 "$REPO/scripts/victor/syndicate-outbound.py" --recent 10 || true
+
+# 4) Stack Docker
+if command -v docker >/dev/null 2>&1; then
+  echo "--- docker stack ---"
+  rsync -a "$STACK_SRC/" "$STACK_DIR/"
+  chmod +x "$STACK_DIR/bootstrap-gotosocial.sh" 2>/dev/null || true
+  cd "$STACK_DIR"
+  docker compose pull gotosocial freshrss 2>/dev/null || true
+  docker compose up -d gotosocial freshrss
+  sleep 8
+  if curl -sf "http://127.0.0.1:8085/.well-known/nodeinfo" >/dev/null 2>&1; then
+    echo "GoToSocial OK (127.0.0.1:8085)"
+    bash "$STACK_DIR/bootstrap-gotosocial.sh" || echo "AVISO: bootstrap masto-rss falhou (retry manual)"
+  else
+    echo "AVISO: GoToSocial ainda iniciando"
+  fi
+
+  # FreshRSS: usuário + feed (idempotente)
+  if docker ps --format '{{.Names}}' | grep -q '^estrato-freshrss$'; then
+    docker exec -u www-data estrato-freshrss bin/cli default-user 2>/dev/null || true
+    docker exec -u www-data estrato-freshrss bin/cli create-user \
+      --auth_type form --language pt-BR --email syndication@estrato.cc \
+      --password "$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9' | head -c 18)" \
+      --user estrato-syndication 2>/dev/null || true
+    docker exec -u www-data estrato-freshrss bin/cli add-feed \
+      --user estrato-syndication --url "https://estrato.cc/feed/" 2>/dev/null || true
+    echo "FreshRSS OK (127.0.0.1:8088)"
+  fi
+else
+  echo "AVISO: Docker ausente — pulando stack"
+fi
+
+# 5) Crons
+CRON_SYN='5 * * * * python3 '"$REPO"'/scripts/victor/syndicate-outbound.py --recent 5 >> '"$LOG_DIR"'/syndicate.log 2>&1'
+if ! crontab -l 2>/dev/null | grep -qF 'syndicate-outbound.py'; then
+  (crontab -l 2>/dev/null; echo "$CRON_SYN") | crontab -
+  echo "Cron horário syndication (:05)"
+fi
+
+# 6) Auditoria
+bash "$REPO/scripts/victor/check-syndication.sh" --strict || true
+
+echo "=== Pacote B concluído ==="

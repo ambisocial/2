@@ -402,7 +402,7 @@ return array(
 			'feeds'       => array(
 				array( 'title' => 'BBC Business', 'url' => 'https://feeds.bbci.co.uk/news/business/rss.xml', 'tier' => 1 ),
 				array( 'title' => 'Financial Times World', 'url' => 'https://www.ft.com/world?format=rss', 'tier' => 1 ),
-				array( 'title' => 'Reuters Business', 'url' => 'https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best', 'tier' => 2 ),
+				array( 'title' => 'BBC World', 'url' => 'https://feeds.bbci.co.uk/news/world/rss.xml', 'tier' => 2 ),
 			),
 			'subcategories' => array(
 				'eua'    => array(

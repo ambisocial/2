@@ -224,7 +224,7 @@ function estrato_rss_get_presets() {
 					array( 'title' => 'Investing.com Brasil', 'url' => 'https://br.investing.com/rss/news.rss' ),
 					array( 'title' => 'MarketWatch', 'url' => 'https://feeds.marketwatch.com/marketwatch/topstories/' ),
 					array( 'title' => 'CNBC Top News', 'url' => 'https://www.cnbc.com/id/100003114/device/rss/rss.html' ),
-					array( 'title' => 'Reuters Business', 'url' => 'https://feeds.reuters.com/reuters/businessNews' ),
+					array( 'title' => 'BBC World', 'url' => 'https://feeds.bbci.co.uk/news/world/rss.xml' ),
 				),
 			),
 			'negocios'          => array(
@@ -268,7 +268,7 @@ function estrato_rss_get_presets() {
 				'feeds'       => array(
 					array( 'title' => 'BBC Business', 'url' => 'https://feeds.bbci.co.uk/news/business/rss.xml' ),
 					array( 'title' => 'Financial Times', 'url' => 'https://www.ft.com/rss/home' ),
-					array( 'title' => 'Reuters Business', 'url' => 'https://feeds.reuters.com/reuters/businessNews' ),
+					array( 'title' => 'BBC World', 'url' => 'https://feeds.bbci.co.uk/news/world/rss.xml' ),
 				),
 			),
 		);

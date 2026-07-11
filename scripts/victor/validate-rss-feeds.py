@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import ssl
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -27,7 +28,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
 TAXONOMY_GLOB = "portals/estrato-*-taxonomy.php"
-USER_AGENT = "EstratoFeedValidator/1.0 (+https://estrato.cc)"
+USER_AGENT = "Mozilla/5.0 (compatible; EstratoFeedValidator/1.1; +https://estrato.cc)"
 MAX_AGE_DAYS = 183
 
 
@@ -133,7 +134,7 @@ def count_items(xml_bytes: bytes) -> tuple[int, int]:
     if tag not in ("rss", "feed", "rdf"):
         return 0, 0
 
-    items = root.findall(".//item") or root.findall(".//{*}entry")
+    items = root.findall(".//item") or root.findall(".//{*}item") or root.findall(".//{*}entry")
     total = len(items)
     if not total:
         return 0, 0
@@ -151,10 +152,15 @@ def count_items(xml_bytes: bytes) -> tuple[int, int]:
 
 def fetch_feed(url: str, timeout: int = 20) -> tuple[int, bytes, str]:
     req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/rss+xml, application/atom+xml, */*"})
+    ctx = ssl.create_default_context()
+    # Alguns feeds BR (ex.: UFRN) têm cadeia SSL incompleta no ambiente de CI.
+    if url.startswith("https://neuro.ufrn.br/"):
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
     try:
-        with urlopen(req, timeout=timeout) as resp:
+        with urlopen(req, timeout=timeout, context=ctx) as resp:
             code = getattr(resp, "status", 200) or 200
-            body = resp.read(512_000)
+            body = resp.read(2_000_000)
             return code, body, ""
     except HTTPError as exc:
         try:

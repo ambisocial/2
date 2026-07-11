@@ -108,6 +108,9 @@ sys.exit(1 if d else 0)" 2>/dev/null
 
 for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php portals/estrato-sustain-taxonomy.php; do
   if [[ -f "$tax" ]]; then
+    if command -v php >/dev/null 2>&1; then
+      php -l "$tax" >/dev/null 2>&1 && ok "php -l $(basename "$tax")" || fail "php -l $tax"
+    fi
     if check_taxonomy_dupes "$tax"; then
       ok "$(basename "$tax") sem feeds duplicados"
     else

@@ -712,5 +712,6 @@ return array(
 			),
 		),
 	),
+	),
 	'columns'        => array(),
 );

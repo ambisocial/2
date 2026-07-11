@@ -52,6 +52,12 @@ export ESTRATO_PORTAL="$PORTAL_ID"
 export WEB_ROOT="$PORTAL_WEB_ROOT"
 export ESTRATO_REPO="$REPO"
 
+# Funções de portal-env.sh não sobrevivem a `bash -c`; reinicializar em cada subshell.
+PORTAL_BASH_INIT="source \"$SCRIPT_DIR/lib/portal-env.sh\"
+export PORTAL_ID=\"$PORTAL_ID\" PORTAL_DOMAIN=\"$PORTAL_DOMAIN\" PORTAL_TITLE=\"$PORTAL_TITLE\"
+export PORTAL_PRESET=\"$PORTAL_PRESET\" PORTAL_WEB_ROOT=\"$PORTAL_WEB_ROOT\" PORTAL_VPS_IP=\"$PORTAL_VPS_IP\"
+export ESTRATO_REPO=\"$REPO\" ESTRATO_PORTAL=\"$PORTAL_ID\" WEB_ROOT=\"$PORTAL_WEB_ROOT\""
+
 LOG_DIR="${REPO}/logs/full-stack"
 mkdir -p "$LOG_DIR"
 LOG_FILE="${LOG_DIR}/${PORTAL_ID}-$(date +%Y%m%d-%H%M%S).log"
@@ -76,17 +82,17 @@ portal_log "Full stack: $PORTAL_ID @ $PORTAL_DOMAIN ($PORTAL_WEB_ROOT)"
 portal_log "Preset: $PORTAL_PRESET | from=$FROM_SPRINT | log=$LOG_FILE"
 
 # ─── Sprint 0: Pré-requisitos ───────────────────────────────────
-run_step 0 "Pré-requisitos" bash -c '
+run_step 0 "Pré-requisitos" bash -c "$PORTAL_BASH_INIT
   portal_sync_plugins
   portal_ensure_permalinks
   portal_wp option update blog_public 1 2>/dev/null || true
   portal_wp option update timezone_string America/Sao_Paulo 2>/dev/null || true
   portal_wp option update WPLANG pt_BR 2>/dev/null || true
-  portal_wp post delete $(portal_wp post list --post_type=page --name=pagina-exemplo --field=ID 2>/dev/null) --force 2>/dev/null || true
-'
+  portal_wp post delete \$(portal_wp post list --post_type=page --name=pagina-exemplo --field=ID 2>/dev/null) --force 2>/dev/null || true
+"
 
 # ─── Sprint 1: SEO ──────────────────────────────────────────────
-run_step 1 "SEO (robots, Yoast, news-sitemap)" bash -c "
+run_step 1 "SEO (robots, Yoast, news-sitemap)" bash -c "$PORTAL_BASH_INIT
   export WEB_ROOT=\"$PORTAL_WEB_ROOT\"
   export ESTRATO_REPO=\"$REPO\"
   if [[ -f \"$REPO/scripts/victor/setup-estrato-seo.sh\" ]]; then
@@ -100,14 +106,14 @@ run_step 1 "SEO (robots, Yoast, news-sitemap)" bash -c "
 "
 
 # ─── Sprint 2: Schema ─────────────────────────────────────────────
-run_step 2 "Schema & OG" bash -c "
+run_step 2 "Schema & OG" bash -c "$PORTAL_BASH_INIT
   export WEB_ROOT=\"$PORTAL_WEB_ROOT\"
   export ESTRATO_REPO=\"$REPO\"
   [[ -f \"$REPO/scripts/victor/setup-estrato-schema.sh\" ]] && bash \"$REPO/scripts/victor/setup-estrato-schema.sh\"
 "
 
 # ─── Sprint 3: E-E-A-T ────────────────────────────────────────────
-run_step 3 "E-E-A-T & Institucional" bash -c "
+run_step 3 "E-E-A-T & Institucional" bash -c "$PORTAL_BASH_INIT
   export WEB_ROOT=\"$PORTAL_WEB_ROOT\"
   export ESTRATO_REPO=\"$REPO\"
   export ESTRATO_PORTAL=\"$PORTAL_ID\"
@@ -129,7 +135,7 @@ run_step 3 "E-E-A-T & Institucional" bash -c "
 
 # ─── Sprint 4: Conteúdo ────────────────────────────────────────────
 if [[ "$SKIP_CONTENT" -eq 0 ]]; then
-  run_step 4 "Conteúdo (enrich, linker)" bash -c "
+  run_step 4 "Conteúdo (enrich, linker)" bash -c "$PORTAL_BASH_INIT
     export WEB_ROOT=\"$PORTAL_WEB_ROOT\"
     export ESTRATO_REPO=\"$REPO\"
     [[ -f \"$REPO/scripts/victor/setup-estrato-content.sh\" ]] && bash \"$REPO/scripts/victor/setup-estrato-content.sh\" || true
@@ -140,7 +146,7 @@ else
 fi
 
 # ─── Sprint 5: Nav & Visual ─────────────────────────────────────────
-run_step 5 "Nav, hubs, visual" bash -c "
+run_step 5 "Nav, hubs, visual" bash -c "$PORTAL_BASH_INIT
   export WEB_ROOT=\"$PORTAL_WEB_ROOT\"
   export ESTRATO_REPO=\"$REPO\"
   export ESTRATO_PORTAL=\"$PORTAL_ID\"
@@ -152,7 +158,7 @@ run_step 5 "Nav, hubs, visual" bash -c "
 "
 
 # ─── Sprint 6: AEO/GEO ────────────────────────────────────────────
-run_step 6 "AEO/GEO (llms.txt, IndexNow)" bash -c "
+run_step 6 "AEO/GEO (llms.txt, IndexNow)" bash -c "$PORTAL_BASH_INIT
   export WEB_ROOT=\"$PORTAL_WEB_ROOT\"
   export ESTRATO_REPO=\"$REPO\"
   [[ -f \"$REPO/scripts/victor/setup-estrato-aeo.sh\" ]] && bash \"$REPO/scripts/victor/setup-estrato-aeo.sh\"
@@ -160,7 +166,7 @@ run_step 6 "AEO/GEO (llms.txt, IndexNow)" bash -c "
 "
 
 # ─── Sprint 7: Gate ───────────────────────────────────────────────
-run_step 7 "Gate & polish" bash -c "
+run_step 7 "Gate & polish" bash -c "$PORTAL_BASH_INIT
   export WEB_ROOT=\"$PORTAL_WEB_ROOT\"
   export ESTRATO_REPO=\"$REPO\"
   portal_wp eval-file \"$REPO/scripts/victor/setup-sprint7-gate.php\" 2>/dev/null || true
@@ -172,7 +178,7 @@ run_step 7 "Gate & polish" bash -c "
 "
 
 # ─── Sprint 8: Taxonomia + Layout ─────────────────────────────────
-run_step 8 "Taxonomia v2 + layout home" bash -c "
+run_step 8 "Taxonomia v2 + layout home" bash -c "$PORTAL_BASH_INIT
   export ESTRATO_PORTAL=\"$PORTAL_ID\"
   export ESTRATO_WP=\"$PORTAL_WEB_ROOT\"
   portal_sync_plugins
@@ -188,7 +194,7 @@ run_step 8 "Taxonomia v2 + layout home" bash -c "
 "
 
 # ─── Sprint 9: Curadoria RSS ──────────────────────────────────────
-run_step 9 "Curadoria RSS" bash -c "
+run_step 9 "Curadoria RSS" bash -c "$PORTAL_BASH_INIT
   if [[ -f \"$REPO/scripts/victor/validate-rss-feeds.py\" ]]; then
     python3 \"$REPO/scripts/victor/validate-rss-feeds.py\" \"$REPO/portals/${PORTAL_ID}-taxonomy.php\" || true
   fi
@@ -196,12 +202,12 @@ run_step 9 "Curadoria RSS" bash -c "
 "
 
 # ─── Sprint 10: Ops ───────────────────────────────────────────────
-run_step 10 "Operação contínua" bash -c "
+run_step 10 "Operação contínua" bash -c "$PORTAL_BASH_INIT
   portal_wp eval-file \"$REPO/scripts/victor/setup-sprint10-ops.php\" 2>/dev/null || true
 "
 
 # ─── Sprint 11: Auditoria taxonomia ─────────────────────────────
-run_step 11 "Auditoria taxonomia v2" bash -c "
+run_step 11 "Auditoria taxonomia v2" bash -c "$PORTAL_BASH_INIT
   portal_wp eval-file \"$REPO/scripts/victor/setup-sprint11-taxonomy-v2.php\" 2>/dev/null || true
 "
 

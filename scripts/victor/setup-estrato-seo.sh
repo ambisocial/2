@@ -6,7 +6,7 @@ WEB="${WEB_ROOT:-/var/www/estrato.cc}"
 REPO="${ESTRATO_REPO:-/var/www/estrato/repo}"
 WP="sudo -u www-data wp --path=$WEB"
 
-echo "=== estrato.cc SEO setup (Sprint 1) ==="
+echo "=== SEO setup (Sprint 1) @ $WEB ==="
 
 # Plugins atualizados
 if [[ -d "$REPO/estrato-portal-bootstrap" ]]; then

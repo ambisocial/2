@@ -4,10 +4,11 @@ set -euo pipefail
 
 STACK_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="${STACK_DIR}/.env"
+COOKIE_JAR="${STACK_DIR}/.gts-oauth-cookies"
 GTS_URL="${GTS_URL:-http://127.0.0.1:8085}"
-BOT_USER="${GTS_BOT_USER:-estrato-bot}"
+BOT_USER="${GTS_BOT_USER:-estrato_bot}"
 BOT_EMAIL="${GTS_BOT_EMAIL:-estrato-bot@authors.estrato.cc}"
-BOT_PASS="${GTS_BOT_PASS:-$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24)}"
+BOT_PASS="${GTS_BOT_PASS:-}"
 
 cd "$STACK_DIR"
 
@@ -16,11 +17,32 @@ if ! docker compose ps gotosocial 2>/dev/null | grep -qE 'running|Up'; then
   exit 1
 fi
 
+# Reutiliza credenciais existentes quando válidas.
+if [[ -f "$ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  if [[ -n "${MASTODON_ACCESS_TOKEN:-}" ]]; then
+    if curl -sf -H "Authorization: Bearer ${MASTODON_ACCESS_TOKEN}" \
+      "${GTS_URL}/api/v1/accounts/verify_credentials" >/dev/null 2>&1; then
+      docker compose up -d masto-rss
+      echo "GoToSocial bot OK (token existente) — env em $ENV_FILE"
+      exit 0
+    fi
+  fi
+  BOT_PASS="${GTS_BOT_PASS:-$BOT_PASS}"
+fi
+
+if [[ -z "$BOT_PASS" ]]; then
+  BOT_PASS="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24)"
+fi
+
 # Conta local (idempotente — ignora se já existe).
 docker compose exec -T gotosocial /gotosocial/gotosocial admin account create \
   --username "$BOT_USER" \
   --email "$BOT_EMAIL" \
   --password "$BOT_PASS" 2>/dev/null || true
+docker compose exec -T gotosocial /gotosocial/gotosocial admin account confirm \
+  --username "$BOT_USER" 2>/dev/null || true
 
 # Registrar app OAuth (Mastodon-compatible API).
 APP_JSON=$(curl -sS -X POST "${GTS_URL}/api/v1/apps" \
@@ -35,10 +57,25 @@ if [[ -z "$CLIENT_ID" || -z "$CLIENT_SECRET" ]]; then
   exit 1
 fi
 
-# Token via password grant (instância local).
+# GoToSocial 0.17+ não aceita password grant — fluxo authorization_code via curl.
+AUTH_URL="${GTS_URL}/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=read+write"
+rm -f "$COOKIE_JAR"
+curl -sS -c "$COOKIE_JAR" -b "$COOKIE_JAR" "$AUTH_URL" >/dev/null
+curl -sS -c "$COOKIE_JAR" -b "$COOKIE_JAR" -X POST "${GTS_URL}/auth/sign_in" \
+  -d "username=${BOT_EMAIL}&password=${BOT_PASS}" >/dev/null
+curl -sS -c "$COOKIE_JAR" -b "$COOKIE_JAR" "$AUTH_URL" >/dev/null
+AUTH_HDRS=$(curl -sS -c "$COOKIE_JAR" -b "$COOKIE_JAR" -X POST "${GTS_URL}/oauth/authorize" -D - -o /dev/null)
+AUTH_CODE=$(echo "$AUTH_HDRS" | grep -i '^Location:' | sed -n 's/.*code=//p' | tr -d '\r')
+rm -f "$COOKIE_JAR"
+
+if [[ -z "$AUTH_CODE" ]]; then
+  echo "Falha ao obter authorization code (GoToSocial OAuth)"
+  exit 1
+fi
+
 TOKEN_JSON=$(curl -sS -X POST "${GTS_URL}/oauth/token" \
   -H 'Content-Type: application/json' \
-  -d "{\"client_id\":\"$CLIENT_ID\",\"client_secret\":\"$CLIENT_SECRET\",\"grant_type\":\"password\",\"username\":\"$BOT_USER\",\"password\":\"$BOT_PASS\",\"scope\":\"read write\",\"redirect_uri\":\"urn:ietf:wg:oauth:2.0:oob\"}")
+  -d "{\"redirect_uri\":\"urn:ietf:wg:oauth:2.0:oob\",\"client_id\":\"$CLIENT_ID\",\"client_secret\":\"$CLIENT_SECRET\",\"grant_type\":\"authorization_code\",\"code\":\"$AUTH_CODE\"}")
 
 ACCESS_TOKEN=$(echo "$TOKEN_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('access_token',''))")
 

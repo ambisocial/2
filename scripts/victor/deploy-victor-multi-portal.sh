@@ -201,7 +201,9 @@ apply_portal() {
 
   sudo -u www-data wp --path="$web" option update blogname "$title" 2>/dev/null || true
   sudo -u www-data wp --path="$web" option update blogdescription "$tagline" 2>/dev/null || true
-  sudo -u www-data wp --path="$web" rewrite flush --hard 2>/dev/null || true
+  # REST API exige permalink_structure; --hard falha em pools www-data (proc_open).
+  sudo -u www-data wp --path="$web" option update permalink_structure '/%postname%/' 2>/dev/null || true
+  sudo -u www-data wp --path="$web" rewrite flush 2>/dev/null || true
 
   local health
   health=$(curl -sk -H "Host: ${domain}" "https://${VPS_IP}/wp-json/estrato/v1/health" 2>/dev/null || echo "fail")

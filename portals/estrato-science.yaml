@@ -1,0 +1,56 @@
+# Portal Ciência, tecnologia e futuro
+id: estrato-science
+domain: science.estrato.cc
+title: Estrato Science
+tagline: Ciência, tecnologia e futuro
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-science
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-science-taxonomy.php
+
+# 3 editorias × 6 nichos (fonte canônica: estrato-science-taxonomy.php, schema v2)
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-science-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - neuro-biologia
+  - bio-fabricacao
+  - ia-seguranca
+
+branding:
+  primary_color: "#0B132B"
+  accent_color: "#5BC0BE"
+  secondary_color: "#1C2541"
+  logo_file: estrato-logo.png
+  breaking_category: ia-seguranca
+  breaking_label: "Futuro"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/science.estrato.cc

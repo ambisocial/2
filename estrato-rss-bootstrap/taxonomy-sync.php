@@ -19,7 +19,7 @@ define( 'ESTRATO_RSS_IMPORT_MATRIX_OPTION', 'estrato_rss_import_matrix' );
  * @return array<int, string>
  */
 function estrato_rss_taxonomy_presets() {
-	return array( 'brasil-financeiro', 'brasil-mind', 'brasil-lifestyle' );
+	return array( 'brasil-financeiro', 'brasil-mind', 'brasil-lifestyle', 'brasil-science' );
 }
 
 /**
@@ -31,6 +31,7 @@ function estrato_rss_preset_to_taxonomy_basename( $preset ) {
 		'brasil-financeiro' => 'estrato-finance-taxonomy',
 		'brasil-mind'       => 'estrato-mind-taxonomy',
 		'brasil-lifestyle'  => 'estrato-lifestyle-taxonomy',
+		'brasil-science'    => 'estrato-science-taxonomy',
 	);
 	$preset = sanitize_key( $preset );
 	return $map[ $preset ] ?? 'estrato-finance-taxonomy';
@@ -106,6 +107,13 @@ function estrato_rss_load_lifestyle_taxonomy() {
 }
 
 /**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_science_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-science' );
+}
+
+/**
  * Converte taxonomia do portal em mapa de preset RSS (editorias — sem subcategorias/colunas).
  *
  * @param array<string, mixed> $taxonomy
@@ -168,6 +176,16 @@ function estrato_rss_get_lifestyle_menu_order() {
 	return estrato_rss_get_taxonomy_menu_order(
 		estrato_rss_load_lifestyle_taxonomy(),
 		array( 'sabores-paixao', 'movimento-ar-livre', 'hobbies-colecao' )
+	);
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_science_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order(
+		estrato_rss_load_science_taxonomy(),
+		array( 'neuro-biologia', 'bio-fabricacao', 'ia-seguranca' )
 	);
 }
 

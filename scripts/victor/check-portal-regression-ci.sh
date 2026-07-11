@@ -42,13 +42,26 @@ else
   fail "estrato-lifestyle.yaml ausente"
 fi
 
+if [[ -f portals/estrato-science-taxonomy.php ]]; then
+  ok "estrato-science-taxonomy.php presente"
+else
+  fail "estrato-science-taxonomy.php ausente"
+fi
+
+if [[ -f portals/estrato-science.yaml ]]; then
+  ok "estrato-science.yaml presente"
+else
+  fail "estrato-science.yaml ausente"
+fi
+
 for sh in scripts/victor/check-portal-regression.sh \
           scripts/victor/setup-estrato-gate.sh \
           scripts/victor/setup-estrato-taxonomy.sh \
           scripts/victor/setup-estrato-rss-curation.sh \
           scripts/victor/setup-estrato-ops.sh \
           scripts/victor/setup-estrato-mind-taxonomy.sh \
-          scripts/victor/setup-estrato-lifestyle-taxonomy.sh; do
+          scripts/victor/setup-estrato-lifestyle-taxonomy.sh \
+          scripts/victor/setup-estrato-science-taxonomy.sh; do
   if [[ -f "$sh" ]]; then
     bash -n "$sh" && ok "bash -n $sh"
   else
@@ -80,7 +93,7 @@ sys.exit(1 if d else 0)" 2>/dev/null
   fi
 }
 
-for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php; do
+for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php; do
   if [[ -f "$tax" ]]; then
     if check_taxonomy_dupes "$tax"; then
       ok "$(basename "$tax") sem feeds duplicados"

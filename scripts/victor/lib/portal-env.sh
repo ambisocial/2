@@ -29,7 +29,7 @@ portal_resolve() {
 }
 
 portal_wp() {
-  sudo -u www-data wp --path="${PORTAL_WEB_ROOT:?}"
+  sudo -u www-data wp --path="${PORTAL_WEB_ROOT:?}" "$@"
 }
 
 portal_log() {

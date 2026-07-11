@@ -1,18 +1,34 @@
 #!/usr/bin/env bash
-# Valida regras anti-regressão do portal estrato.cc
+# Valida regras anti-regressão por portal (finance ou satélite).
 # Uso: bash scripts/victor/check-portal-regression.sh [--strict]
+#      ESTRATO_PORTAL=estrato-mind WEB_ROOT=/var/www/mente.estrato.cc bash ...
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PORTAL_ID="${ESTRATO_PORTAL:-estrato-finance}"
 DOMAIN="${ESTRATO_DOMAIN:-estrato.cc}"
+WEB_ROOT="${WEB_ROOT:-/var/www/estrato.cc}"
+
+if [[ -f "$SCRIPT_DIR/lib/portal-env.sh" && -f "${ESTRATO_REPO:-/var/www/estrato/repo}/portals/${PORTAL_ID}.yaml" ]]; then
+  # shellcheck source=/dev/null
+  source "$SCRIPT_DIR/lib/portal-env.sh"
+  portal_resolve "$PORTAL_ID"
+  DOMAIN="$PORTAL_DOMAIN"
+  WEB_ROOT="$PORTAL_WEB_ROOT"
+fi
+
+IS_FINANCE=0
+[[ "$PORTAL_ID" == "estrato-finance" ]] && IS_FINANCE=1
+
 BASE="https://${DOMAIN}"
 # No Victor, consulta origem direta (evita CF challenge em curl servidor→servidor).
-if [[ -f /var/www/estrato.cc/wp-config.php ]]; then
+if [[ -f "${WEB_ROOT}/wp-config.php" ]]; then
   BASE="https://187.127.12.186"
   CURL_HOST=( -H "Host: ${DOMAIN}" -k )
 else
   CURL_HOST=()
 fi
-WP="${WP_CLI:-sudo -u www-data wp --path=/var/www/estrato.cc}"
+WP="${WP_CLI:-sudo -u www-data wp --path=$WEB_ROOT}"
 STRICT="${1:-}"
 YAML="${ESTRATO_REGRESSION_YAML:-/var/www/estrato/repo/portals/estrato-anti-regression.yaml}"
 
@@ -33,7 +49,7 @@ http_status() {
 
 body() {
   local follow="-L"
-  if [[ -f /var/www/estrato.cc/wp-config.php ]]; then
+  if [[ -f "${WEB_ROOT}/wp-config.php" ]]; then
     follow=""
   fi
   # shellcheck disable=SC2086
@@ -43,7 +59,7 @@ body() {
 # No Victor, reescreve URLs estrato.cc → IP origem.
 normalize_url() {
   local url="$1"
-  if [[ -f /var/www/estrato.cc/wp-config.php && "$url" == https://${DOMAIN}* ]]; then
+  if [[ -f "${WEB_ROOT}/wp-config.php" && "$url" == https://${DOMAIN}* ]]; then
     echo "${BASE}${url#https://${DOMAIN}}"
   else
     echo "$url"
@@ -62,6 +78,7 @@ latest_post_url() {
 }
 
 echo "=== Estrato Anti-Regression Check ==="
+echo "Portal: $PORTAL_ID | Domain: $DOMAIN | Web: $WEB_ROOT"
 echo "Domain: $BASE"
 echo "Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo
@@ -133,17 +150,20 @@ else
   rm -f "$POST_HTML"
 fi
 
-cat_code=$(http_status "$BASE/category/economia/")
-cat_html=$(body "$BASE/category/economia/?nocache=$(date +%s)")
+cat_code=$(http_status "$BASE/category/$( [[ $IS_FINANCE -eq 1 ]] && echo economia || echo aprendizado-cognicao )/")
+cat_html=$(body "$BASE/category/$( [[ $IS_FINANCE -eq 1 ]] && echo economia || echo aprendizado-cognicao )/?nocache=$(date +%s)")
 cat_title=$(echo "$cat_html" | grep -oiE '<title[^>]*>[^<]+</title>' | head -1)
 if echo "$cat_title" | grep -qi "Archives"; then warn "AR-SCHEMA-010 title categoria com 'Archives'"; else ok "AR-SCHEMA-010 title categoria pt_BR"; fi
 
 # ─── E. E-E-A-T ──────────────────────────────────────────────────
 echo "## E. E-E-A-T / institucional"
-for path in sobre politica-editorial contato politica-de-privacidade; do
+for path in sobre politica-editorial contato; do
   code=$(http_status "$BASE/$path/")
   if [[ "$code" == "200" ]]; then ok "AR-EEAT página /$path/ OK"; else block "AR-EEAT-$path HTTP $code (esperado 200)"; fi
 done
+priv_code=$(http_status "$BASE/privacidade/")
+pol_code=$(http_status "$BASE/politica-de-privacidade/")
+if [[ "$priv_code" == "200" || "$pol_code" == "200" ]]; then ok "AR-EEAT página privacidade OK"; else block "AR-EEAT-privacidade HTTP $priv_code/$pol_code (esperado 200)"; fi
 
 if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   users=$($WP user list --format=count 2>/dev/null || echo 0)
@@ -164,7 +184,9 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   logo=$($WP eval 'echo (int) get_theme_mod("custom_logo");' 2>/dev/null || echo "")
   if [[ -n "$logo" && "$logo" != "0" ]]; then ok "AR-VISUAL-001 custom_logo=$logo"; else block "AR-VISUAL-001 sem custom_logo"; fi
   accent=$($WP eval 'echo (string) get_theme_mod("pressgrid_accent_color");' 2>/dev/null || echo "")
-  if [[ "$accent" == "#9AFF33" || "$accent" == "#9aff33" ]]; then ok "AR-VISUAL-002 accent $accent"; else warn "AR-VISUAL-002 accent=$accent (esperado #9AFF33)"; fi
+  if [[ $IS_FINANCE -eq 1 ]]; then
+    if [[ "$accent" == "#9AFF33" || "$accent" == "#9aff33" ]]; then ok "AR-VISUAL-002 accent $accent"; else warn "AR-VISUAL-002 accent=$accent (esperado #9AFF33)"; fi
+  elif [[ -n "$accent" && "$accent" != "0" ]]; then ok "AR-VISUAL-002 accent $accent"; else warn "AR-VISUAL-002 accent não configurado"; fi
 else
   warn "WP-CLI indisponível — pulando checks WordPress"
 fi
@@ -174,11 +196,17 @@ echo "## F. navegação & AEO"
 if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   primary=$($WP eval '$l=get_theme_mod("nav_menu_locations"); echo isset($l["primary"]) ? (int)$l["primary"] : 0;' 2>/dev/null || echo 0)
   if [[ -n "$primary" && "$primary" != "0" ]]; then ok "AR-NAV-001 menu primary=$primary"; else block "AR-NAV-001 sem menu primary"; fi
-  menu_count=$($WP menu item list estrato-principal --format=count 2>/dev/null || echo 0)
-  if [[ "$menu_count" -ge 8 ]]; then ok "AR-NAV-002 menu $menu_count itens"; else block "AR-NAV-002 menu apenas $menu_count itens (meta 8+)"; fi
-  breaking=$($WP eval 'echo (int) get_theme_mod("pressgrid_breaking_news_category");' 2>/dev/null || echo 0)
-  forex=$($WP eval 'echo get_theme_mod("pressgrid_forex_force") ? "1" : "0";' 2>/dev/null || echo 0)
-  if [[ -n "$breaking" && "$breaking" != "0" ]] || [[ "$forex" == "1" ]]; then ok "AR-VISUAL-004 ticker/forex ativo"; else warn "AR-VISUAL-004 sem ticker mercados/forex"; fi
+  menu_count=$($WP menu item list estrato-principal --format=count 2>/dev/null || $WP menu item list estrato-mente --format=count 2>/dev/null || echo 0)
+  min_menu=3
+  [[ $IS_FINANCE -eq 1 ]] && min_menu=8
+  if [[ "$menu_count" -ge $min_menu ]]; then ok "AR-NAV-002 menu $menu_count itens"; else block "AR-NAV-002 menu apenas $menu_count itens (meta $min_menu+)"; fi
+  if [[ $IS_FINANCE -eq 1 ]]; then
+    breaking=$($WP eval 'echo (int) get_theme_mod("pressgrid_breaking_news_category");' 2>/dev/null || echo 0)
+    forex=$($WP eval 'echo get_theme_mod("pressgrid_forex_force") ? "1" : "0";' 2>/dev/null || echo 0)
+    if [[ -n "$breaking" && "$breaking" != "0" ]] || [[ "$forex" == "1" ]]; then ok "AR-VISUAL-004 ticker/forex ativo"; else warn "AR-VISUAL-004 sem ticker mercados/forex"; fi
+  else
+    ok "AR-VISUAL-004 ticker/forex N/A satélite"
+  fi
 else
   warn "WP-CLI indisponível — pulando AR-NAV-001/002"
 fi
@@ -200,6 +228,7 @@ if [[ "$code" == "200" ]]; then ok "AR-INDEX-001 IndexNow key file OK"; else war
 code=$(http_status "$BASE/ads.txt")
 if [[ "$code" == "200" ]]; then ok "AR-AEO ads.txt OK"; else warn "AR-AEO ads.txt ausente"; fi
 
+if [[ $IS_FINANCE -eq 1 ]]; then
 hubs_ok=0
 for hub in selic ibovespa dolar cripto inflacao tributacao agronegocio; do
   c=$(http_status "$BASE/tudo-sobre/$hub/")
@@ -208,10 +237,19 @@ done
 if [[ "$hubs_ok" -ge 7 ]]; then ok "AR-NAV-003 $hubs_ok/7 hubs /tudo-sobre/"; elif [[ "$hubs_ok" -ge 3 ]]; then ok "AR-NAV-003 $hubs_ok hubs /tudo-sobre/ (mín 3)"; else warn "AR-NAV-003 apenas $hubs_ok/7 hubs"; fi
 code=$(http_status "$BASE/cotacoes/")
 if [[ "$code" == "200" ]]; then ok "AR-NAV página /cotacoes/ OK"; else warn "AR-NAV /cotacoes/ HTTP $code"; fi
+else
+  hubs_ok=0
+  for hub in aprendizado filosofia financas-comportamentais; do
+    c=$(http_status "$BASE/tudo-sobre/$hub/")
+    [[ "$c" == "200" ]] && hubs_ok=$((hubs_ok+1))
+  done
+  if [[ "$hubs_ok" -ge 1 ]]; then ok "AR-NAV-003 $hubs_ok hubs /tudo-sobre/ (satélite)"; else warn "AR-NAV-003 nenhum hub /tudo-sobre/ no satélite"; fi
+fi
 
 # ─── H. TAXONOMIA (Sprint 8) ─────────────────────────────────────
-echo "## H. taxonomia financeira"
+echo "## H. taxonomia $( [[ $IS_FINANCE -eq 1 ]] && echo financeira || echo portal )"
 if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
+  if [[ $IS_FINANCE -eq 1 ]]; then
   for slug in economia mercados negocios financas-pessoais criptomoedas agronegocio mundo; do
     cnt=$($WP post list --category_name="$slug" --post_status=publish --format=count 2>/dev/null || echo 0)
     if [[ "$cnt" -eq 0 ]]; then warn "AR-TAX-001 $slug sem posts publicados"; else ok "AR-TAX-001 $slug posts=$cnt"; fi
@@ -222,11 +260,18 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
     legacy=$((legacy + n))
   done
   if [[ "$legacy" -eq 0 ]]; then ok "AR-TAX-002 zero posts em categorias legado"; else warn "AR-TAX-002 $legacy posts em politica/tecnologia/brasil"; fi
+  else
+  for slug in aprendizado-cognicao filosofia-autoconhecimento financas-comportamentais; do
+    cnt=$($WP post list --category_name="$slug" --post_status=publish --format=count 2>/dev/null || echo 0)
+    if [[ "$cnt" -eq 0 ]]; then warn "AR-TAX-001 $slug sem posts publicados"; else ok "AR-TAX-001 $slug posts=$cnt"; fi
+  done
+  ok "AR-TAX-002 legado N/A satélite"
+  fi
   pg_secs=$($WP eval 'echo function_exists("estrato_regression_pressgrid_finance_sections") ? estrato_regression_pressgrid_finance_sections() : -1;' 2>/dev/null || echo -1)
   if [[ "$pg_secs" -ge 7 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções por editoria"; elif [[ "$pg_secs" -ge 4 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções (mín 4)"; elif [[ "$pg_secs" -ge 0 ]]; then warn "AR-TAX-003 PressGrid apenas $pg_secs seções editoria"; else warn "AR-TAX-003 helper indisponível"; fi
   branded=$($WP eval 'echo function_exists("estrato_regression_branded_editorias_count") ? estrato_regression_branded_editorias_count() : -1;' 2>/dev/null || echo -1)
   if [[ "$branded" -ge 7 ]]; then ok "AR-TAX-004 $branded/7 editorias com branding"; elif [[ "$branded" -ge 4 ]]; then ok "AR-TAX-004 $branded editorias com branding (mín 4)"; elif [[ "$branded" -ge 0 ]]; then warn "AR-TAX-004 apenas $branded editorias com branding"; else warn "AR-TAX-004 branding editorias indisponível"; fi
-  schema_v=$($WP eval '$t=function_exists("estrato_rss_load_finance_taxonomy")?estrato_rss_load_finance_taxonomy():array(); echo (int)($t["schema_version"]??0);' 2>/dev/null || echo 0)
+  schema_v=$($WP eval '$t=function_exists("estrato_rss_load_finance_taxonomy")?estrato_rss_load_finance_taxonomy():(function_exists("estrato_rss_load_portal_taxonomy")?estrato_rss_load_portal_taxonomy():array()); echo (int)($t["schema_version"]??0);' 2>/dev/null || echo 0)
   if [[ "$schema_v" -ge 2 ]]; then ok "AR-TAX-005 schema taxonomia v$schema_v"; else warn "AR-TAX-005 schema taxonomia v$schema_v (meta v2)"; fi
   matrix_n=$($WP eval 'echo count(get_option("estrato_rss_import_matrix", array()));' 2>/dev/null || echo -1)
   if [[ "$matrix_n" -ge 7 ]]; then ok "AR-TAX-006 matriz RSS $matrix_n nós"; elif [[ "$matrix_n" -ge 0 ]]; then warn "AR-TAX-006 matriz RSS $matrix_n nós"; else warn "AR-TAX-006 matriz RSS indisponível"; fi
@@ -247,8 +292,10 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   fi
   ratio=$($WP eval 'echo function_exists("estrato_rss_feed_health_ratio") ? estrato_rss_feed_health_ratio() : -1;' 2>/dev/null || echo -1)
   if awk -v r="$ratio" 'BEGIN{exit !(r>=0.70)}' 2>/dev/null; then ok "AR-RSS-003 saúde feeds=$ratio"; elif awk -v r="$ratio" 'BEGIN{exit !(r>=0)}' 2>/dev/null; then warn "AR-RSS-003 saúde feeds=$ratio (meta 0.70)"; else warn "AR-RSS-003 saúde feeds não validada"; fi
-  menu_n=$($WP menu item list estrato-principal --format=count 2>/dev/null || echo 0)
-  if [[ "$menu_n" -ge 8 ]]; then ok "AR-RSS-004 menu $menu_n itens"; else warn "AR-RSS-004 menu $menu_n itens"; fi
+  menu_n=$($WP menu item list estrato-principal --format=count 2>/dev/null || $WP menu item list estrato-mente --format=count 2>/dev/null || echo 0)
+  min_rss_menu=3
+  [[ $IS_FINANCE -eq 1 ]] && min_rss_menu=8
+  if [[ "$menu_n" -ge $min_rss_menu ]]; then ok "AR-RSS-004 menu $menu_n itens"; else warn "AR-RSS-004 menu $menu_n itens"; fi
 else
   warn "WP-CLI indisponível — pulando AR-RSS-*"
 fi

@@ -13,9 +13,15 @@ BOT_PASS="${GTS_BOT_PASS:-}"
 cd "$STACK_DIR"
 
 # Pacote C: OAuth deve usar o host público quando GoToSocial roda com GTS_PUBLIC_HOST.
+GTS_PUBLIC_HOST_SAVED=""
+GTS_PUBLIC_PROTOCOL_SAVED=""
+GTS_TRUSTED_PROXIES_SAVED=""
 if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"
+  GTS_PUBLIC_HOST_SAVED="${GTS_PUBLIC_HOST:-}"
+  GTS_PUBLIC_PROTOCOL_SAVED="${GTS_PUBLIC_PROTOCOL:-}"
+  GTS_TRUSTED_PROXIES_SAVED="${GTS_TRUSTED_PROXIES:-}"
   if [[ -n "${GTS_PUBLIC_HOST:-}" && "${GTS_PUBLIC_PROTOCOL:-}" == "https" ]]; then
     GTS_URL="${GTS_PUBLIC_PROTOCOL}://${GTS_PUBLIC_HOST}"
   fi
@@ -100,6 +106,14 @@ MASTODON_ACCESS_TOKEN=$ACCESS_TOKEN
 GTS_BOT_USER=$BOT_USER
 GTS_BOT_PASS=$BOT_PASS
 EOF
+# Preserva variáveis Pacote C (bootstrap reescreve .env)
+if [[ -n "${GTS_PUBLIC_HOST_SAVED:-}" ]]; then
+  cat >> "$ENV_FILE" <<EOF
+GTS_PUBLIC_HOST=${GTS_PUBLIC_HOST_SAVED}
+GTS_PUBLIC_PROTOCOL=${GTS_PUBLIC_PROTOCOL_SAVED:-https}
+GTS_TRUSTED_PROXIES=${GTS_TRUSTED_PROXIES_SAVED:-127.0.0.1/32,::1,172.16.0.0/12}
+EOF
+fi
 chmod 600 "$ENV_FILE"
 
 docker compose up -d masto-rss

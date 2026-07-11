@@ -6,7 +6,7 @@ WEB="${WEB_ROOT:-/var/www/estrato.cc}"
 REPO="${ESTRATO_REPO:-/var/www/estrato/repo}"
 WP="sudo -u www-data wp --path=$WEB"
 
-echo "=== estrato.cc Schema setup (Sprint 2) ==="
+echo "=== Schema setup (Sprint 2) @ $WEB ==="
 
 if [[ -d "$REPO/estrato-portal-bootstrap" ]]; then
   rsync -a "$REPO/estrato-portal-bootstrap/" "$WEB/wp-content/plugins/estrato-portal-bootstrap/"

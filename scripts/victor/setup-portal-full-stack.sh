@@ -75,7 +75,9 @@ run_step() {
     portal_log "[dry-run] $*"
     return 0
   fi
-  "$@" 2>&1 | tee -a "$LOG_FILE"
+  if ! "$@" 2>&1 | tee -a "$LOG_FILE"; then
+    portal_log "WARN Sprint $sprint falhou (exit $?) — continuando"
+  fi
 }
 
 portal_log "Full stack: $PORTAL_ID @ $PORTAL_DOMAIN ($PORTAL_WEB_ROOT)"
@@ -98,9 +100,9 @@ run_step 1 "SEO (robots, Yoast, news-sitemap)" bash -c "$PORTAL_BASH_INIT
   if [[ -f \"$REPO/scripts/victor/setup-estrato-seo.sh\" ]]; then
     # Yoast titles genéricos por portal
     bash \"$REPO/scripts/victor/setup-estrato-seo.sh\"
-    portal_wp option patch update wpseo_titles title-home-wpseo '${PORTAL_TITLE} | ${PORTAL_DOMAIN}'
-    portal_wp option patch update wpseo_titles title-tax-category '%%term_title%%: notícias %%page%% | ${PORTAL_TITLE}'
-    portal_wp option patch update wpseo_titles title-post '%%title%% | ${PORTAL_TITLE}'
+    portal_wp option patch update wpseo_titles title-home-wpseo \"${PORTAL_TITLE} | ${PORTAL_DOMAIN}\"
+    portal_wp option patch update wpseo_titles title-tax-category \"%%term_title%%: notícias %%page%% | ${PORTAL_TITLE}\"
+    portal_wp option patch update wpseo_titles title-post \"%%title%% | ${PORTAL_TITLE}\"
   fi
   portal_ensure_permalinks
 "

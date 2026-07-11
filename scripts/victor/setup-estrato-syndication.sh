@@ -64,10 +64,18 @@ fi
 
 # 5) Crons
 CRON_SYN='5 * * * * python3 '"$REPO"'/scripts/victor/syndicate-outbound.py --recent 5 >> '"$LOG_DIR"'/syndicate.log 2>&1'
+CRON_MSN='*/30 * * * * python3 '"$REPO"'/scripts/victor/syndicate-outbound.py --generate-msn-feed >> '"$LOG_DIR"'/msn-feed.log 2>&1'
 if ! crontab -l 2>/dev/null | grep -qF 'syndicate-outbound.py'; then
   (crontab -l 2>/dev/null; echo "$CRON_SYN") | crontab -
   echo "Cron horário syndication (:05)"
 fi
+if ! crontab -l 2>/dev/null | grep -qF '--generate-msn-feed'; then
+  (crontab -l 2>/dev/null; echo "$CRON_MSN") | crontab -
+  echo "Cron MSN feed (:30)"
+fi
+
+# MSN feed inicial
+python3 "$REPO/scripts/victor/syndicate-outbound.py" --generate-msn-feed 2>/dev/null || true
 
 # 6) Auditoria
 bash "$REPO/scripts/victor/check-syndication.sh" --strict || true

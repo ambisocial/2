@@ -19,7 +19,9 @@ run_b() {
   local step="$1"
   local file="$2"
   echo "=== $step ===" | tee -a "$LOG"
-  portal_sync_plugins 2>&1 | tee -a "$LOG" || true
+  if [[ "$step" == "B1 conteúdo" ]]; then
+    portal_sync_plugins 2>&1 | tee -a "$LOG" || true
+  fi
   portal_wp eval-file "$REPO/scripts/victor/$file" 2>&1 | tee -a "$LOG"
   portal_wp cache flush 2>/dev/null || true
 }

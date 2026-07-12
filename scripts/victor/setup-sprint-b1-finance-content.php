@@ -21,7 +21,25 @@ $stats = array(
 );
 
 $backfill = dirname( __FILE__ ) . '/backfill-fallback-thumbnails.php';
-if ( is_readable( $backfill ) ) {
+if ( is_readable( $backfill ) && function_exists( 'estrato_bridge_set_fallback_thumbnail' ) ) {
+	foreach (
+		get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		) as $post_id
+	) {
+		if ( has_post_thumbnail( $post_id ) ) {
+			continue;
+		}
+		if ( estrato_bridge_set_fallback_thumbnail( $post_id ) ) {
+			++$stats['fallback_thumbs'];
+		}
+	}
+} elseif ( is_readable( $backfill ) ) {
 	ob_start();
 	require $backfill;
 	$out = ob_get_clean();

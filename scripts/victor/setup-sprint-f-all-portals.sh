@@ -39,6 +39,16 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   echo "--- F3 GEO llms-full ---" | tee -a "$LOG"
   portal_wp eval-file "$REPO/scripts/victor/setup-sprint-f3-portal-geo.php" 2>&1 | tee -a "$LOG"
 
+  echo "--- pós-F: A2 autores + thumbs + legacy ---" | tee -a "$LOG"
+  portal_wp eval-file "$REPO/scripts/victor/setup-sprint-a2-portal-authors.php" 2>&1 | tee -a "$LOG" || true
+  portal_wp eval-file "$REPO/scripts/victor/backfill-fallback-thumbnails.php" 2>&1 | tee -a "$LOG" || true
+  portal_wp eval-file "$REPO/scripts/victor/enrich-thin-posts.php" 2>&1 | tee -a "$LOG" || true
+  portal_wp eval-file "$REPO/scripts/victor/trash-pre2024-posts.php" 2>&1 | tee -a "$LOG" || true
+
+  if [[ "$PORTAL_ID" != "estrato-finance" ]]; then
+    portal_wp eval-file "$REPO/scripts/victor/rebuild-portal-menu.php" 2>&1 | tee -a "$LOG" || true
+  fi
+
   portal_wp cache flush 2>/dev/null || true
 done
 

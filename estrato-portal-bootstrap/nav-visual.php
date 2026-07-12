@@ -374,6 +374,24 @@ function estrato_nav_network_footer_html() {
 }
 
 /**
+ * HTML do hub da rede na home (finance — S26).
+ *
+ * @return string
+ */
+function estrato_nav_network_hub_html() {
+	$html = '<div class="estrato-network-hub"><p>Explore os portais especializados da rede Estrato:</p><ul class="estrato-network-hub-grid">';
+	foreach ( estrato_nav_network_catalog() as $node ) {
+		if ( 'estrato-finance' === $node['id'] ) {
+			continue;
+		}
+		$html .= '<li><a href="' . esc_url( $node['url'] ) . '"><strong>' . esc_html( $node['name'] )
+			. '</strong></a><br><span class="estrato-network-tagline">' . esc_html( $node['tagline'] ) . '</span></li>';
+	}
+	$html .= '</ul></div>';
+	return $html;
+}
+
+/**
  * Links de editorias no footer.
  *
  * @return string

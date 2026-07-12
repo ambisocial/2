@@ -10,7 +10,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'ESTRATO_SYNDICATE_SCRIPT', '/var/www/estrato/repo/scripts/victor/syndicate-outbound.py' );
-define( 'ESTRATO_SYNDICATE_LOG', '/var/log/estrato/syndicate.log' );
+define( 'ESTRATO_SYNDICATE_LOG_DIR', '/var/log/estrato' );
+
+/**
+ * @return string
+ */
+function estrato_syndicate_log_path() {
+	$portal = function_exists( 'estrato_nav_current_portal_id' )
+		? estrato_nav_current_portal_id()
+		: 'estrato-finance';
+	return ESTRATO_SYNDICATE_LOG_DIR . '/syndicate-' . sanitize_key( $portal ) . '.log';
+}
 
 /**
  * @param int $post_id
@@ -33,13 +43,25 @@ function estrato_syndicate_on_publish( $post_id ) {
 		return;
 	}
 
+	$log = estrato_syndicate_log_path();
+	if ( ! is_dir( ESTRATO_SYNDICATE_LOG_DIR ) ) {
+		wp_mkdir_p( ESTRATO_SYNDICATE_LOG_DIR );
+	}
+	if ( ! is_file( $log ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_touch
+		touch( $log );
+		@chmod( $log, 0664 );
+	}
+
 	$cmd = sprintf(
-		'python3 %s --url %s --title %s --content %s >> %s 2>&1 &',
+		'ESTRATO_DOMAIN=%s ESTRATO_WP_PATH=%s python3 %s --url %s --title %s --content %s >> %s 2>&1 &',
+		escapeshellarg( home_url() ),
+		escapeshellarg( trailingslashit( ABSPATH ) ),
 		escapeshellarg( $script ),
 		escapeshellarg( $url ),
 		escapeshellarg( $title ),
 		escapeshellarg( $excerpt ? $excerpt : wp_trim_words( wp_strip_all_tags( $post->post_content ), 40 ) ),
-		escapeshellarg( ESTRATO_SYNDICATE_LOG )
+		escapeshellarg( $log )
 	);
 
 	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
@@ -67,11 +89,12 @@ function estrato_syndicate_resolve_script_path() {
  * @return int Linhas no log de syndication (-1 se ausente).
  */
 function estrato_regression_syndication_log_lines() {
-	if ( ! is_readable( ESTRATO_SYNDICATE_LOG ) ) {
+	$log = estrato_syndicate_log_path();
+	if ( ! is_readable( $log ) ) {
 		return -1;
 	}
 	$lines = 0;
-	$fh    = fopen( ESTRATO_SYNDICATE_LOG, 'r' );
+	$fh    = fopen( $log, 'r' );
 	if ( ! $fh ) {
 		return -1;
 	}

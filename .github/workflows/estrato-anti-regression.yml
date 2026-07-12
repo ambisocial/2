@@ -39,8 +39,8 @@ jobs:
 
   victor-regression:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/Preditivit')
-    continue-on-error: true
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/Preditivit' || startsWith(github.ref, 'refs/heads/cursor/')))
+    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
 

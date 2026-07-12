@@ -18,8 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'index-bot'))
 
-WP = Path('/var/www/estrato.cc')
-LOG = Path('/var/log/estrato/syndicate.log')
+WP = Path(os.getenv('ESTRATO_WP_PATH', '/var/www/estrato.cc')).resolve()
+LOG = Path(os.getenv('ESTRATO_SYNDICATE_LOG', '/var/log/estrato/syndicate.log'))
 SECRETS_DIR = Path(os.getenv('ESTRATO_SECRETS_DIR', '/root/.secrets'))
 INDEXNOW_KEY = WP / 'estrato-indexnow-key.txt'
 DOMAIN = os.getenv('ESTRATO_DOMAIN', 'https://estrato.cc').rstrip('/')
@@ -418,7 +418,22 @@ def main() -> int:
     parser.add_argument('--ping-sitemaps', action='store_true', help='Ping Google/Bing sitemaps')
     parser.add_argument('--generate-msn-feed', action='store_true', help='Generate MSN-compatible RSS feed')
     parser.add_argument('--msn-limit', type=int, default=50, help='Items in MSN feed')
+    parser.add_argument('--wp-path', default='', help='WordPress root path')
+    parser.add_argument('--domain', default='', help='Portal base URL')
     args = parser.parse_args()
+
+    global WP, DOMAIN, INDEXNOW_KEY, MSN_FEED_PATH, SITEMAPS
+    if args.wp_path:
+        WP = Path(args.wp_path).resolve()
+        INDEXNOW_KEY = WP / 'estrato-indexnow-key.txt'
+        MSN_FEED_PATH = WP / 'msn-feed.xml'
+    if args.domain:
+        DOMAIN = args.domain.rstrip('/')
+    SITEMAPS = [
+        f'{DOMAIN}/sitemap_index.xml',
+        f'{DOMAIN}/news-sitemap.xml',
+        f'{DOMAIN}/msn-feed.xml',
+    ]
 
     if args.generate_msn_feed:
         print(json.dumps(generate_msn_feed(args.msn_limit), indent=2, ensure_ascii=False))

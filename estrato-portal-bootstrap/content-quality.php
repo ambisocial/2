@@ -49,7 +49,20 @@ function estrato_content_category_label( $category_slug ) {
 		'agronegocio'       => 'agronegócio',
 		'mundo'             => 'economia internacional',
 	);
-	return $labels[ $category_slug ] ?? 'economia e mercados';
+	if ( isset( $labels[ $category_slug ] ) ) {
+		return $labels[ $category_slug ];
+	}
+
+	$term = get_term_by( 'slug', $category_slug, 'category' );
+	if ( $term && ! is_wp_error( $term ) ) {
+		$brand = get_term_meta( $term->term_id, '_estrato_brand_name', true );
+		return $brand ? (string) $brand : (string) $term->name;
+	}
+
+	return function_exists( 'estrato_nav_current_portal_id' )
+		&& 'estrato-finance' !== estrato_nav_current_portal_id()
+		? 'esta editoria'
+		: 'economia e mercados';
 }
 
 /**
@@ -71,58 +84,92 @@ function estrato_content_build_aeo_blocks( $title, $excerpt, $content, $category
 	if ( strlen( $resumo ) < 80 && strlen( $plain ) > 80 ) {
 		$resumo = wp_trim_words( $plain, 40, '…' );
 	}
+	$is_finance = ! function_exists( 'estrato_nav_current_portal_id' )
+		|| 'estrato-finance' === estrato_nav_current_portal_id();
+
 	if ( strlen( $resumo ) < 40 ) {
-		$resumo = sprintf(
-			'Esta matéria reúne o contexto essencial sobre %s, com foco em impactos para investidores, empresas e consumidores no Brasil.',
-			$area
-		);
+		$resumo = $is_finance
+			? sprintf(
+				'Esta matéria reúne o contexto essencial sobre %s, com foco em impactos para investidores, empresas e consumidores no Brasil.',
+				$area
+			)
+			: sprintf(
+				'Esta matéria organiza o essencial sobre %s, com contexto editorial, fontes verificáveis e leitura aprofundada para quem acompanha o tema no Brasil.',
+				$area
+			);
 	}
 
-	$faq = array(
-		array(
-			'q' => sprintf( 'Por que %s está em destaque?', wp_trim_words( $title, 8, '…' ) ),
-			'a' => sprintf(
-				'O tema dialoga diretamente com tendências de %s e pode influenciar decisões de investimento, custos e expectativas de inflação no curto prazo.',
-				$area
+	$faq = $is_finance
+		? array(
+			array(
+				'q' => sprintf( 'Por que %s está em destaque?', wp_trim_words( $title, 8, '…' ) ),
+				'a' => sprintf(
+					'O tema dialoga diretamente com tendências de %s e pode influenciar decisões de investimento, custos e expectativas de inflação no curto prazo.',
+					$area
+				),
 			),
-		),
-		array(
-			'q' => 'Quem deve acompanhar esta notícia?',
-			'a' => 'Investidores, gestores, empreendedores e leitores que acompanham indicadores macroeconômicos e movimentos setoriais no Brasil.',
-		),
-		array(
-			'q' => 'Como o Estrato trata esta cobertura?',
-			'a' => 'A redação cruza fontes primárias, dados públicos e contexto de mercado antes da publicação, conforme nossa política editorial.',
-		),
-	);
+			array(
+				'q' => 'Quem deve acompanhar esta notícia?',
+				'a' => 'Investidores, gestores, empreendedores e leitores que acompanham indicadores macroeconômicos e movimentos setoriais no Brasil.',
+			),
+			array(
+				'q' => 'Como o Estrato trata esta cobertura?',
+				'a' => 'A redação cruza fontes primárias, dados públicos e contexto de mercado antes da publicação, conforme nossa política editorial.',
+			),
+		)
+		: array(
+			array(
+				'q' => sprintf( 'Por que %s importa agora?', wp_trim_words( $title, 8, '…' ) ),
+				'a' => sprintf(
+					'O assunto conecta tendências de %s com debates atuais no Brasil e ajuda leitores a separar contexto de opinião.',
+					$area
+				),
+			),
+			array(
+				'q' => 'Quem se beneficia desta cobertura?',
+				'a' => 'Leitores curiosos, profissionais do setor e quem busca profundidade além do headline diário.',
+			),
+			array(
+				'q' => 'Como atualizamos esta pauta?',
+				'a' => 'Cruzamos fontes primárias, dados públicos e curadoria editorial antes de publicar, conforme a política do portal.',
+			),
+		);
 
 	$faq_html = '';
 	foreach ( $faq as $item ) {
 		$faq_html .= '<h3>' . esc_html( $item['q'] ) . '</h3><p>' . esc_html( $item['a'] ) . '</p>';
 	}
 
+	$context_heading = $is_finance ? 'Contexto de mercado' : 'Contexto editorial';
+	$context_body    = $is_finance
+		? sprintf(
+			'Em um cenário de %s, movimentos como o descrito em “%s” ajudam a calibrar expectativas sobre juros, câmbio e fluxo de capital. Analistas costumam cruzar estes eventos com dados do Banco Central, IBGE e B3 para avaliar o desdobramento nas próximas semanas.',
+			$area,
+			wp_trim_words( $title, 12, '…' )
+		)
+		: sprintf(
+			'Em %s, temas como “%s” costumam atravessar comunidades, pesquisa e prática cotidiana. Organizamos referências, histórico recente e implicações para leitores que querem ir além do resumo de redes sociais.',
+			$area,
+			wp_trim_words( $title, 12, '…' )
+		);
+	$impact_heading = $is_finance ? 'Impacto prático' : 'Por que acompanhar';
+	$impact_body    = $is_finance
+		? sprintf(
+			'Para o investidor de varejo e para empresas expostas a %s, o efeito mais imediato costuma aparecer em precificação de ativos, custo de capital e revisão de projeções. Acompanhar comunicados oficiais e a reação do mercado nas sessões seguintes ajuda a separar ruído de mudança estrutural de cenário.',
+			$area
+		)
+		: sprintf(
+			'Para quem acompanha %s, vale observar como o debate evolui nas próximas semanas: novas fontes, dados empíricos e experiências de comunidade ajudam a calibrar expectativas e evitar conclusões apressadas.',
+			$area
+		);
+
 	return ESTRATO_AEO_MARKER . "\n"
 		. '<div class="estrato-aeo-resumo"><h2>O que você precisa saber</h2><p><strong>'
 		. esc_html( $resumo ) . '</strong></p></div>'
-		. '<h2>Contexto de mercado</h2>'
-		. '<p>'
-		. esc_html(
-			sprintf(
-				'Em um cenário de %s, movimentos como o descrito em “%s” ajudam a calibrar expectativas sobre juros, câmbio e fluxo de capital. Analistas costumam cruzar estes eventos com dados do Banco Central, IBGE e B3 para avaliar o desdobramento nas próximas semanas.',
-				$area,
-				wp_trim_words( $title, 12, '…' )
-			)
-		)
-		. '</p>'
-		. '<h2>Impacto prático</h2>'
-		. '<p>'
-		. esc_html(
-			sprintf(
-				'Para o investidor de varejo e para empresas expostas a %s, o efeito mais imediato costuma aparecer em precificação de ativos, custo de capital e revisão de projeções. Acompanhar comunicados oficiais e a reação do mercado nas sessões seguintes ajuda a separar ruído de mudança estrutural de cenário.',
-				$area
-			)
-		)
-		. '</p>'
+		. '<h2>' . esc_html( $context_heading ) . '</h2>'
+		. '<p>' . esc_html( $context_body ) . '</p>'
+		. '<h2>' . esc_html( $impact_heading ) . '</h2>'
+		. '<p>' . esc_html( $impact_body ) . '</p>'
 		. '<h2>Perguntas frequentes</h2>' . $faq_html;
 }
 
@@ -444,4 +491,51 @@ function estrato_regression_pipeline_without_source() {
 	";
 
 	return (int) $wpdb->get_var( $sql );
+}
+
+/**
+ * Posts publicados sem bloco AEO.
+ *
+ * @return int
+ */
+function estrato_regression_posts_without_aeo() {
+	$count = 0;
+	foreach ( get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		)
+	) as $post_id ) {
+		$content = get_post_field( 'post_content', $post_id );
+		if ( false === strpos( $content, ESTRATO_AEO_MARKER ) ) {
+			++$count;
+		}
+	}
+	return $count;
+}
+
+/**
+ * Longforms publicados (modo analysis, ≥1500 palavras).
+ *
+ * @return int
+ */
+function estrato_regression_longform_count() {
+	$count = 0;
+	foreach ( get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_key'       => '_estrato_content_mode',
+			'meta_value'     => 'analysis',
+		)
+	) as $post_id ) {
+		if ( estrato_content_post_word_count( $post_id ) >= 1500 ) {
+			++$count;
+		}
+	}
+	return $count;
 }

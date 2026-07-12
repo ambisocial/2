@@ -83,6 +83,11 @@ function estrato_seo_schema_person( $data ) {
 		$data['jobTitle'] = sanitize_text_field( $job );
 	}
 
+	$same_as = get_user_meta( (int) $author_id, 'estrato_same_as', true );
+	if ( is_string( $same_as ) && str_starts_with( $same_as, 'http' ) ) {
+		$data['sameAs'] = esc_url_raw( $same_as );
+	}
+
 	return $data;
 }
 add_filter( 'wpseo_schema_person', 'estrato_seo_schema_person' );

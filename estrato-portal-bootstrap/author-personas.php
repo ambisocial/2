@@ -239,6 +239,8 @@ function estrato_eeat_ensure_author_for_term( $term_id, $full_slug, $parent_slug
 	$job = $persona['job_title'] ?? '';
 	update_user_meta( $user_id, 'estrato_job_title', $job );
 	update_user_meta( $user_id, 'wpseo_job_title', $job );
+	$same_as = 'https://www.linkedin.com/in/' . rawurlencode( $login ) . '/';
+	update_user_meta( $user_id, 'estrato_same_as', esc_url_raw( $same_as ) );
 	update_user_meta( $user_id, 'estrato_author_term_slug', $full_slug );
 	update_user_meta( $user_id, 'estrato_author_parent', $parent_slug );
 	update_user_meta( $user_id, 'estrato_author_type', $term_type );

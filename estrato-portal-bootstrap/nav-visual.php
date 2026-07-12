@@ -194,13 +194,68 @@ function estrato_shortcode_cotacoes() {
 		set_transient( 'estrato_cotacoes_frankfurter', $cached, HOUR_IN_SECONDS );
 	}
 
+	$brl_cached = get_transient( 'estrato_cotacoes_brl_cross' );
+	if ( false === $brl_cached ) {
+		$brl_resp = wp_remote_get(
+			'https://api.frankfurter.app/latest?from=BRL&to=USD,EUR,GBP',
+			array( 'timeout' => 12 )
+		);
+		if ( ! is_wp_error( $brl_resp ) ) {
+			$brl_body = json_decode( wp_remote_retrieve_body( $brl_resp ), true );
+			if ( ! empty( $brl_body['rates'] ) && is_array( $brl_body['rates'] ) ) {
+				$brl_cached = $brl_body;
+				set_transient( 'estrato_cotacoes_brl_cross', $brl_cached, HOUR_IN_SECONDS );
+			}
+		}
+	}
+
+	$crypto = get_transient( 'estrato_cotacoes_crypto' );
+	if ( false === $crypto ) {
+		$crypto_resp = wp_remote_get(
+			'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,brl',
+			array( 'timeout' => 12 )
+		);
+		if ( ! is_wp_error( $crypto_resp ) ) {
+			$crypto_body = json_decode( wp_remote_retrieve_body( $crypto_resp ), true );
+			if ( is_array( $crypto_body ) && ! empty( $crypto_body['bitcoin'] ) ) {
+				$crypto = $crypto_body;
+				set_transient( 'estrato_cotacoes_crypto', $crypto, 15 * MINUTE_IN_SECONDS );
+			}
+		}
+	}
+
 	$date  = isset( $cached['date'] ) ? $cached['date'] : gmdate( 'Y-m-d' );
 	$rates = $cached['rates'];
-	$html  = '<div class="estrato-cotacoes"><p><em>Referência USD — Frankfurter/ECB — ' . esc_html( $date ) . '</em></p><table><thead><tr><th>Par</th><th>Taxa</th></tr></thead><tbody>';
+	$html  = '<div class="estrato-cotacoes"><p><em>Referência USD — Frankfurter/ECB — ' . esc_html( $date ) . '</em></p>'
+		. '<table><thead><tr><th>Par</th><th>Taxa</th></tr></thead><tbody>';
 	foreach ( $rates as $code => $rate ) {
 		$html .= '<tr><td>USD/' . esc_html( $code ) . '</td><td>' . esc_html( number_format_i18n( (float) $rate, 4 ) ) . '</td></tr>';
 	}
-	$html .= '</tbody></table><p><em>Ibovespa e ativos B3 sujeitos a delay de 15 minutos (B3).</em></p></div>';
+	$html .= '</tbody></table>';
+
+	if ( is_array( $brl_cached ) && ! empty( $brl_cached['rates'] ) ) {
+		$html .= '<h3>Cruzamento a partir do real</h3><table><thead><tr><th>Par</th><th>Taxa</th></tr></thead><tbody>';
+		foreach ( $brl_cached['rates'] as $code => $rate ) {
+			$html .= '<tr><td>BRL/' . esc_html( $code ) . '</td><td>' . esc_html( number_format_i18n( (float) $rate, 4 ) ) . '</td></tr>';
+		}
+		$html .= '</tbody></table>';
+	}
+
+	if ( is_array( $crypto ) ) {
+		$html .= '<h3>Cripto (CoinGecko)</h3><table><thead><tr><th>Ativo</th><th>USD</th><th>BRL</th></tr></thead><tbody>';
+		foreach ( array( 'bitcoin' => 'Bitcoin', 'ethereum' => 'Ethereum' ) as $id => $label ) {
+			if ( empty( $crypto[ $id ] ) ) {
+				continue;
+			}
+			$html .= '<tr><td>' . esc_html( $label ) . '</td><td>'
+				. esc_html( number_format_i18n( (float) ( $crypto[ $id ]['usd'] ?? 0 ), 2 ) )
+				. '</td><td>' . esc_html( number_format_i18n( (float) ( $crypto[ $id ]['brl'] ?? 0 ), 2 ) )
+				. '</td></tr>';
+		}
+		$html .= '</tbody></table>';
+	}
+
+	$html .= '<p><em>Ibovespa e ativos B3 sujeitos a delay de 15 minutos (B3). Cripto: referência CoinGecko, volátil.</em></p></div>';
 	return $html;
 }
 add_shortcode( 'estrato_cotacoes', 'estrato_shortcode_cotacoes' );

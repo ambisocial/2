@@ -112,7 +112,7 @@ function estrato_rss_match_subcategory_term( $parent_term_id, $title, $body, $ta
  * @param bool                   $first_run
  * @param array<int, array>      $matrix
  * @param array<string, mixed>   $taxonomy
- * @return array{imported:int, skipped:int, errors:int, deleted:int}
+ * @return array{imported:int, skipped:int, skipped_no_image:int, errors:int, deleted:int}
  */
 function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 	if ( ! function_exists( 'fetch_feed' ) ) {
@@ -125,10 +125,11 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 	$max_run  = max( 1, min( 300, (int) $settings['max_per_run'] ) );
 	$imported = estrato_rss_get_imported_guids();
 	$stats    = array(
-		'imported' => 0,
-		'skipped'  => 0,
-		'errors'   => 0,
-		'deleted'  => 0,
+		'imported'         => 0,
+		'skipped'          => 0,
+		'skipped_no_image' => 0,
+		'errors'           => 0,
+		'deleted'          => 0,
 	);
 
 	estrato_rss_create_categories();
@@ -216,6 +217,14 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 					$source
 				);
 
+				$image_url = estrato_rss_resolve_item_image_url( $item, $body, $link );
+				if ( ! $image_url ) {
+					$stats['skipped']++;
+					$stats['skipped_no_image']++;
+					estrato_rss_mark_guid_imported( $guid );
+					continue;
+				}
+
 				$post_id = wp_insert_post(
 					array(
 						'post_title'    => $title,
@@ -235,14 +244,18 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 				update_post_meta( $post_id, '_estrato_rss_source', $feed_info['title'] ?? '' );
 				update_post_meta( $post_id, '_estrato_rss_source_url', $feed_info['url'] );
 				update_post_meta( $post_id, '_estrato_source_url', $link );
-				$image_url = estrato_rss_extract_image_url( $item, $body );
-				if ( ! $image_url && $link && function_exists( 'estrato_bridge_fetch_og_image' ) ) {
-					$image_url = estrato_bridge_fetch_og_image( $link );
+				$attached = false;
+				if ( function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
+					$attached = (bool) estrato_bridge_set_featured_image_from_url( $post_id, $image_url, true );
 				}
-				if ( $image_url && function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
-					estrato_bridge_set_featured_image_from_url( $post_id, $image_url, true );
-					update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
+				if ( ! $attached ) {
+					wp_delete_post( $post_id, true );
+					$stats['skipped']++;
+					$stats['skipped_no_image']++;
+					estrato_rss_mark_guid_imported( $guid );
+					continue;
 				}
+				update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
 				estrato_rss_mark_guid_imported( $guid );
 				$imported[ $guid ] = true;
 				$stats['imported']++;

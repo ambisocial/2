@@ -56,6 +56,40 @@ function estrato_gate_ensure_post_category( $post_id ) {
 add_action( 'save_post_post', 'estrato_gate_ensure_post_category', 50 );
 
 /**
+ * Impede publicação de post sem imagem original da matéria.
+ *
+ * @param int $post_id
+ */
+function estrato_gate_require_original_thumbnail( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	if ( wp_is_post_revision( $post_id ) ) {
+		return;
+	}
+	$post = get_post( $post_id );
+	if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) {
+		return;
+	}
+	if ( ! function_exists( 'estrato_bridge_post_has_original_thumbnail' ) ) {
+		return;
+	}
+	if ( estrato_bridge_post_has_original_thumbnail( $post_id ) ) {
+		return;
+	}
+	remove_action( 'save_post_post', 'estrato_gate_require_original_thumbnail', 100 );
+	wp_update_post(
+		array(
+			'ID'          => $post_id,
+			'post_status' => 'draft',
+		)
+	);
+	add_action( 'save_post_post', 'estrato_gate_require_original_thumbnail', 100 );
+	update_post_meta( $post_id, '_estrato_skip_reason', 'no_original_image' );
+}
+add_action( 'save_post_post', 'estrato_gate_require_original_thumbnail', 100 );
+
+/**
  * Posts publicados antes de 2024-01-01 (para AR-SITEMAP-004).
  *
  * @return int

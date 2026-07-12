@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.8.0
+ * Version: 1.8.1
  * Author: Cursor Agent
  */
 
@@ -734,6 +734,28 @@ function estrato_rss_mark_guid_imported( $guid ) {
 }
 
 /**
+ * Resolve URL de imagem original publicável (RSS/OG).
+ *
+ * @param object $item
+ * @param string $html_content
+ * @param string $link
+ * @return string
+ */
+function estrato_rss_resolve_item_image_url( $item, $html_content = '', $link = '' ) {
+	$image_url = estrato_rss_extract_image_url( $item, $html_content );
+	if ( ! $image_url && $link && function_exists( 'estrato_bridge_fetch_og_image' ) ) {
+		$image_url = estrato_bridge_fetch_og_image( $link );
+	}
+	if ( function_exists( 'estrato_bridge_normalize_image_url' ) ) {
+		$image_url = estrato_bridge_normalize_image_url( (string) $image_url );
+	}
+	if ( function_exists( 'estrato_bridge_is_publishable_image_url' ) ) {
+		return estrato_bridge_is_publishable_image_url( $image_url ) ? esc_url_raw( $image_url ) : '';
+	}
+	return $image_url ? esc_url_raw( $image_url ) : '';
+}
+
+/**
  * Extrai URL de imagem de um item RSS.
  *
  * @param object $item SimplePie item.
@@ -801,10 +823,11 @@ function estrato_rss_run_import( $first_run = false ) {
 	$config     = estrato_rss_get_config();
 	$imported   = estrato_rss_get_imported_guids();
 	$stats      = array(
-		'imported' => 0,
-		'skipped'  => 0,
-		'errors'   => 0,
-		'deleted'  => 0,
+		'imported'         => 0,
+		'skipped'          => 0,
+		'skipped_no_image' => 0,
+		'errors'           => 0,
+		'deleted'          => 0,
 	);
 
 	foreach ( $config as $slug => $data ) {
@@ -857,6 +880,14 @@ function estrato_rss_run_import( $first_run = false ) {
 					$source
 				);
 
+				$image_url = estrato_rss_resolve_item_image_url( $item, $body, $link );
+				if ( ! $image_url ) {
+					$stats['skipped']++;
+					$stats['skipped_no_image']++;
+					estrato_rss_mark_guid_imported( $guid );
+					continue;
+				}
+
 				$post_id = wp_insert_post(
 					array(
 						'post_title'    => $title,
@@ -879,14 +910,18 @@ function estrato_rss_run_import( $first_run = false ) {
 				update_post_meta( $post_id, '_estrato_rss_source_url', $feed_info['url'] );
 				update_post_meta( $post_id, '_estrato_source_url', $link );
 
-				$image_url = estrato_rss_extract_image_url( $item, $body );
-				if ( ! $image_url && $link && function_exists( 'estrato_bridge_fetch_og_image' ) ) {
-					$image_url = estrato_bridge_fetch_og_image( $link );
+				$attached = false;
+				if ( function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
+					$attached = (bool) estrato_bridge_set_featured_image_from_url( $post_id, $image_url, true );
 				}
-				if ( $image_url && function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
-					estrato_bridge_set_featured_image_from_url( $post_id, $image_url, true );
-					update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
+				if ( ! $attached ) {
+					wp_delete_post( $post_id, true );
+					$stats['skipped']++;
+					$stats['skipped_no_image']++;
+					estrato_rss_mark_guid_imported( $guid );
+					continue;
 				}
+				update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
 
 				estrato_rss_mark_guid_imported( $guid );
 				$imported[ $guid ]      = true;

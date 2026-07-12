@@ -104,4 +104,8 @@ fi
 
 log "=== Fim monitor (alert=$ALERT) ==="
 log "Log: $LOG"
+log ""
+log "Cron recomendado (Victor):"
+log "  0 7 * * 1  ESTRATO_MONITOR_AUTOFIX=1 bash $REPO/scripts/victor/monitor-estrato-network.sh >> /var/log/estrato/monitor.log 2>&1"
+log "  0 8 * * 1  bash $REPO/scripts/victor/audit-e2e-production.sh --strict >> /var/log/estrato/e2e-audit.log 2>&1"
 exit "$ALERT"

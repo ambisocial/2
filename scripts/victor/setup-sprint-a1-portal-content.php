@@ -16,11 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $portal = getenv( 'ESTRATO_PORTAL' ) ?: '';
-if ( '' === $portal && function_exists( 'estrato_portal_get_id' ) ) {
-	$portal = estrato_portal_get_id();
-}
 if ( '' === $portal ) {
-	$portal = 'estrato-finance';
+	$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+	$by_domain = array(
+		'estrato.cc'           => 'estrato-finance',
+		'mente.estrato.cc'     => 'estrato-mind',
+		'lifestyle.estrato.cc' => 'estrato-lifestyle',
+		'science.estrato.cc'   => 'estrato-science',
+		'sustain.estrato.cc'   => 'estrato-sustain',
+		'culture.estrato.cc'   => 'estrato-culture',
+	);
+	$portal = $by_domain[ $host ] ?? '';
 }
 
 $loaders = array(

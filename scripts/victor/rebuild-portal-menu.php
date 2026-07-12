@@ -1,6 +1,6 @@
 <?php
 /**
- * Reconstrói menu Estrato Principal a partir do preset ativo (option).
+ * Reconstrói menu Estrato Principal (mega menu com subcategorias).
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
@@ -8,6 +8,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $preset = get_option( ESTRATO_RSS_OPTION_PRESET, 'brasil-financeiro' );
 $preset = is_string( $preset ) ? sanitize_key( $preset ) : 'brasil-financeiro';
+
+if ( function_exists( 'estrato_nav_rebuild_principal_menu' ) ) {
+	$result = estrato_nav_rebuild_principal_menu();
+	if ( function_exists( 'estrato_rss_rebuild_column_menu' ) ) {
+		estrato_rss_rebuild_column_menu();
+	}
+	WP_CLI::success( sprintf(
+		'Mega menu preset=%s pais=%d filhos=%d colunas=%d',
+		$preset,
+		(int) ( $result['parents'] ?? 0 ),
+		(int) ( $result['children'] ?? 0 ),
+		(int) ( $result['columns'] ?? 0 )
+	) );
+	exit( 0 );
+}
 
 $taxonomy = estrato_rss_load_taxonomy_by_preset( $preset );
 $order    = $taxonomy['menu_order'] ?? $taxonomy['index_order'] ?? array();

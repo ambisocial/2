@@ -530,6 +530,14 @@ function estrato_rss_localize_homepage_blocks() {
  * @param array<string, int> $categories
  */
 function estrato_rss_rebuild_menus( $categories ) {
+	if ( function_exists( 'estrato_nav_rebuild_principal_menu' ) ) {
+		estrato_nav_rebuild_principal_menu( $categories );
+		if ( function_exists( 'estrato_rss_rebuild_column_menu' ) ) {
+			estrato_rss_rebuild_column_menu();
+		}
+		return;
+	}
+
 	$menu_name = 'Estrato Principal';
 	$existing  = wp_get_nav_menu_object( $menu_name );
 	if ( $existing ) {

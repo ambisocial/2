@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Negócios adicionais do grupo (além dos portais Estrato).
  * Filtro: estrato_ft_group_businesses_extra
  *
- * @return array<int, array{name:string,url:string,tagline?:string}>
+ * @return array<int, array{name:string,url?:string,tagline?:string,text_only?:bool}>
  */
 function estrato_ft_group_businesses_extra() {
 	$defaults = array(
@@ -38,24 +38,24 @@ function estrato_ft_group_businesses_extra() {
 			'tagline' => 'Dados e inteligência',
 		),
 		array(
-			'name'    => 'AB Mídia',
-			'url'     => 'https://estrato.cc/',
-			'tagline' => 'Mídia e publicação',
+			'name'      => 'AB Mídia',
+			'tagline'   => 'Mídia e publicação',
+			'text_only' => true,
 		),
 		array(
-			'name'    => 'AB Research',
-			'url'     => 'https://estrato.cc/category/mercados/',
-			'tagline' => 'Pesquisa e análise',
+			'name'      => 'AB Research',
+			'tagline'   => 'Pesquisa e análise',
+			'text_only' => true,
 		),
 		array(
-			'name'    => 'AB News',
-			'url'     => 'https://estrato.cc/',
-			'tagline' => 'Notícias e cobertura',
+			'name'      => 'AB News',
+			'tagline'   => 'Notícias e cobertura',
+			'text_only' => true,
 		),
 		array(
-			'name'    => 'AB Stocks',
-			'url'     => 'https://estrato.cc/cotacoes/',
-			'tagline' => 'Mercados e cotações',
+			'name'      => 'AB Stocks',
+			'tagline'   => 'Mercados e cotações',
+			'text_only' => true,
 		),
 	);
 	return apply_filters( 'estrato_ft_group_businesses_extra', $defaults );
@@ -64,7 +64,7 @@ function estrato_ft_group_businesses_extra() {
 /**
  * Todos os negócios do grupo para o grid "Mais do Grupo Estrato".
  *
- * @return array<int, array{name:string,url:string,tagline:string,current:bool}>
+ * @return array<int, array{name:string,url:string,tagline:string,current:bool,text_only?:bool}>
  */
 function estrato_ft_group_businesses_all() {
 	$current_host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
@@ -83,15 +83,19 @@ function estrato_ft_group_businesses_all() {
 	}
 
 	foreach ( estrato_ft_group_businesses_extra() as $biz ) {
-		if ( empty( $biz['url'] ) || empty( $biz['name'] ) ) {
+		if ( empty( $biz['name'] ) ) {
+			continue;
+		}
+		$text_only = ! empty( $biz['text_only'] );
+		if ( ! $text_only && empty( $biz['url'] ) ) {
 			continue;
 		}
 		$out[] = array(
-			'name'    => (string) $biz['name'],
-			'url'     => (string) $biz['url'],
-			'tagline' => (string) ( $biz['tagline'] ?? '' ),
-			// Só oculta se for exatamente a home do portal atual (não por host compartilhado).
-			'current' => untrailingslashit( (string) $biz['url'] ) === untrailingslashit( home_url( '/' ) ),
+			'name'      => (string) $biz['name'],
+			'url'       => $text_only ? '' : (string) $biz['url'],
+			'tagline'   => (string) ( $biz['tagline'] ?? '' ),
+			'text_only' => $text_only,
+			'current'   => $text_only ? false : untrailingslashit( (string) $biz['url'] ) === untrailingslashit( home_url( '/' ) ),
 		);
 	}
 
@@ -278,12 +282,21 @@ function estrato_ft_render_footer() {
 									<?php continue; ?>
 								<?php endif; ?>
 								<li>
-									<a href="<?php echo esc_url( $biz['url'] ); ?>">
-										<span class="estrato-ft-group__name"><?php echo esc_html( $biz['name'] ); ?></span>
-										<?php if ( ! empty( $biz['tagline'] ) ) : ?>
-											<span class="estrato-ft-group__tag"><?php echo esc_html( $biz['tagline'] ); ?></span>
-										<?php endif; ?>
-									</a>
+									<?php if ( ! empty( $biz['text_only'] ) ) : ?>
+										<span class="estrato-ft-group__item estrato-ft-group__item--text">
+											<span class="estrato-ft-group__name"><?php echo esc_html( $biz['name'] ); ?></span>
+											<?php if ( ! empty( $biz['tagline'] ) ) : ?>
+												<span class="estrato-ft-group__tag"><?php echo esc_html( $biz['tagline'] ); ?></span>
+											<?php endif; ?>
+										</span>
+									<?php else : ?>
+										<a href="<?php echo esc_url( $biz['url'] ); ?>">
+											<span class="estrato-ft-group__name"><?php echo esc_html( $biz['name'] ); ?></span>
+											<?php if ( ! empty( $biz['tagline'] ) ) : ?>
+												<span class="estrato-ft-group__tag"><?php echo esc_html( $biz['tagline'] ); ?></span>
+											<?php endif; ?>
+										</a>
+									<?php endif; ?>
 								</li>
 							<?php endforeach; ?>
 						</ul>
@@ -346,8 +359,9 @@ function estrato_ft_footer_styles() {
 	.estrato-ft-group__panel{background:#fff1e5;color:#33302e;padding:1.25rem 1rem 1.5rem;margin:0 -1rem}
 	.estrato-ft-group__title{font-family:Georgia,"Times New Roman",serif;font-size:1.125rem;font-weight:400;margin:0 0 1rem;color:#33302e}
 	.estrato-ft-group__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem 1.5rem;list-style:none;margin:0;padding:0}
-	.estrato-ft-group__grid a{display:block;text-decoration:underline;color:#0d7680;font-size:.875rem;line-height:1.45;padding:.2rem 0}
+	.estrato-ft-group__grid a,.estrato-ft-group__grid .estrato-ft-group__item{display:block;text-decoration:underline;color:#0d7680;font-size:.875rem;line-height:1.45;padding:.2rem 0}
 	.estrato-ft-group__grid a:hover{color:#004d4d}
+	.estrato-ft-group__grid .estrato-ft-group__item--text{cursor:default;text-decoration:underline}
 	.estrato-ft-group__name{display:block}
 	.estrato-ft-group__tag{display:block;font-size:.75rem;color:#5c5650;text-decoration:none;margin-top:.1rem}
 	.estrato-ft-legal{padding:1.25rem 0 0;font-size:.75rem;line-height:1.55;color:#9aa3ad}

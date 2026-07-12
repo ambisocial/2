@@ -18,9 +18,44 @@ if ( ! defined( 'ABSPATH' ) ) {
 function estrato_ft_group_businesses_extra() {
 	$defaults = array(
 		array(
-			'name'    => 'Ambi Social',
+			'name'    => 'Ambi Rede Social LLC',
 			'url'     => 'https://ambi.social/',
-			'tagline' => 'Tecnologia e mídia',
+			'tagline' => 'Rede social sustentável',
+		),
+		array(
+			'name'    => 'Tree Company LLC',
+			'url'     => 'https://ambi.social/',
+			'tagline' => 'Projetos ambientais e carbono',
+		),
+		array(
+			'name'    => 'Estrato Mídia e Conteúdo LLC',
+			'url'     => 'https://estrato.cc/sobre/',
+			'tagline' => 'Mídia e conteúdo editorial',
+		),
+		array(
+			'name'    => 'Data Estrato',
+			'url'     => 'https://estrato.cc/data/',
+			'tagline' => 'Dados e inteligência',
+		),
+		array(
+			'name'    => 'AB Mídia',
+			'url'     => 'https://estrato.cc/',
+			'tagline' => 'Mídia e publicação',
+		),
+		array(
+			'name'    => 'AB Research',
+			'url'     => 'https://estrato.cc/category/mercados/',
+			'tagline' => 'Pesquisa e análise',
+		),
+		array(
+			'name'    => 'AB News',
+			'url'     => 'https://estrato.cc/',
+			'tagline' => 'Notícias e cobertura',
+		),
+		array(
+			'name'    => 'AB Stocks',
+			'url'     => 'https://estrato.cc/cotacoes/',
+			'tagline' => 'Mercados e cotações',
 		),
 	);
 	return apply_filters( 'estrato_ft_group_businesses_extra', $defaults );

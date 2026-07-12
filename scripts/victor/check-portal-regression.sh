@@ -20,6 +20,15 @@ fi
 IS_FINANCE=0
 [[ "$PORTAL_ID" == "estrato-finance" ]] && IS_FINANCE=1
 
+PORTAL_YAML="${ESTRATO_REPO:-/var/www/estrato/repo}/portals/${PORTAL_ID}.yaml"
+SATELLITE_CATS=()
+if [[ $IS_FINANCE -eq 0 && -f "$PORTAL_YAML" ]]; then
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && SATELLITE_CATS+=( "$line" )
+  done < <(awk '/^categories:/{f=1;next} f && /^  - /{print $2; next} f && /^[^ #]/{exit}' "$PORTAL_YAML")
+fi
+SATELLITE_SAMPLE_CAT="${SATELLITE_CATS[0]:-aprendizado-cognicao}"
+
 BASE="https://${DOMAIN}"
 # No Victor, consulta origem direta (evita CF challenge em curl servidor→servidor).
 if [[ -f "${WEB_ROOT}/wp-config.php" ]]; then
@@ -150,8 +159,8 @@ else
   rm -f "$POST_HTML"
 fi
 
-cat_code=$(http_status "$BASE/category/$( [[ $IS_FINANCE -eq 1 ]] && echo economia || echo aprendizado-cognicao )/")
-cat_html=$(body "$BASE/category/$( [[ $IS_FINANCE -eq 1 ]] && echo economia || echo aprendizado-cognicao )/?nocache=$(date +%s)")
+cat_code=$(http_status "$BASE/category/$( [[ $IS_FINANCE -eq 1 ]] && echo economia || echo "$SATELLITE_SAMPLE_CAT" )/")
+cat_html=$(body "$BASE/category/$( [[ $IS_FINANCE -eq 1 ]] && echo economia || echo "$SATELLITE_SAMPLE_CAT" )/?nocache=$(date +%s)")
 cat_title=$(echo "$cat_html" | grep -oiE '<title[^>]*>[^<]+</title>' | head -1)
 if echo "$cat_title" | grep -qi "Archives"; then warn "AR-SCHEMA-010 title categoria com 'Archives'"; else ok "AR-SCHEMA-010 title categoria pt_BR"; fi
 
@@ -239,7 +248,8 @@ code=$(http_status "$BASE/cotacoes/")
 if [[ "$code" == "200" ]]; then ok "AR-NAV página /cotacoes/ OK"; else warn "AR-NAV /cotacoes/ HTTP $code"; fi
 else
   hubs_ok=0
-  for hub in aprendizado filosofia financas-comportamentais; do
+  for slug in "${SATELLITE_CATS[@]}"; do
+    hub="${slug%%-*}"
     c=$(http_status "$BASE/tudo-sobre/$hub/")
     [[ "$c" == "200" ]] && hubs_ok=$((hubs_ok+1))
   done
@@ -261,7 +271,7 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   done
   if [[ "$legacy" -eq 0 ]]; then ok "AR-TAX-002 zero posts em categorias legado"; else warn "AR-TAX-002 $legacy posts em politica/tecnologia/brasil"; fi
   else
-  for slug in aprendizado-cognicao filosofia-autoconhecimento financas-comportamentais; do
+  for slug in "${SATELLITE_CATS[@]}"; do
     cnt=$($WP post list --category_name="$slug" --post_status=publish --format=count 2>/dev/null || echo 0)
     if [[ "$cnt" -eq 0 ]]; then warn "AR-TAX-001 $slug sem posts publicados"; else ok "AR-TAX-001 $slug posts=$cnt"; fi
   done

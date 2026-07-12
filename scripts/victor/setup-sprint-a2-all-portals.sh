@@ -15,6 +15,7 @@ for PORTAL_ID in estrato-mind estrato-lifestyle estrato-science estrato-sustain 
   export ESTRATO_PORTAL="$PORTAL_ID"
   echo "=== A2 $PORTAL_ID @ $PORTAL_WEB_ROOT ===" | tee -a "$LOG"
   portal_wp eval-file "$REPO/scripts/victor/setup-sprint-a2-portal-authors.php" 2>&1 | tee -a "$LOG"
+  portal_wp eval-file "$REPO/scripts/victor/rebuild-portal-menu.php" 2>&1 | tee -a "$LOG"
   portal_wp cache flush 2>/dev/null || true
 done
 

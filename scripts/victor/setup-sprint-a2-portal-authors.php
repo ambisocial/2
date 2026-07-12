@@ -60,19 +60,6 @@ if ( function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
 	$sync = estrato_rss_sync_portal_taxonomy( $preset );
 }
 
-if ( function_exists( 'estrato_rss_rebuild_menus' ) && ! empty( $taxonomy['categories'] ) ) {
-	$parents = array();
-	foreach ( array_keys( $taxonomy['categories'] ) as $slug ) {
-		$term = get_term_by( 'slug', $slug, 'category' );
-		if ( $term && ! is_wp_error( $term ) ) {
-			$parents[ $slug ] = (int) $term->term_id;
-		}
-	}
-	if ( ! empty( $parents ) ) {
-		estrato_rss_rebuild_menus( $parents );
-	}
-}
-
 $editoria_authors = 0;
 $cat_author_map   = array();
 

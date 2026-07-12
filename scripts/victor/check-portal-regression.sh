@@ -53,7 +53,8 @@ block(){ echo "  🛑 BLOCKER: $1"; FAIL=$((FAIL+1)); BLOCKERS=$((BLOCKERS+1)); 
 
 http_status() {
   local url="$1"
-  curl -sI -o /dev/null -w "%{http_code}" --max-time 15 "${CURL_HOST[@]}" "$url" 2>/dev/null || echo "000"
+  local timeout="${2:-15}"
+  curl -sI -o /dev/null -w "%{http_code}" --max-time "$timeout" "${CURL_HOST[@]}" "$url" 2>/dev/null || echo "000"
 }
 
 body() {
@@ -94,7 +95,9 @@ echo
 
 # ─── A. ROBOTS ───────────────────────────────────────────────────
 echo "## A. robots.txt"
-code=$(http_status "$BASE/robots.txt")
+ROBOTS_TIMEOUT=15
+[[ $IS_FINANCE -eq 1 ]] && ROBOTS_TIMEOUT=30
+code=$(http_status "$BASE/robots.txt" "$ROBOTS_TIMEOUT")
 if [[ "$code" == "200" ]]; then ok "AR-ROBOTS-001 robots.txt HTTP 200"; else block "AR-ROBOTS-001 robots.txt HTTP $code"; fi
 
 robots=$(body "$BASE/robots.txt?nocache=$(date +%s)")
@@ -106,11 +109,13 @@ if echo "$robots" | grep -qi "news-sitemap"; then ok "AR-ROBOTS-005 news-sitemap
 
 # ─── B. SITEMAP ──────────────────────────────────────────────────
 echo "## B. sitemap"
+SM_TIMEOUT=15
+[[ $IS_FINANCE -eq 1 ]] && SM_TIMEOUT=45
 for sm in sitemap_index.xml post-sitemap.xml; do
-  code=$(http_status "$BASE/$sm")
+  code=$(http_status "$BASE/$sm" "$SM_TIMEOUT")
   if [[ "$code" == "200" ]]; then ok "sitemap $sm OK"; else block "sitemap $sm HTTP $code"; fi
 done
-code=$(http_status "$BASE/news-sitemap.xml")
+code=$(http_status "$BASE/news-sitemap.xml" "$SM_TIMEOUT")
 if [[ "$code" == "200" ]]; then ok "AR-SITEMAP-003 news-sitemap.xml OK"; else warn "AR-SITEMAP-003 news-sitemap.xml ausente (HTTP $code)"; fi
 
 # AR-SITEMAP-004: posts publicados antes de 2024 (não anos em slugs como "messi-2022").

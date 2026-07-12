@@ -6,7 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
 }
 
-$preset = estrato_rss_get_active_preset();
+$preset = get_option( ESTRATO_RSS_OPTION_PRESET, 'brasil-financeiro' );
+$preset = is_string( $preset ) ? sanitize_key( $preset ) : 'brasil-financeiro';
 $taxonomy = estrato_rss_load_taxonomy_by_preset( $preset );
 $map      = estrato_rss_taxonomy_to_preset( $taxonomy );
 $parents  = array();

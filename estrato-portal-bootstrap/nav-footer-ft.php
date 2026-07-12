@@ -88,6 +88,9 @@ function estrato_ft_footer_link_ok( $url ) {
 	$page = get_page_by_path( $path );
 	return $page && 'publish' === $page->post_status;
 }
+
+/**
+ * Seções do acordeão (padrão FT).
  *
  * @return array<int, array{id:string,label:string,open:bool,links:array<int,array{label:string,url:string}>}>
  */
@@ -175,20 +178,16 @@ function estrato_ft_footer_accordion_sections() {
 		}
 	}
 
-	// Remove links para páginas inexistentes (404).
+	// Remove links para páginas inexistentes.
 	foreach ( $sections as &$section ) {
-		$filtered = array();
-		foreach ( $section['links'] as $link ) {
-			$path = wp_parse_url( $link['url'], PHP_URL_PATH );
-			if ( $path && '/' !== $path ) {
-				$page = get_page_by_path( trim( $path, '/' ) );
-				if ( $page && 'publish' !== $page->post_status ) {
-					continue;
+		$section['links'] = array_values(
+			array_filter(
+				$section['links'],
+				function ( $link ) {
+					return estrato_ft_footer_link_ok( $link['url'] );
 				}
-			}
-			$filtered[] = $link;
-		}
-		$section['links'] = $filtered;
+			)
+		);
 	}
 	unset( $section );
 

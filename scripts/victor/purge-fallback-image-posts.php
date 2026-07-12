@@ -16,5 +16,5 @@ if ( ! function_exists( 'estrato_bridge_unpublish_without_original_image' ) ) {
 	exit( 1 );
 }
 
-$removed = estrato_bridge_unpublish_without_original_image( 500 );
+$removed = estrato_bridge_unpublish_without_original_image( 5000 );
 echo 'unpublished_no_original_image=' . (int) $removed . PHP_EOL;

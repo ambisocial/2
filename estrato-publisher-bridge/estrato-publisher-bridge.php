@@ -694,12 +694,12 @@ function estrato_bridge_post_has_original_thumbnail( $post_id ) {
  * @return int
  */
 function estrato_bridge_unpublish_without_original_image( $limit = 50 ) {
-	$limit   = max( 1, min( 500, (int) $limit ) );
+	$limit   = max( 1, min( 5000, (int) $limit ) );
 	$posts   = get_posts(
 		array(
 			'post_type'      => 'post',
 			'post_status'    => 'publish',
-			'posts_per_page' => $limit,
+			'posts_per_page' => -1,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
 			'fields'         => 'ids',
@@ -707,6 +707,9 @@ function estrato_bridge_unpublish_without_original_image( $limit = 50 ) {
 	);
 	$removed = 0;
 	foreach ( $posts as $post_id ) {
+		if ( $removed >= $limit ) {
+			break;
+		}
 		if ( estrato_bridge_post_has_original_thumbnail( $post_id ) ) {
 			continue;
 		}

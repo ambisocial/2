@@ -52,8 +52,8 @@ return array(
 			),
 			'feeds'       => array(
 				array(
-					'title'    => 'Instituto do Cérebro (UFRN)',
-					'url'      => 'https://neuro.ufrn.br/blog/index.php/feed/',
+					'title'    => 'ABS — Blog do Sono',
+					'url'      => 'https://absono.com.br/feed/',
 					'tier'     => 1,
 					'verified' => true,
 				),
@@ -79,19 +79,8 @@ return array(
 						'exclude' => array(),
 					),
 					'feeds'       => array(
-						array(
-							'title'    => 'Instituto do Cérebro (UFRN)',
-							'url'      => 'https://neuro.ufrn.br/blog/index.php/feed/',
-							'tier'     => 1,
-							'verified' => true,
-						),
-						array(
-							'title'    => 'Lab Sonhos (UFRN)',
-							'url'      => 'https://neuro.ufrn.br/labsonhos/index.php/feed/',
-							'tier'     => 1,
-							'verified' => true,
-						),
 						array( 'title' => 'ABS — Blog do Sono', 'url' => 'https://absono.com.br/feed/', 'tier' => 1 ),
+						array( 'title' => 'Dra. Flávia Solano', 'url' => 'https://flaviasolano.com.br/feed/', 'tier' => 1 ),
 					),
 				),
 				'microbioma-digestivo' => array(

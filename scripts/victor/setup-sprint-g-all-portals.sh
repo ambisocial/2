@@ -43,6 +43,10 @@ for PORTAL_ID in "${PORTALS[@]}"; do
     fi
   fi
 
+  echo "--- pós-G: thumbs + enrich ---" | tee -a "$LOG"
+  portal_wp eval-file "$REPO/scripts/victor/backfill-fallback-thumbnails.php" 2>&1 | tee -a "$LOG" || true
+  portal_wp eval-file "$REPO/scripts/victor/enrich-thin-posts.php" 2>&1 | tee -a "$LOG" || true
+
   portal_wp cache flush 2>/dev/null || true
 done
 

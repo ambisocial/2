@@ -13,7 +13,7 @@ foreach (
 		array(
 			'post_type'      => 'post',
 			'post_status'    => 'publish',
-			'posts_per_page' => 200,
+			'posts_per_page' => -1,
 			'fields'         => 'ids',
 		)
 	) as $post_id

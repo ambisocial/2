@@ -36,6 +36,9 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   echo "--- E3 longforms ---" | tee -a "$LOG"
   portal_wp eval-file "$REPO/scripts/victor/setup-sprint-e3-portal-longforms.php" 2>&1 | tee -a "$LOG"
 
+  echo "--- backfill thumbnails ---" | tee -a "$LOG"
+  portal_wp eval-file "$REPO/scripts/victor/backfill-fallback-thumbnails.php" 2>&1 | tee -a "$LOG" || true
+
   if [[ "$PORTAL_ID" == "estrato-finance" ]]; then
     echo "--- E4 cotações ---" | tee -a "$LOG"
     portal_wp eval-file "$REPO/scripts/victor/setup-sprint-e4-finance-cotacoes.php" 2>&1 | tee -a "$LOG"

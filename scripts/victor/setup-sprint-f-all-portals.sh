@@ -41,6 +41,9 @@ for PORTAL_ID in "${PORTALS[@]}"; do
 
   echo "--- pós-F: A2 autores + thumbs + legacy ---" | tee -a "$LOG"
   portal_wp eval-file "$REPO/scripts/victor/setup-sprint-a2-portal-authors.php" 2>&1 | tee -a "$LOG" || true
+  if [[ "$PORTAL_ID" == "estrato-finance" ]]; then
+    portal_wp eval-file "$REPO/scripts/victor/merge-legacy-categories.php" 2>&1 | tee -a "$LOG" || true
+  fi
   portal_wp eval-file "$REPO/scripts/victor/backfill-fallback-thumbnails.php" 2>&1 | tee -a "$LOG" || true
   portal_wp eval-file "$REPO/scripts/victor/enrich-thin-posts.php" 2>&1 | tee -a "$LOG" || true
   portal_wp eval-file "$REPO/scripts/victor/trash-pre2024-posts.php" 2>&1 | tee -a "$LOG" || true

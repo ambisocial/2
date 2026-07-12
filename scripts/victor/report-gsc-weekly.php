@@ -38,9 +38,18 @@ function estrato_ops_posts_last_days( $slug, $days = 7 ) {
 	return is_array( $posts ) ? count( $posts ) : 0;
 }
 
-$slugs = function_exists( 'estrato_rss_get_finance_menu_order' )
-	? estrato_rss_get_finance_menu_order()
-	: array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' );
+$portal = getenv( 'ESTRATO_PORTAL' ) ?: '';
+if ( '' === $portal && function_exists( 'estrato_nav_current_portal_id' ) ) {
+	$portal = estrato_nav_current_portal_id();
+}
+
+if ( function_exists( 'estrato_aeo_portal_editorias' ) ) {
+	$slugs = estrato_aeo_portal_editorias();
+} elseif ( function_exists( 'estrato_rss_get_finance_menu_order' ) ) {
+	$slugs = estrato_rss_get_finance_menu_order();
+} else {
+	$slugs = array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' );
+}
 
 $ratio = function_exists( 'estrato_regression_word_ratio' ) ? estrato_regression_word_ratio() : -1;
 $thin  = function_exists( 'estrato_regression_thin_posts' ) ? estrato_regression_thin_posts() : -1;
@@ -48,7 +57,10 @@ $feed  = function_exists( 'estrato_rss_feed_health_ratio' ) ? estrato_rss_feed_h
 $gsc   = get_option( 'estrato_gsc_manual_metrics', array() );
 
 $lines   = array();
-$lines[] = '# Relatório semanal Estrato — ' . gmdate( 'Y-m-d' );
+$lines[] = '# Relatório semanal ' . get_bloginfo( 'name' ) . ' — ' . gmdate( 'Y-m-d' );
+if ( $portal ) {
+	$lines[] = 'Portal: `' . $portal . '`';
+}
 $lines[] = '';
 $lines[] = '## Resumo portal';
 $lines[] = sprintf( '- Posts 300+ palavras: **%.1f%%**', $ratio >= 0 ? $ratio * 100 : 0 );

@@ -112,22 +112,43 @@ add_action( 'wp_head', 'estrato_aeo_output_hub_faq_schema', 8 );
  * @return array<int, array{q:string,a:string}>
  */
 function estrato_aeo_get_hub_faqs( $slug, $title ) {
-	$title = $title ? $title : ucfirst( $slug );
+	$title    = $title ? $title : ucfirst( $slug );
+	$blog     = get_bloginfo( 'name' );
+	$is_finance = ! function_exists( 'estrato_nav_current_portal_id' )
+		|| 'estrato-finance' === estrato_nav_current_portal_id();
 
-	return array(
+	$faqs = array(
 		array(
 			'q' => sprintf( 'O que é %s e por que importa?', wp_trim_words( $title, 6, '' ) ),
-			'a' => 'É um tema central da economia brasileira monitorado pela redação do Estrato, com impacto em juros, preços, empresas e investimentos.',
+			'a' => $is_finance
+				? 'É um tema central da economia brasileira monitorado pela redação do Estrato, com impacto em juros, preços, empresas e investimentos.'
+				: sprintf(
+					'É um tema central de %s no %s, com cobertura editorial contínua e fontes verificáveis.',
+					wp_trim_words( $title, 6, '' ),
+					$blog
+				),
 		),
 		array(
-			'q' => 'Com que frequência o Estrato atualiza esta hub?',
-			'a' => 'Publicamos novas matérias diariamente e revisamos o contexto quando há dados oficiais do Banco Central, IBGE, B3 ou mudanças regulatórias.',
-		),
-		array(
-			'q' => 'Onde encontrar cotações e dados de mercado?',
-			'a' => 'Consulte a página de Cotações em https://estrato.cc/cotacoes/ e a editoria Mercados para análises do Ibovespa, dólar e juros.',
+			'q' => sprintf( 'Com que frequência o %s atualiza esta hub?', $blog ),
+			'a' => $is_finance
+				? 'Publicamos novas matérias diariamente e revisamos o contexto quando há dados oficiais do Banco Central, IBGE, B3 ou mudanças regulatórias.'
+				: 'Publicamos novas matérias diariamente e revisamos o contexto quando surgem dados, fontes primárias ou mudanças relevantes no debate.',
 		),
 	);
+
+	if ( $is_finance ) {
+		$faqs[] = array(
+			'q' => 'Onde encontrar cotações e dados de mercado?',
+			'a' => 'Consulte a página de Cotações em ' . home_url( '/cotacoes/' ) . ' e a editoria Mercados para análises do Ibovespa, dólar e juros.',
+		);
+	} else {
+		$faqs[] = array(
+			'q' => 'Onde ver mais conteúdo sobre este tema?',
+			'a' => 'Explore as editorias relacionadas no ' . $blog . ' e os guias em /tudo-sobre/ para contexto ampliado.',
+		);
+	}
+
+	return $faqs;
 }
 
 /**
@@ -193,25 +214,304 @@ function estrato_aeo_write_indexnow_key_file() {
 }
 
 /**
+ * Editorias do portal atual (index_order da taxonomia).
+ *
+ * @return array<int, string>
+ */
+function estrato_aeo_portal_editorias() {
+	$portal  = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+	$loaders = array(
+		'estrato-finance'   => 'estrato_rss_load_finance_taxonomy',
+		'estrato-mind'      => 'estrato_rss_load_mind_taxonomy',
+		'estrato-lifestyle' => 'estrato_rss_load_lifestyle_taxonomy',
+		'estrato-science'   => 'estrato_rss_load_science_taxonomy',
+		'estrato-sustain'   => 'estrato_rss_load_sustain_taxonomy',
+		'estrato-culture'   => 'estrato_rss_load_culture_taxonomy',
+	);
+	$loader  = $loaders[ $portal ] ?? null;
+	if ( ! $loader || ! function_exists( $loader ) ) {
+		return function_exists( 'estrato_rss_get_finance_menu_order' )
+			? estrato_rss_get_finance_menu_order()
+			: array();
+	}
+	$taxonomy = $loader();
+	return $taxonomy['index_order'] ?? array_keys( $taxonomy['categories'] ?? array() );
+}
+
+/**
+ * Hubs /tudo-sobre/ publicados.
+ *
+ * @return array<int, array{slug:string,title:string,url:string}>
+ */
+function estrato_aeo_portal_hubs() {
+	$parent = get_page_by_path( 'tudo-sobre', OBJECT, 'page' );
+	if ( ! $parent ) {
+		return array();
+	}
+	$hubs = array();
+	foreach (
+		get_children(
+			array(
+				'post_parent' => $parent->ID,
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+			)
+		) as $page
+	) {
+		$hubs[] = array(
+			'slug'  => $page->post_name,
+			'title' => $page->post_title,
+			'url'   => get_permalink( $page ),
+		);
+	}
+	return $hubs;
+}
+
+/**
+ * @return string
+ */
+function estrato_aeo_build_llms_txt() {
+	$home    = home_url( '/' );
+	$blog    = get_bloginfo( 'name' );
+	$tagline = get_bloginfo( 'description' );
+	$date    = gmdate( 'Y-m-d' );
+	$lines   = array(
+		'# ' . $blog . ' — llms.txt (GEO / AEO)',
+		'# ' . $tagline,
+		'# Última atualização: ' . $date,
+		'',
+		'> ' . $tagline,
+		'',
+		'## Sobre',
+		'',
+		'- Site: ' . $home,
+		'- Política editorial: ' . home_url( '/politica-editorial/' ),
+		'- Sobre: ' . home_url( '/sobre/' ),
+		'- Contato: ' . home_url( '/contato/' ),
+		'',
+		'## Editorias',
+		'',
+	);
+
+	foreach ( estrato_aeo_portal_editorias() as $slug ) {
+		$term = get_term_by( 'slug', $slug, 'category' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$lines[] = '- ' . $term->name . ': ' . get_category_link( $term );
+		}
+	}
+
+	$hubs = estrato_aeo_portal_hubs();
+	if ( $hubs ) {
+		$lines[] = '';
+		$lines[] = '## Guias (hubs evergreen)';
+		$lines[] = '';
+		foreach ( $hubs as $hub ) {
+			$lines[] = '- ' . $hub['title'] . ': ' . $hub['url'];
+		}
+	}
+
+	if ( 'estrato-finance' === ( function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : '' ) ) {
+		$lines[] = '';
+		$lines[] = '## Cotações';
+		$lines[] = '';
+		$lines[] = '- Cotações (Frankfurter/ECB): ' . home_url( '/cotacoes/' );
+	}
+
+	$lines[] = '';
+	$lines[] = '## Feeds';
+	$lines[] = '';
+	$lines[] = '- RSS: ' . home_url( '/feed/' );
+	$lines[] = '- Sitemap: ' . home_url( '/sitemap_index.xml' );
+	$lines[] = '- News sitemap: ' . home_url( '/news-sitemap.xml' );
+	$lines[] = '';
+	$lines[] = '## Citação';
+	$lines[] = '';
+	$lines[] = 'Ao citar o ' . $blog . ', indique o título da matéria, a URL e a data de publicação.';
+
+	return implode( "\n", $lines ) . "\n";
+}
+
+/**
+ * @return string
+ */
+function estrato_aeo_build_llms_full_txt() {
+	$home = home_url( '/' );
+	$blog = get_bloginfo( 'name' );
+	$lines = array(
+		'# ' . $blog . ' — llms-full.txt (GEO expandido)',
+		'',
+		'## Identidade',
+		'',
+		'Nome: ' . $blog,
+		'URL: ' . $home,
+		'Idioma: pt-BR',
+		'Operador: Estrato Mídia e Conteúdo Ltda.',
+		'',
+		'## Missão',
+		'',
+		get_bloginfo( 'description' ),
+		'',
+		'## Políticas',
+		'',
+		'- Política editorial: ' . home_url( '/politica-editorial/' ),
+		'- Privacidade (LGPD): ' . home_url( '/privacidade/' ),
+		'',
+		'## Taxonomia editorial',
+		'',
+		'| Editoria | Slug | URL |',
+		'|----------|------|-----|',
+	);
+
+	foreach ( estrato_aeo_portal_editorias() as $slug ) {
+		$term = get_term_by( 'slug', $slug, 'category' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$lines[] = sprintf(
+				'| %s | %s | %s |',
+				$term->name,
+				$slug,
+				get_category_link( $term )
+			);
+		}
+	}
+
+	$hubs = estrato_aeo_portal_hubs();
+	if ( $hubs ) {
+		$lines[] = '';
+		$lines[] = '## Hubs temáticos (FAQ + notícias)';
+		$lines[] = '';
+		foreach ( $hubs as $i => $hub ) {
+			$lines[] = ( $i + 1 ) . '. ' . $hub['url'] . ' — ' . $hub['title'];
+		}
+	}
+
+	$lines[] = '';
+	$lines[] = '## Formato de conteúdo';
+	$lines[] = '';
+	$lines[] = 'Matérias incluem: lead factual, resumo AEO, contexto, perguntas frequentes (FAQ) e links internos. Mínimo editorial: 300 palavras em posts publicados.';
+	$lines[] = '';
+	$lines[] = '## Contato editorial';
+	$lines[] = '';
+	$lines[] = '- redacao@estrato.cc';
+	$lines[] = '- contato@estrato.cc';
+
+	return implode( "\n", $lines ) . "\n";
+}
+
+/**
+ * Speakable + HowTo leve em posts (Sprint 22).
+ */
+function estrato_aeo_output_post_geo_schema() {
+	if ( ! is_singular( 'post' ) ) {
+		return;
+	}
+
+	$post = get_queried_object();
+	if ( ! $post || empty( $post->ID ) ) {
+		return;
+	}
+
+	$schema = array(
+		'@context'    => 'https://schema.org',
+		'@type'       => 'WebPage',
+		'url'         => get_permalink( $post ),
+		'name'        => get_the_title( $post ),
+		'speakable'   => array(
+			'@type'       => 'SpeakableSpecification',
+			'cssSelector' => array(
+				'.estrato-aeo-resumo',
+				'.estrato-editorial-lead',
+				'h1',
+			),
+		),
+		'description' => wp_strip_all_tags( get_the_excerpt( $post ) ),
+	);
+
+	echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+}
+add_action( 'wp_head', 'estrato_aeo_output_post_geo_schema', 9 );
+
+/**
+ * IndexNow em lote para URLs recentes.
+ *
+ * @param int $limit
+ * @return int
+ */
+function estrato_aeo_indexnow_ping_urls( $urls ) {
+	if ( ! get_option( ESTRATO_INDEXNOW_ENABLED_OPTION, false ) || ! $urls ) {
+		return 0;
+	}
+
+	$key  = estrato_aeo_get_indexnow_key();
+	$host = wp_parse_url( home_url(), PHP_URL_HOST );
+	if ( ! $key || ! $host ) {
+		return 0;
+	}
+
+	$urls = array_values( array_unique( array_filter( $urls ) ) );
+	if ( ! $urls ) {
+		return 0;
+	}
+
+	wp_remote_post(
+		'https://api.indexnow.org/indexnow',
+		array(
+			'timeout' => 15,
+			'headers' => array( 'Content-Type' => 'application/json; charset=utf-8' ),
+			'body'    => wp_json_encode(
+				array(
+					'host'        => $host,
+					'key'         => $key,
+					'keyLocation' => home_url( '/estrato-indexnow-key.txt' ),
+					'urlList'     => array_slice( $urls, 0, 100 ),
+				)
+			),
+		)
+	);
+
+	return count( $urls );
+}
+
+/**
+ * @param int $limit
+ * @return int
+ */
+function estrato_aeo_indexnow_recent_posts( $limit = 30 ) {
+	$urls = array();
+	foreach (
+		get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'posts_per_page' => $limit,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			)
+		) as $post
+	) {
+		$urls[] = get_permalink( $post );
+	}
+	return estrato_aeo_indexnow_ping_urls( $urls );
+}
+
+/**
  * Copia assets GEO (llms.txt, ads.txt) para a raiz.
  *
  * @return array<string, bool>
  */
 function estrato_aeo_deploy_static_files() {
 	$base   = plugin_dir_path( __FILE__ ) . 'assets/';
-	$files  = array( 'llms.txt', 'llms-full.txt', 'ads.txt' );
 	$result = array();
 
-	foreach ( $files as $file ) {
-		$src = $base . $file;
-		$dst = ABSPATH . $file;
-		if ( ! is_readable( $src ) ) {
-			$result[ $file ] = false;
-			continue;
-		}
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		$ok              = file_put_contents( $dst, file_get_contents( $src ), LOCK_EX );
-		$result[ $file ] = false !== $ok;
+	$llms = estrato_aeo_build_llms_txt();
+	$full = estrato_aeo_build_llms_full_txt();
+	$result['llms.txt']      = false !== file_put_contents( ABSPATH . 'llms.txt', $llms, LOCK_EX );
+	$result['llms-full.txt'] = false !== file_put_contents( ABSPATH . 'llms-full.txt', $full, LOCK_EX );
+
+	$ads_src = $base . 'ads.txt';
+	if ( is_readable( $ads_src ) ) {
+		$result['ads.txt'] = false !== file_put_contents( ABSPATH . 'ads.txt', file_get_contents( $ads_src ), LOCK_EX );
+	} else {
+		$result['ads.txt'] = false;
 	}
 
 	$result['estrato-indexnow-key.txt'] = estrato_aeo_write_indexnow_key_file();

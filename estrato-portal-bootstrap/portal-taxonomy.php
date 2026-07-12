@@ -121,6 +121,9 @@ function estrato_portal_section_branding_styles() {
 
 	echo '<style id="estrato-section-branding">'
 		. ':root{--estrato-primary:' . $primary . ';--estrato-accent:' . $accent . ';--estrato-secondary:' . $secondary . '}'
+		. '.estrato-section-active .estrato-g1-header__principal,.estrato-section-active .estrato-g1-header__editoria'
+		. '{background-color:var(--estrato-primary)!important;color:#fff!important}'
+		. '.estrato-section-active .estrato-g1-header__logo-img{filter:brightness(0) invert(1)}'
 		. '.estrato-section-active .site-header,.estrato-section-active header.site-header,.estrato-section-active #masthead'
 		. '{background-color:var(--estrato-primary)!important;border-bottom:3px solid var(--estrato-accent)}'
 		. '.estrato-section-active .main-nav a:hover,.estrato-section-active a{color:inherit}'

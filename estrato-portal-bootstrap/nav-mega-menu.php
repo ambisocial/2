@@ -260,7 +260,7 @@ function estrato_nav_rebuild_principal_menu( $categories = null ) {
 function estrato_nav_mega_menu_args( $args ) {
 	$loc = $args['theme_location'] ?? '';
 	if ( in_array( $loc, array( 'primary', 'top-menu', 'footer-menu' ), true ) ) {
-		$args['menu_class'] = trim( ( $args['menu_class'] ?? 'menu' ) . ' estrato-mega-nav' );
+		$args['menu_class'] = trim( ( $args['menu_class'] ?? 'menu' ) . ' estrato-mega-nav estrato-g1-menu' );
 	}
 	return $args;
 }

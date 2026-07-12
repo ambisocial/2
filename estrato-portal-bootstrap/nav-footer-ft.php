@@ -86,12 +86,12 @@ function estrato_ft_group_businesses_all() {
 		if ( empty( $biz['url'] ) || empty( $biz['name'] ) ) {
 			continue;
 		}
-		$host = (string) wp_parse_url( $biz['url'], PHP_URL_HOST );
 		$out[] = array(
 			'name'    => (string) $biz['name'],
 			'url'     => (string) $biz['url'],
 			'tagline' => (string) ( $biz['tagline'] ?? '' ),
-			'current' => $host === $current_host,
+			// Só oculta se for exatamente a home do portal atual (não por host compartilhado).
+			'current' => untrailingslashit( (string) $biz['url'] ) === untrailingslashit( home_url( '/' ) ),
 		);
 	}
 

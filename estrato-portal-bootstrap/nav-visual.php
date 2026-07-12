@@ -232,6 +232,199 @@ function estrato_shortcode_hub_posts( $atts ) {
 add_shortcode( 'estrato_hub_posts', 'estrato_shortcode_hub_posts' );
 
 /**
+ * Catálogo da rede Estrato (cross-linking Sprint 15).
+ *
+ * @return array<int, array{id:string,name:string,url:string,tagline:string}>
+ */
+function estrato_nav_network_catalog() {
+	return array(
+		array(
+			'id'      => 'estrato-finance',
+			'name'    => 'Estrato',
+			'url'     => 'https://estrato.cc/',
+			'tagline' => 'Economia, mercados e finanças',
+		),
+		array(
+			'id'      => 'estrato-mind',
+			'name'    => 'Estrato Mente',
+			'url'     => 'https://mente.estrato.cc/',
+			'tagline' => 'Conhecimento e desenvolvimento pessoal',
+		),
+		array(
+			'id'      => 'estrato-lifestyle',
+			'name'    => 'Estrato Lifestyle',
+			'url'     => 'https://lifestyle.estrato.cc/',
+			'tagline' => 'Estilos de vida e hobbies',
+		),
+		array(
+			'id'      => 'estrato-science',
+			'name'    => 'Estrato Science',
+			'url'     => 'https://science.estrato.cc/',
+			'tagline' => 'Ciência, tecnologia e futuro',
+		),
+		array(
+			'id'      => 'estrato-sustain',
+			'name'    => 'Estrato Sustain',
+			'url'     => 'https://sustain.estrato.cc/',
+			'tagline' => 'Sustentabilidade e economia alternativa',
+		),
+		array(
+			'id'      => 'estrato-culture',
+			'name'    => 'Estrato Culture',
+			'url'     => 'https://culture.estrato.cc/',
+			'tagline' => 'Cultura pop e narrativas de nicho',
+		),
+	);
+}
+
+/**
+ * Resolve portal_id atual.
+ *
+ * @return string
+ */
+function estrato_nav_current_portal_id() {
+	$portal = getenv( 'ESTRATO_PORTAL' ) ?: '';
+	if ( $portal ) {
+		return sanitize_key( $portal );
+	}
+	$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+	$map  = array(
+		'estrato.cc'           => 'estrato-finance',
+		'mente.estrato.cc'     => 'estrato-mind',
+		'lifestyle.estrato.cc' => 'estrato-lifestyle',
+		'science.estrato.cc'   => 'estrato-science',
+		'sustain.estrato.cc'   => 'estrato-sustain',
+		'culture.estrato.cc'   => 'estrato-culture',
+	);
+	return $map[ $host ] ?? 'estrato-finance';
+}
+
+/**
+ * HTML do widget "Na rede Estrato".
+ *
+ * @return string
+ */
+function estrato_nav_network_footer_html() {
+	$current = estrato_nav_current_portal_id();
+	$html    = '<div class="estrato-network-footer"><p><strong>Na rede Estrato</strong></p><ul>';
+	foreach ( estrato_nav_network_catalog() as $node ) {
+		if ( $node['id'] === $current ) {
+			continue;
+		}
+		$html .= '<li><a href="' . esc_url( $node['url'] ) . '">' . esc_html( $node['name'] )
+			. '</a> <span class="estrato-network-tagline">— ' . esc_html( $node['tagline'] ) . '</span></li>';
+	}
+	$html .= '</ul></div>';
+	return $html;
+}
+
+/**
+ * Links de editorias no footer.
+ *
+ * @return string
+ */
+function estrato_nav_footer_editorias() {
+	$terms = get_terms(
+		array(
+			'taxonomy'   => 'category',
+			'parent'     => 0,
+			'hide_empty' => false,
+			'number'     => 8,
+		)
+	);
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		return '';
+	}
+	$links = array();
+	foreach ( $terms as $term ) {
+		$legacy = array( 'politica', 'tecnologia', 'brasil', 'sem-categoria' );
+		if ( in_array( $term->slug, $legacy, true ) ) {
+			continue;
+		}
+		$links[] = '<a href="' . esc_url( get_category_link( $term ) ) . '">' . esc_html( $term->name ) . '</a>';
+	}
+	return implode( ' · ', array_slice( $links, 0, 7 ) );
+}
+
+/**
+ * Mapa de cross-links entre portais (finance ↔ satélites).
+ *
+ * @return array<string, array<string, array<int, array{url:string,title:string}>>>
+ */
+function estrato_nav_crosslink_map() {
+	return array(
+		'estrato-finance' => array(
+			'selic'       => array(
+				array(
+					'url'   => 'https://mente.estrato.cc/tudo-sobre/financas/',
+					'title' => 'Finanças comportamentais — Estrato Mente',
+				),
+			),
+			'cripto'      => array(
+				array(
+					'url'   => 'https://science.estrato.cc/tudo-sobre/ia/',
+					'title' => 'IA e segurança — Estrato Science',
+				),
+			),
+			'agronegocio' => array(
+				array(
+					'url'   => 'https://sustain.estrato.cc/tudo-sobre/agro/',
+					'title' => 'Agro sustentável — Estrato Sustain',
+				),
+			),
+		),
+		'estrato-mind'    => array(
+			'financas' => array(
+				array(
+					'url'   => 'https://estrato.cc/tudo-sobre/selic/',
+					'title' => 'Tudo sobre Selic — Estrato',
+				),
+				array(
+					'url'   => 'https://estrato.cc/category/financas-pessoais/',
+					'title' => 'Finanças pessoais — Estrato',
+				),
+			),
+		),
+		'estrato-science' => array(
+			'ia' => array(
+				array(
+					'url'   => 'https://estrato.cc/tudo-sobre/cripto/',
+					'title' => 'Criptomoedas — Estrato',
+				),
+			),
+		),
+		'estrato-sustain' => array(
+			'agro' => array(
+				array(
+					'url'   => 'https://estrato.cc/tudo-sobre/agronegocio/',
+					'title' => 'Agronegócio — Estrato',
+				),
+			),
+		),
+	);
+}
+
+/**
+ * Bloco HTML de cross-links para página hub.
+ *
+ * @param string $hub_slug
+ * @return string
+ */
+function estrato_nav_render_crosslinks_block( $hub_slug ) {
+	$portal = estrato_nav_current_portal_id();
+	$map    = estrato_nav_crosslink_map();
+	if ( empty( $map[ $portal ][ $hub_slug ] ) ) {
+		return '';
+	}
+	$html = '<div class="estrato-network-crosslinks"><h2>Na rede Estrato</h2><ul>';
+	foreach ( $map[ $portal ][ $hub_slug ] as $link ) {
+		$html .= '<li><a href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['title'] ) . '</a></li>';
+	}
+	$html .= '</ul></div>';
+	return $html;
+}
+
+/**
  * CSS leve para grids Estrato.
  */
 function estrato_nav_visual_styles() {

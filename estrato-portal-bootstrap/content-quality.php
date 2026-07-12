@@ -168,8 +168,9 @@ function estrato_content_inject_internal_links( $content, $post_id ) {
 		return $content;
 	}
 
-	$links = array();
-	$cats  = get_the_category( $post_id );
+	$links    = array();
+	$cats     = get_the_category( $post_id );
+	$cat_slug = ! empty( $cats[0] ) ? $cats[0]->slug : '';
 	if ( ! empty( $cats[0] ) ) {
 		$links[] = array(
 			'url'   => get_category_link( $cats[0]->term_id ),
@@ -184,10 +185,32 @@ function estrato_content_inject_internal_links( $content, $post_id ) {
 		);
 	}
 
+	if ( count( $links ) < 3 && $cat_slug ) {
+		$fallback_slug = $cat_slug;
+		$fallback_term = get_term_by( 'slug', $fallback_slug, 'category' );
+		if ( $fallback_term && ! is_wp_error( $fallback_term ) ) {
+			$links[] = array(
+				'url'   => get_category_link( $fallback_term ),
+				'title' => 'Mais em ' . $fallback_term->name,
+			);
+		}
+	}
+
+	$hub_slug = $cat_slug ? strtok( $cat_slug, '-' ) : '';
+	if ( $hub_slug ) {
+		$hub_page = get_page_by_path( 'tudo-sobre/' . $hub_slug, OBJECT, 'page' );
+		if ( $hub_page && count( $links ) < 3 ) {
+			$links[] = array(
+				'url'   => get_permalink( $hub_page ),
+				'title' => 'Guia: Tudo sobre ' . ucfirst( str_replace( '-', ' ', $hub_slug ) ),
+			);
+		}
+	}
+
 	if ( count( $links ) < 3 ) {
 		$links[] = array(
-			'url'   => home_url( '/category/economia/' ),
-			'title' => 'Economia no Estrato',
+			'url'   => home_url( '/' ),
+			'title' => 'Início — ' . get_bloginfo( 'name' ),
 		);
 	}
 

@@ -191,6 +191,27 @@ return array(
 						array( 'title' => 'Revista Trasgo (arquivo)', 'url' => 'https://trasgo.com.br/feed/', 'tier' => 3 ),
 					),
 				),
+				'cinema-seriados'   => array(
+					'name'        => 'Cinema & seriados de nicho',
+					'description' => 'Crítica de cinema, séries cult e cultura pop editorial fora do mainstream.',
+					'keywords'    => array(
+						'include' => array(
+							'seriado cult',
+							'série cult',
+							'cinema independente',
+							'cinema de autor',
+							'crítica de cinema',
+							'critica de cinema',
+							'cultura pop',
+							'streaming nicho',
+						),
+						'exclude' => array(),
+					),
+					'feeds'       => array(
+						array( 'title' => 'Omelete', 'url' => 'https://www.omelete.com.br/rss/feed.xml', 'tier' => 1 ),
+						array( 'title' => 'Cinema em Cena', 'url' => 'https://www.cinemaemcena.com.br/rss/', 'tier' => 2 ),
+					),
+				),
 				'musica-nicho'      => array(
 					'name'        => 'Música independente de nicho',
 					'description' => 'Shoegaze, dream pop, vaporwave, synthwave e post-rock instrumental brasileiro.',

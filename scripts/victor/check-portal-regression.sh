@@ -277,8 +277,14 @@ if command -v wp &>/dev/null || $WP option get blogname &>/dev/null 2>&1; then
   done
   ok "AR-TAX-002 legado N/A satélite"
   fi
-  pg_secs=$($WP eval 'echo function_exists("estrato_regression_pressgrid_finance_sections") ? estrato_regression_pressgrid_finance_sections() : -1;' 2>/dev/null || echo -1)
-  if [[ "$pg_secs" -ge 7 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções por editoria"; elif [[ "$pg_secs" -ge 4 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções (mín 4)"; elif [[ "$pg_secs" -ge 0 ]]; then warn "AR-TAX-003 PressGrid apenas $pg_secs seções editoria"; else warn "AR-TAX-003 helper indisponível"; fi
+  if [[ $IS_FINANCE -eq 1 ]]; then
+    pg_secs=$($WP eval 'echo function_exists("estrato_regression_pressgrid_finance_sections") ? estrato_regression_pressgrid_finance_sections() : -1;' 2>/dev/null || echo -1)
+    if [[ "$pg_secs" -ge 7 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções por editoria"; elif [[ "$pg_secs" -ge 4 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções (mín 4)"; elif [[ "$pg_secs" -ge 0 ]]; then warn "AR-TAX-003 PressGrid apenas $pg_secs seções editoria"; else warn "AR-TAX-003 helper indisponível"; fi
+  else
+    pg_secs=$($WP eval 'echo function_exists("estrato_regression_pressgrid_portal_sections") ? estrato_regression_pressgrid_portal_sections() : -1;' 2>/dev/null || echo -1)
+    editoria_n=${#SATELLITE_CATS[@]}
+    if [[ "$pg_secs" -ge "$editoria_n" && "$editoria_n" -gt 0 ]]; then ok "AR-TAX-003 PressGrid $pg_secs/$editoria_n seções por editoria"; elif [[ "$pg_secs" -ge 1 ]]; then ok "AR-TAX-003 PressGrid $pg_secs seções (satélite)"; elif [[ "$pg_secs" -ge 0 ]]; then warn "AR-TAX-003 PressGrid apenas $pg_secs seções editoria"; else warn "AR-TAX-003 helper indisponível"; fi
+  fi
   branded=$($WP eval 'echo function_exists("estrato_regression_branded_editorias_count") ? estrato_regression_branded_editorias_count() : -1;' 2>/dev/null || echo -1)
   if [[ "$branded" -ge 7 ]]; then ok "AR-TAX-004 $branded/7 editorias com branding"; elif [[ "$branded" -ge 4 ]]; then ok "AR-TAX-004 $branded editorias com branding (mín 4)"; elif [[ "$branded" -ge 0 ]]; then warn "AR-TAX-004 apenas $branded editorias com branding"; else warn "AR-TAX-004 branding editorias indisponível"; fi
   schema_v=$($WP eval '$t=function_exists("estrato_rss_load_finance_taxonomy")?estrato_rss_load_finance_taxonomy():(function_exists("estrato_rss_load_portal_taxonomy")?estrato_rss_load_portal_taxonomy():array()); echo (int)($t["schema_version"]??0);' 2>/dev/null || echo 0)

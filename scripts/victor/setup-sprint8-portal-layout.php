@@ -15,8 +15,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 $portal = getenv( 'ESTRATO_PORTAL' ) ?: 'estrato-finance';
 $portal = preg_replace( '/[^a-z0-9\-]/', '', strtolower( $portal ) );
 
+$preset_map = array(
+	'estrato-finance'   => 'brasil-financeiro',
+	'estrato-mind'      => 'brasil-mind',
+	'estrato-lifestyle' => 'brasil-lifestyle',
+	'estrato-science'   => 'brasil-science',
+	'estrato-sustain'   => 'brasil-sustain',
+	'estrato-culture'   => 'brasil-culture',
+);
+$sync_preset = $preset_map[ $portal ] ?? get_option( 'estrato_rss_preset', 'brasil-financeiro' );
+
 if ( function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
-	$sync = estrato_rss_sync_portal_taxonomy();
+	$sync = estrato_rss_sync_portal_taxonomy( $sync_preset );
 	WP_CLI::log( 'Taxonomia sincronizada: ' . wp_json_encode( $sync ) );
 }
 

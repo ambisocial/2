@@ -28,6 +28,8 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   export ESTRATO_PORTAL="$PORTAL_ID"
   log "--- $PORTAL_ID @ $PORTAL_WEB_ROOT preset=$PORTAL_PRESET ---"
   portal_sync_plugins 2>&1 | tee -a "$LOG"
+  portal_wp eval-file "$REPO/scripts/victor/apply-portal-config.php" 2>&1 | tee -a "$LOG"
+  portal_wp eval-file "$REPO/scripts/victor/setup-sprint8-portal-layout.php" 2>&1 | tee -a "$LOG" || true
   portal_wp eval-file "$REPO/scripts/victor/setup-portal-rss-health.php" 2>&1 | tee -a "$LOG"
   portal_wp eval-file "$REPO/scripts/victor/backfill-fallback-thumbnails.php" 2>&1 | tee -a "$LOG" || true
   portal_wp eval-file "$REPO/scripts/victor/enrich-thin-posts.php" 2>&1 | tee -a "$LOG" || true

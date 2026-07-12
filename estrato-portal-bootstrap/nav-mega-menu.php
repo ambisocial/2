@@ -62,7 +62,7 @@ function estrato_nav_columns_by_editoria( $taxonomy ) {
 			continue;
 		}
 		$branding = is_array( $col['branding'] ?? null ) ? $col['branding'] : array();
-		if ( empty( $branding['show_in_nav'] ) ) {
+		if ( empty( $col['show_in_nav'] ) && empty( $branding['show_in_nav'] ) ) {
 			continue;
 		}
 		$parent_slug = sanitize_key( $col['category'] );

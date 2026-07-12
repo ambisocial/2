@@ -75,6 +75,10 @@ if ( ! is_array( $config ) || empty( $config['content']['rss_preset'] ) ) {
 	return;
 }
 
+if ( empty( $config['id'] ) ) {
+	$config['id'] = $portal;
+}
+
 echo "portal yaml: {$yaml_path}\n";
 
 if ( function_exists( 'estrato_portal_apply_config' ) ) {

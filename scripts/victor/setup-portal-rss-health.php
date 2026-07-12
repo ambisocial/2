@@ -22,7 +22,28 @@ $report = array(
 	'duplicates'   => array(),
 );
 
+$preset_map = array(
+	'estrato-finance'   => 'brasil-financeiro',
+	'estrato-mind'      => 'brasil-mind',
+	'estrato-lifestyle' => 'brasil-lifestyle',
+	'estrato-science'   => 'brasil-science',
+	'estrato-sustain'   => 'brasil-sustain',
+	'estrato-culture'   => 'brasil-culture',
+);
+$portal_env = getenv( 'ESTRATO_PORTAL' ) ?: '';
+$portal_env = preg_replace( '/[^a-z0-9\-]/', '', strtolower( $portal_env ) );
+
 $preset = function_exists( 'estrato_rss_get_active_preset' ) ? estrato_rss_get_active_preset() : 'brasil-financeiro';
+if ( ! empty( $preset_map[ $portal_env ] ) ) {
+	$expected = $preset_map[ $portal_env ];
+	if ( $preset !== $expected ) {
+		WP_CLI::warning( "Preset divergente: ativo=$preset esperado=$expected — corrigindo" );
+		if ( function_exists( 'estrato_rss_apply_preset' ) ) {
+			estrato_rss_apply_preset( $expected );
+		}
+		$preset = $expected;
+	}
+}
 $report['preset'] = $preset;
 
 // 1) Sync taxonomia v2 (categorias, subcategorias, matriz RSS, keywords).
@@ -133,8 +154,9 @@ if ( function_exists( 'estrato_bridge_backfill_featured_images' ) ) {
 }
 $report['images'] = array( 'set' => $img_set, 'failed' => $img_fail );
 
-// 8) Posts RSS duplicados por GUID.
+// 8) Posts RSS duplicados por GUID — remove extras (mantém o mais antigo).
 $guid_dupes = 0;
+$guid_removed = 0;
 global $wpdb;
 $rows = $wpdb->get_results(
 	"SELECT meta_value AS guid, COUNT(*) AS c FROM {$wpdb->postmeta}
@@ -145,10 +167,28 @@ $rows = $wpdb->get_results(
 if ( $rows ) {
 	foreach ( $rows as $row ) {
 		$guid_dupes += (int) $row['c'] - 1;
-		WP_CLI::warning( 'GUID duplicado: ' . $row['guid'] . ' (' . $row['c'] . 'x)' );
+		$dup_posts = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT p.ID FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+				 WHERE pm.meta_key = '_estrato_rss_guid' AND pm.meta_value = %s
+				 AND p.post_status IN ('publish','draft','pending')
+				 ORDER BY p.post_date ASC",
+				$row['guid']
+			)
+		);
+		if ( count( $dup_posts ) > 1 ) {
+			array_shift( $dup_posts );
+			foreach ( $dup_posts as $dup_id ) {
+				wp_trash_post( (int) $dup_id );
+				++$guid_removed;
+			}
+			WP_CLI::warning( 'GUID duplicado removido: ' . $row['guid'] . ' (' . count( $dup_posts ) . ' extras)' );
+		}
 	}
 }
 $report['duplicates']['guid'] = $guid_dupes;
+$report['duplicates']['guid_removed'] = $guid_removed;
 
 // 9) Títulos idênticos publicados (últimos 500).
 $title_dupes = 0;

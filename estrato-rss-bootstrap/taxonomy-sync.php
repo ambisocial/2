@@ -469,7 +469,7 @@ function estrato_rss_rebuild_column_menu() {
 	$nav_cols = array_filter(
 		$columns,
 		function ( $col ) {
-			return ! empty( $col['branding']['show_in_nav'] );
+			return ! empty( $col['show_in_nav'] ) || ! empty( $col['branding']['show_in_nav'] );
 		}
 	);
 	if ( ! $nav_cols ) {

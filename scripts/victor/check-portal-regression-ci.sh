@@ -18,6 +18,27 @@ else
   fail "estrato-anti-regression.yaml ausente"
 fi
 
+for ar in mind lifestyle science sustain culture; do
+  f="portals/estrato-anti-regression-${ar}.yaml"
+  if [[ -f "$f" ]]; then
+    ok "$(basename "$f") presente"
+  else
+    fail "$(basename "$f") ausente"
+  fi
+done
+
+if [[ -f scripts/victor/check-portal-regression-all.sh ]]; then
+  bash -n scripts/victor/check-portal-regression-all.sh && ok "bash -n check-portal-regression-all.sh"
+else
+  fail "check-portal-regression-all.sh ausente"
+fi
+
+if [[ -f scripts/victor/setup-sprint-c1-multi-regression.sh ]]; then
+  bash -n scripts/victor/setup-sprint-c1-multi-regression.sh && ok "bash -n setup-sprint-c1-multi-regression.sh"
+else
+  fail "setup-sprint-c1-multi-regression.sh ausente"
+fi
+
 if [[ -f portals/estrato-finance-taxonomy.php ]]; then
   ok "estrato-finance-taxonomy.php presente"
 else
@@ -79,6 +100,8 @@ else
 fi
 
 for sh in scripts/victor/check-portal-regression.sh \
+          scripts/victor/check-portal-regression-all.sh \
+          scripts/victor/setup-sprint-c1-multi-regression.sh \
           scripts/victor/setup-estrato-gate.sh \
           scripts/victor/setup-estrato-taxonomy.sh \
           scripts/victor/setup-estrato-rss-curation.sh \

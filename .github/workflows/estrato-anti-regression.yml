@@ -33,7 +33,9 @@ jobs:
         run: bash scripts/victor/check-portal-regression-ci.sh
 
       - name: Strict shellcheck (check-portal-regression)
-        run: bash -n scripts/victor/check-portal-regression.sh
+        run: |
+          bash -n scripts/victor/check-portal-regression.sh
+          bash -n scripts/victor/check-portal-regression-all.sh
 
   victor-regression:
     runs-on: ubuntu-latest
@@ -55,4 +57,4 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
           export SSHPASS="$VICTOR_SSH_PASSWORD"
           sshpass -e ssh -o StrictHostKeyChecking=no "${VICTOR_SSH_USER}@${VICTOR_SSH_HOST}" \
-            'bash /var/www/estrato/repo/scripts/victor/check-portal-regression.sh --strict'
+            'bash /var/www/estrato/repo/scripts/victor/check-portal-regression-all.sh --strict'

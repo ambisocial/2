@@ -149,7 +149,7 @@ function estrato_home_render_card( $post, $variant = 'list' ) {
 	if ( 'hero' === $variant ) {
 		$thumb = get_the_post_thumbnail(
 			$post->ID,
-			'large',
+			'medium_large',
 			array(
 				'loading'       => 'eager',
 				'fetchpriority' => 'high',

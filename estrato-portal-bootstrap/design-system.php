@@ -114,7 +114,7 @@ function estrato_ds_enqueue_fonts() {
 	}
 	wp_enqueue_style(
 		'estrato-ds-fonts',
-		'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap',
+		'https://fonts.bunny.net/css?family=inter:400,500,600,700|newsreader:600,700|ibm-plex-mono:500&display=swap',
 		array(),
 		null
 	);

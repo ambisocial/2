@@ -39,17 +39,15 @@ function estrato_perf_preload_lcp() {
 		return;
 	}
 
-	echo '<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>' . "\n";
-	echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
-
+	$lcp_size  = 'medium_large';
 	$image_url = '';
 	if ( function_exists( 'estrato_home_is_active' ) && estrato_home_is_active() ) {
 		$hero_id = estrato_perf_home_hero_post_id();
 		if ( $hero_id ) {
-			$image_url = get_the_post_thumbnail_url( $hero_id, 'large' );
+			$image_url = get_the_post_thumbnail_url( $hero_id, $lcp_size );
 		}
 	} elseif ( is_singular( 'post' ) && has_post_thumbnail() ) {
-		$image_url = get_the_post_thumbnail_url( get_the_ID(), 'large' );
+		$image_url = get_the_post_thumbnail_url( get_the_ID(), $lcp_size );
 	}
 
 	if ( $image_url ) {
@@ -60,6 +58,26 @@ function estrato_perf_preload_lcp() {
 	}
 }
 add_action( 'wp_head', 'estrato_perf_preload_lcp', 1 );
+
+/**
+ * CSS crítico above-the-fold na home (evita esperar style block tardio).
+ */
+function estrato_perf_critical_home_css() {
+	if ( ! function_exists( 'estrato_home_is_active' ) || ! estrato_home_is_active() ) {
+		return;
+	}
+	?>
+	<style id="estrato-critical-home">
+	.estrato-home-v2{max-width:1200px;margin:0 auto;padding:var(--estrato-space-4,24px) 1rem}
+	.estrato-home-hero{display:grid;gap:var(--estrato-space-4,24px);margin-bottom:var(--estrato-space-5,40px)}
+	@media(min-width:900px){.estrato-home-hero{grid-template-columns:1.4fr 1fr}}
+	.estrato-home-card__link{color:inherit;text-decoration:none;display:block}
+	.estrato-home-card__media img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px}
+	.estrato-home-card--hero .estrato-home-card__title{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:.35rem 0}
+	</style>
+	<?php
+}
+add_action( 'wp_head', 'estrato_perf_critical_home_css', 2 );
 
 /**
  * Google Fonts sem bloquear render (media print → all).
@@ -171,9 +189,12 @@ add_filter( 'post_thumbnail_html', 'estrato_perf_post_thumbnail_attrs', 10, 5 );
  */
 function estrato_perf_lcp_status() {
 	return array(
-		'preload'     => true,
-		'async_fonts' => true,
-		'defer_js'    => true,
-		'version'     => defined( 'ESTRATO_PORTAL_VERSION' ) ? ESTRATO_PORTAL_VERSION : '',
+		'preload'       => true,
+		'async_fonts'   => true,
+		'defer_js'      => true,
+		'ticker_cron'   => true,
+		'fonts_cdn'     => 'bunny',
+		'lcp_image_size'=> 'medium_large',
+		'version'       => defined( 'ESTRATO_PORTAL_VERSION' ) ? ESTRATO_PORTAL_VERSION : '',
 	);
 }

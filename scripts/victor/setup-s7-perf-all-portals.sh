@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# S7.3 — deploy perf LCP (plugin 1.20 + nginx cache + Lighthouse).
+# S7.3+ — deploy perf LCP (plugin 1.21 + nginx cache + ticker cron + Lighthouse).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,6 +20,7 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   echo "--- $PORTAL_ID ---"
   portal_sync_plugins
   portal_wp eval 'if(function_exists("estrato_perf_lcp_status")){print_r(estrato_perf_lcp_status());}' 2>/dev/null || true
+  portal_wp eval 'if(function_exists("estrato_ticker_refresh_cache")){estrato_ticker_refresh_cache();echo "ticker warmed\n";}' 2>/dev/null || true
   portal_wp cache flush 2>/dev/null || true
 done
 

@@ -10,28 +10,47 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Dados placeholder quando o cache ainda não foi aquecido.
+ *
  * @return array<string, mixed>
  */
-function estrato_ticker_fetch_data() {
+function estrato_ticker_placeholder_data() {
+	return array(
+		'ibov'    => array( 'label' => 'IBOVESPA', 'value' => '—', 'change' => 0 ),
+		'usdbrl'  => array( 'label' => 'USD/BRL', 'value' => '—', 'change' => 0 ),
+		'selic'   => array( 'label' => 'SELIC', 'value' => '—', 'change' => 0 ),
+		'ipca'    => array( 'label' => 'IPCA 12m', 'value' => '—', 'change' => 0 ),
+		'btc'     => array( 'label' => 'BITCOIN', 'value' => '—', 'change' => 0 ),
+		'updated' => gmdate( 'H:i' ),
+	);
+}
+
+/**
+ * Lê cache sem chamadas HTTP (não bloqueia TTFB/LCP).
+ *
+ * @return array<string, mixed>
+ */
+function estrato_ticker_get_cached() {
 	$cached = get_transient( 'estrato_ticker_br_v2' );
 	if ( false !== $cached && is_array( $cached ) ) {
 		return $cached;
 	}
+	return estrato_ticker_placeholder_data();
+}
 
-	$data = array(
-		'ibov'   => array( 'label' => 'IBOVESPA', 'value' => '—', 'change' => 0 ),
-		'usdbrl' => array( 'label' => 'USD/BRL', 'value' => '—', 'change' => 0 ),
-		'selic'  => array( 'label' => 'SELIC', 'value' => '—', 'change' => 0 ),
-		'ipca'   => array( 'label' => 'IPCA 12m', 'value' => '—', 'change' => 0 ),
-		'btc'    => array( 'label' => 'BITCOIN', 'value' => '—', 'change' => 0 ),
-		'updated'=> gmdate( 'H:i' ),
-	);
+/**
+ * Atualiza cache via APIs externas (cron / CLI apenas).
+ *
+ * @return array<string, mixed>
+ */
+function estrato_ticker_refresh_cache() {
+	$data = estrato_ticker_placeholder_data();
 
-	$ibov = wp_remote_get( 'https://brapi.dev/api/quote/%5EBVSP', array( 'timeout' => 10 ) );
+	$ibov = wp_remote_get( 'https://brapi.dev/api/quote/%5EBVSP', array( 'timeout' => 8 ) );
 	if ( ! is_wp_error( $ibov ) ) {
 		$body = json_decode( wp_remote_retrieve_body( $ibov ), true );
 		if ( ! empty( $body['results'][0] ) ) {
-			$r = $body['results'][0];
+			$r            = $body['results'][0];
 			$data['ibov'] = array(
 				'label'  => 'IBOVESPA',
 				'value'  => number_format_i18n( (float) ( $r['regularMarketPrice'] ?? 0 ), 0 ),
@@ -40,11 +59,11 @@ function estrato_ticker_fetch_data() {
 		}
 	}
 
-	$fx = wp_remote_get( 'https://economia.awesomeapi.com.br/json/last/USD-BRL', array( 'timeout' => 10 ) );
+	$fx = wp_remote_get( 'https://economia.awesomeapi.com.br/json/last/USD-BRL', array( 'timeout' => 8 ) );
 	if ( ! is_wp_error( $fx ) ) {
 		$body = json_decode( wp_remote_retrieve_body( $fx ), true );
 		if ( ! empty( $body['USDBRL'] ) ) {
-			$r = $body['USDBRL'];
+			$r              = $body['USDBRL'];
 			$data['usdbrl'] = array(
 				'label'  => 'USD/BRL',
 				'value'  => number_format_i18n( (float) ( $r['bid'] ?? 0 ), 2 ),
@@ -53,7 +72,7 @@ function estrato_ticker_fetch_data() {
 		}
 	}
 
-	$selic = wp_remote_get( 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json', array( 'timeout' => 10 ) );
+	$selic = wp_remote_get( 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json', array( 'timeout' => 8 ) );
 	if ( ! is_wp_error( $selic ) ) {
 		$body = json_decode( wp_remote_retrieve_body( $selic ), true );
 		if ( ! empty( $body[0]['valor'] ) ) {
@@ -65,7 +84,7 @@ function estrato_ticker_fetch_data() {
 		}
 	}
 
-	$ipca = wp_remote_get( 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/1?formato=json', array( 'timeout' => 10 ) );
+	$ipca = wp_remote_get( 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/1?formato=json', array( 'timeout' => 8 ) );
 	if ( ! is_wp_error( $ipca ) ) {
 		$body = json_decode( wp_remote_retrieve_body( $ipca ), true );
 		if ( ! empty( $body[0]['valor'] ) ) {
@@ -77,11 +96,11 @@ function estrato_ticker_fetch_data() {
 		}
 	}
 
-	$btc = wp_remote_get( 'https://economia.awesomeapi.com.br/json/last/BTC-USD', array( 'timeout' => 10 ) );
+	$btc = wp_remote_get( 'https://economia.awesomeapi.com.br/json/last/BTC-USD', array( 'timeout' => 8 ) );
 	if ( ! is_wp_error( $btc ) ) {
 		$body = json_decode( wp_remote_retrieve_body( $btc ), true );
 		if ( ! empty( $body['BTCUSD'] ) ) {
-			$r = $body['BTCUSD'];
+			$r           = $body['BTCUSD'];
 			$data['btc'] = array(
 				'label'  => 'BITCOIN',
 				'value'  => 'US$ ' . number_format_i18n( (float) ( $r['bid'] ?? 0 ), 0 ),
@@ -90,9 +109,54 @@ function estrato_ticker_fetch_data() {
 		}
 	}
 
+	$data['updated'] = gmdate( 'H:i' );
 	set_transient( 'estrato_ticker_br_v2', $data, 15 * MINUTE_IN_SECONDS );
 	return $data;
 }
+
+/**
+ * @deprecated Use estrato_ticker_get_cached() no front.
+ * @return array<string, mixed>
+ */
+function estrato_ticker_fetch_data() {
+	return estrato_ticker_get_cached();
+}
+
+/**
+ * Cron a cada 15 minutos.
+ *
+ * @param array<string, mixed> $schedules
+ * @return array<string, mixed>
+ */
+function estrato_ticker_cron_schedules( $schedules ) {
+	if ( ! isset( $schedules['estrato_fifteen_minutes'] ) ) {
+		$schedules['estrato_fifteen_minutes'] = array(
+			'interval' => 15 * MINUTE_IN_SECONDS,
+			'display'  => 'A cada 15 minutos (Estrato ticker)',
+		);
+	}
+	return $schedules;
+}
+add_filter( 'cron_schedules', 'estrato_ticker_cron_schedules' );
+
+/**
+ * Agenda cron do ticker.
+ */
+function estrato_ticker_schedule_cron() {
+	if ( wp_next_scheduled( 'estrato_ticker_refresh_event' ) ) {
+		return;
+	}
+	wp_schedule_event( time(), 'estrato_fifteen_minutes', 'estrato_ticker_refresh_event' );
+}
+add_action( 'init', 'estrato_ticker_schedule_cron' );
+
+/**
+ * Handler do cron.
+ */
+function estrato_ticker_cron_handler() {
+	estrato_ticker_refresh_cache();
+}
+add_action( 'estrato_ticker_refresh_event', 'estrato_ticker_cron_handler' );
 
 /**
  * @param array{label:string,value:string,change:float} $item
@@ -113,7 +177,7 @@ function estrato_ticker_format_item( $item ) {
  * @return string
  */
 function estrato_ticker_render_bar() {
-	$data  = estrato_ticker_fetch_data();
+	$data  = estrato_ticker_get_cached();
 	$items = array( 'ibov', 'usdbrl', 'selic', 'ipca', 'btc' );
 	$link  = get_page_by_path( 'cotacoes', OBJECT, 'page' );
 	$url   = $link ? get_permalink( $link ) : home_url( '/cotacoes/' );

@@ -66,6 +66,10 @@ function estrato_eeat_build_persona( $parent_slug, $sub_slug, $sub_name, $sub_de
 	$idx  = abs( crc32( $parent_slug . '-' . $sub_slug ) ) % count( $pool );
 	$pick = $pool[ $idx ];
 
+	// Nome canônico da editoria: preferir o `name` real do termo (respeita
+	// acentos, "&", capitalização). Fallback para whitelist e por último
+	// para title-case do slug.
+	$parent_term = get_term_by( 'slug', $parent_slug, 'category' );
 	$parent_names = array(
 		'economia'          => 'Economia',
 		'mercados'          => 'Mercados',
@@ -75,13 +79,17 @@ function estrato_eeat_build_persona( $parent_slug, $sub_slug, $sub_name, $sub_de
 		'agronegocio'       => 'Agronegócio',
 		'mundo'             => 'Internacional',
 	);
-
-	$parent_label = $parent_names[ $parent_slug ] ?? ucfirst( str_replace( '-', ' ', $parent_slug ) );
-	$role         = 'column' === $term_type ? 'Colunista' : 'Repórter';
-	$display      = $pick['first'] . ' ' . $pick['last'];
+	if ( $parent_term && ! is_wp_error( $parent_term ) && ! empty( $parent_term->name ) ) {
+		$parent_label = html_entity_decode( (string) $parent_term->name, ENT_QUOTES, 'UTF-8' );
+	} else {
+		$parent_label = $parent_names[ $parent_slug ] ?? ucwords( str_replace( '-', ' ', $parent_slug ) );
+	}
+	$sub_name = html_entity_decode( (string) $sub_name, ENT_QUOTES, 'UTF-8' );
+	$role     = 'column' === $term_type ? 'Colunista' : 'Repórter';
+	$display  = $pick['first'] . ' ' . $pick['last'];
 	// Fix pós auditoria visual 2026-07-13: quando o "sub" é a própria editoria
 	// (autor raiz), sub_name == parent_label — evitar "de Finanças Pessoais · Finanças Pessoais".
-	if ( strcasecmp( trim( (string) $sub_name ), trim( (string) $parent_label ) ) === 0 ) {
+	if ( strcasecmp( trim( $sub_name ), trim( $parent_label ) ) === 0 ) {
 		$job = $role . ' de ' . $parent_label;
 	} else {
 		$job = $role . ' de ' . $sub_name . ' · ' . $parent_label;

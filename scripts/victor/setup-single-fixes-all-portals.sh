@@ -63,12 +63,15 @@ _portal_wp_env() {
 }
 
 echo ""
-echo "[3/6] fix-author-jobs-dedup.php"
+echo "[3/6] fix-author-jobs (dedup + refresh)"
 for p in "${PORTALS[@]}"; do
 	portal_resolve "$p"
-	echo "  → $PORTAL_DOMAIN"
+	echo "  → $PORTAL_DOMAIN [dedup]"
 	_portal_wp_env ESTRATO_FIX_JOBS_DRY_RUN "$DRY" \
-		eval-file "$REPO/scripts/victor/fix-author-jobs-dedup.php" 2>&1 | tail -6
+		eval-file "$REPO/scripts/victor/fix-author-jobs-dedup.php" 2>&1 | tail -3
+	echo "  → $PORTAL_DOMAIN [refresh]"
+	_portal_wp_env ESTRATO_FIX_JOBS_REFRESH_DRY_RUN "$DRY" \
+		eval-file "$REPO/scripts/victor/fix-author-jobs-refresh.php" 2>&1 | tail -6
 done
 
 echo ""

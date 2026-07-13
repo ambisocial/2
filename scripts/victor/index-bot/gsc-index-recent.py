@@ -1,30 +1,49 @@
 #!/usr/bin/env python3
-"""Inspeciona posts recentes no GSC (últimas 24h publicados)."""
+"""Inspeciona posts recentes no GSC — todos os portais da rede."""
+from __future__ import annotations
+
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT / 'index-bot'))
+sys.path.insert(0, str(ROOT))
 
 from gsc_api import list_sites, request_indexing  # noqa: E402
 
-WP = '/var/www/estrato.cc'
-LIMIT = int(__import__('os').getenv('GSC_INDEX_LIMIT', '10'))
+REPO = Path(os.getenv('ESTRATO_REPO', '/var/www/estrato/repo'))
+LIMIT_PER = int(os.getenv('GSC_INDEX_LIMIT_PER_PORTAL', '5'))
+MAX_TOTAL = int(os.getenv('GSC_INDEX_LIMIT', '30'))
+
+PORTAL_PATHS = [
+    ('/var/www/estrato.cc', 'estrato-finance'),
+    ('/var/www/mente.estrato.cc', 'estrato-mind'),
+    ('/var/www/lifestyle.estrato.cc', 'estrato-lifestyle'),
+    ('/var/www/science.estrato.cc', 'estrato-science'),
+    ('/var/www/sustain.estrato.cc', 'estrato-sustain'),
+    ('/var/www/culture.estrato.cc', 'estrato-culture'),
+]
 
 
-def recent_urls() -> list[str]:
-    out = subprocess.check_output(
+def wp_recent_urls(wp_path: str, limit: int) -> list[str]:
+    if not Path(wp_path).joinpath('wp-config.php').is_file():
+        return []
+    proc = subprocess.run(
         [
-            'sudo', '-u', 'www-data', 'wp', f'--path={WP}', 'post', 'list',
+            'sudo', '-u', 'www-data', 'wp', f'--path={wp_path}', 'post', 'list',
             '--post_status=publish', '--post_type=post',
-            f'--posts_per_page={LIMIT}', '--orderby=date', '--order=desc',
+            f'--posts_per_page={limit}', '--orderby=date', '--order=desc',
             '--field=url',
         ],
+        capture_output=True,
         text=True,
+        check=False,
     )
-    return [u.strip() for u in out.splitlines() if u.strip()]
+    if proc.returncode != 0:
+        return []
+    return [u.strip() for u in proc.stdout.splitlines() if u.strip()]
 
 
 def main() -> int:
@@ -32,8 +51,22 @@ def main() -> int:
         print('GSC: sem acesso — confira Usuários no Search Console')
         return 1
 
+    collected: list[str] = []
+    seen: set[str] = set()
+    for wp_path, portal_id in PORTAL_PATHS:
+        for url in wp_recent_urls(wp_path, LIMIT_PER):
+            if url in seen:
+                continue
+            seen.add(url)
+            collected.append(url)
+            print(f'# {portal_id}: {url}', file=sys.stderr)
+
+    if not collected:
+        print('[]')
+        return 0
+
     results = []
-    for url in recent_urls():
+    for url in collected[:MAX_TOTAL]:
         try:
             results.append(request_indexing(url))
         except Exception as exc:  # noqa: BLE001

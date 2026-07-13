@@ -112,6 +112,9 @@ function estrato_ds_enqueue_fonts() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
+	if ( function_exists( 'estrato_fonts_selfhosted_ready' ) && estrato_fonts_selfhosted_ready() ) {
+		return;
+	}
 	wp_enqueue_style(
 		'estrato-ds-fonts',
 		'https://fonts.bunny.net/css?family=inter:400,500,600,700|newsreader:600,700|ibm-plex-mono:500&display=swap',

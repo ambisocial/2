@@ -262,7 +262,7 @@ function estrato_perf_lcp_status() {
 		'async_fonts'    => true,
 		'defer_js'       => true,
 		'ticker_cron'    => true,
-		'fonts_cdn'      => 'bunny',
+		'fonts_cdn'      => function_exists( 'estrato_fonts_selfhosted_ready' ) && estrato_fonts_selfhosted_ready() ? 'selfhosted' : 'bunny',
 		'lcp_image_size' => 'medium_large',
 		'single_resize'  => true,
 		'pressgrid_hints'=> false,

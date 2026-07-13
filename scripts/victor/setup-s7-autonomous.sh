@@ -15,6 +15,10 @@ PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-
 {
 echo "=== S7 autonomous ==="
 
+echo "0. Fontes self-hosted"
+bash "$SCRIPT_DIR/setup-selfhosted-fonts.sh" 2>&1 | tail -12
+
+echo ""
 echo "1. Sync plugin + perf 1.22"
 bash "$SCRIPT_DIR/setup-s7-perf-all-portals.sh" 2>&1 | tail -25
 

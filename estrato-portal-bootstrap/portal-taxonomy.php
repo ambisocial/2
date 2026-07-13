@@ -188,15 +188,17 @@ function estrato_enqueue_columns_strip_css() {
 	if ( ! is_front_page() ) {
 		return;
 	}
+	$css = '.estrato-columns-strip ul{display:flex;flex-wrap:wrap;gap:.75rem;list-style:none;margin:1rem 0;padding:0}'
+		. '.estrato-columns-strip a{display:inline-block;padding:.45rem .9rem;border-radius:4px;font-weight:600;text-decoration:none;background:var(--col-primary);color:var(--col-accent)}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-columns-strip', $css, 'main' );
+		return;
+	}
 	wp_register_style( 'estrato-columns-strip', false, array(), '1.0.0' );
 	wp_enqueue_style( 'estrato-columns-strip' );
-	wp_add_inline_style(
-		'estrato-columns-strip',
-		'.estrato-columns-strip ul{display:flex;flex-wrap:wrap;gap:.75rem;list-style:none;margin:1rem 0;padding:0}'
-		. '.estrato-columns-strip a{display:inline-block;padding:.45rem .9rem;border-radius:4px;font-weight:600;text-decoration:none;background:var(--col-primary);color:var(--col-accent)}'
-	);
+	wp_add_inline_style( 'estrato-columns-strip', $css );
 }
-add_action( 'wp_enqueue_scripts', 'estrato_enqueue_columns_strip_css', 20 );
+add_action( 'wp_head', 'estrato_enqueue_columns_strip_css', 20 );
 
 /**
  * @return int

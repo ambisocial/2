@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'ESTRATO_MIN_PUBLISH_WORDS', 200 );
 define( 'ESTRATO_TARGET_WORDS', 300 );
 define( 'ESTRATO_AEO_MARKER', '<!-- estrato-aeo -->' );
+define( 'ESTRATO_KEYPOINTS_MARKER', '<!-- estrato-keypoints -->' );
 define( 'ESTRATO_DISABLE_GENERIC_AEO', true );
 
 /**
@@ -297,6 +298,91 @@ function estrato_content_build_extension_block( $title, $category_slug = '' ) {
 }
 
 /**
+ * Extrai texto limpo para enriquecimento derivado do próprio artigo.
+ *
+ * @param string $html
+ * @return string
+ */
+function estrato_content_plain_for_extract( $html ) {
+	$html = preg_replace( '/<div class="estrato-internal-links">[\s\S]*?<\/div>/iu', '', $html );
+	$html = preg_replace( '/' . preg_quote( ESTRATO_AEO_MARKER, '/' ) . '[\s\S]*/iu', '', $html );
+	$html = preg_replace( '/' . preg_quote( ESTRATO_KEYPOINTS_MARKER, '/' ) . '[\s\S]*/iu', '', $html );
+	$html = preg_replace( '/<p><em>Fonte:.*?<\/em><\/p>/iu', '', $html );
+	return trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $html ) ) );
+}
+
+/**
+ * @param string $plain
+ * @param int    $min_len
+ * @param int    $max
+ * @return array<int, string>
+ */
+function estrato_content_extract_sentences( $plain, $min_len = 30, $max = 10 ) {
+	$parts = preg_split( '/(?<=[.!?…])\s+/u', $plain, -1, PREG_SPLIT_NO_EMPTY );
+	$out   = array();
+	foreach ( $parts as $sentence ) {
+		$sentence = trim( $sentence );
+		if ( strlen( $sentence ) < $min_len ) {
+			continue;
+		}
+		if ( preg_match( '/^(fonte:|leia também|matéria exclusiva)/iu', $sentence ) ) {
+			continue;
+		}
+		$out[] = $sentence;
+		if ( count( $out ) >= $max ) {
+			break;
+		}
+	}
+	return $out;
+}
+
+/**
+ * Pontos-chave e síntese derivados do corpo da matéria (sem template genérico).
+ *
+ * @param string $title
+ * @param string $content
+ * @return string
+ */
+function estrato_content_build_derived_keypoints( $title, $content ) {
+	if ( false !== strpos( $content, ESTRATO_KEYPOINTS_MARKER ) ) {
+		return '';
+	}
+
+	$plain = estrato_content_plain_for_extract( $content );
+	if ( strlen( $plain ) < 100 ) {
+		return '';
+	}
+
+	$sentences = estrato_content_extract_sentences( $plain, 25, 12 );
+	if ( count( $sentences ) < 3 ) {
+		return '';
+	}
+
+	$bullets = array_slice( $sentences, 0, min( 4, count( $sentences ) ) );
+	$synth   = array_slice( $sentences, min( 4, count( $sentences ) ), 5 );
+
+	$html = ESTRATO_KEYPOINTS_MARKER . "\n<div class=\"estrato-keypoints\">";
+	$html .= '<h2>Pontos-chave</h2><ul>';
+	foreach ( $bullets as $bullet ) {
+		$html .= '<li>' . esc_html( wp_trim_words( $bullet, 40, '…' ) ) . '</li>';
+	}
+	$html .= '</ul>';
+	if ( $synth ) {
+		$html .= '<h2>Síntese</h2><p>'
+			. esc_html(
+				sprintf(
+					'Em síntese, “%s” reúne os seguintes desdobramentos: %s',
+					wp_trim_words( wp_strip_all_tags( $title ), 12, '…' ),
+					implode( ' ', $synth )
+				)
+			)
+			. '</p>';
+	}
+	$html .= '</div>';
+	return $html;
+}
+
+/**
  * Enriquece post publicado abaixo da meta de palavras.
  *
  * @param int $post_id
@@ -315,9 +401,7 @@ function estrato_content_enrich_post( $post_id ) {
 	$content = $post->post_content;
 	$words   = estrato_content_word_count( $content );
 
-	if ( $words >= ESTRATO_TARGET_WORDS
-		&& false !== strpos( $content, ESTRATO_AEO_MARKER )
-		&& false !== strpos( $content, 'estrato-internal-links' ) ) {
+	if ( $words >= ESTRATO_TARGET_WORDS ) {
 		return array(
 			'updated' => false,
 			'words'   => $words,
@@ -338,6 +422,12 @@ function estrato_content_enrich_post( $post_id ) {
 			$content,
 			$cat_slug
 		);
+	} elseif ( ESTRATO_DISABLE_GENERIC_AEO && $words < ESTRATO_TARGET_WORDS && $words >= ESTRATO_MIN_PUBLISH_WORDS ) {
+		$derived = estrato_content_build_derived_keypoints( $post->post_title, $content );
+		if ( $derived ) {
+			$content .= "\n" . $derived;
+			$words    = estrato_content_word_count( $content );
+		}
 	}
 
 	$content = estrato_content_inject_internal_links( $content, $post_id );

@@ -194,7 +194,9 @@ foreach ( $items as $item ) {
 				)
 			);
 		}
-		if ( function_exists( 'estrato_bridge_set_fallback_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
+		if ( function_exists( 'estrato_bridge_set_editorial_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
+			estrato_bridge_set_editorial_thumbnail( $post_id );
+		} elseif ( function_exists( 'estrato_bridge_set_fallback_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
 			estrato_bridge_set_fallback_thumbnail( $post_id );
 		}
 		if ( 'publish' !== get_post_status( $post_id ) ) {

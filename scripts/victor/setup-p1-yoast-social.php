@@ -23,13 +23,18 @@ if ( ! is_readable( $logo_path ) ) {
 $attach_id = (int) get_option( 'estrato_og_default_attachment_id', 0 );
 if ( ! $attach_id || ! get_post( $attach_id ) ) {
 	if ( is_readable( $logo_path ) ) {
-		$file_array = array(
-			'name'     => 'estrato-og-default.jpg',
-			'tmp_name' => $logo_path,
-		);
-		$attach_id  = media_handle_sideload( $file_array, 0, 'Estrato OG default' );
-		if ( ! is_wp_error( $attach_id ) ) {
-			update_option( 'estrato_og_default_attachment_id', (int) $attach_id, false );
+		$tmp = wp_tempnam( 'estrato-og' );
+		if ( $tmp && copy( $logo_path, $tmp ) ) {
+			$file_array = array(
+				'name'     => 'estrato-og-default.jpg',
+				'tmp_name' => $tmp,
+			);
+			$attach_id  = media_handle_sideload( $file_array, 0, 'Estrato OG default' );
+			if ( is_wp_error( $attach_id ) ) {
+				$attach_id = 0;
+			} else {
+				update_option( 'estrato_og_default_attachment_id', (int) $attach_id, false );
+			}
 		}
 	}
 }

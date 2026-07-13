@@ -50,12 +50,25 @@ if [ "$DRY" = "0" ]; then
 	systemctl reload php8.3-fpm 2>/dev/null || systemctl reload php8.2-fpm 2>/dev/null || true
 fi
 
+# Helper: portal_wp usa `sudo -u www-data env "ESTRATO_PORTAL=..."` que limpa o
+# resto do ambiente. Precisamos forçar cada env var explícita quando o script
+# PHP depende dela. Padrão wp-cli aceita `--define` do PHP mas não tem
+# equivalente para env; usamos `sudo -u www-data <var>=<val> ...` manualmente.
+_portal_wp_env() {
+	local var="$1"
+	local val="$2"
+	shift 2
+	sudo -u www-data env "ESTRATO_PORTAL=${ESTRATO_PORTAL:-}" "$var=$val" \
+		wp --path="${PORTAL_WEB_ROOT:?}" "$@"
+}
+
 echo ""
 echo "[3/6] fix-author-jobs-dedup.php"
 for p in "${PORTALS[@]}"; do
 	portal_resolve "$p"
 	echo "  → $PORTAL_DOMAIN"
-	ESTRATO_FIX_JOBS_DRY_RUN="$DRY" portal_wp eval-file "$REPO/scripts/victor/fix-author-jobs-dedup.php" 2>&1 | tail -6
+	_portal_wp_env ESTRATO_FIX_JOBS_DRY_RUN "$DRY" \
+		eval-file "$REPO/scripts/victor/fix-author-jobs-dedup.php" 2>&1 | tail -6
 done
 
 echo ""
@@ -63,7 +76,8 @@ echo "[4/6] fix-post-content-hygiene.php (strip boilerplate + backfill títulos/
 for p in "${PORTALS[@]}"; do
 	portal_resolve "$p"
 	echo "  → $PORTAL_DOMAIN"
-	ESTRATO_HYGIENE_DRY_RUN="$DRY" portal_wp eval-file "$REPO/scripts/victor/fix-post-content-hygiene.php" 2>&1 | tail -8
+	_portal_wp_env ESTRATO_HYGIENE_DRY_RUN "$DRY" \
+		eval-file "$REPO/scripts/victor/fix-post-content-hygiene.php" 2>&1 | tail -8
 done
 
 echo ""
@@ -71,7 +85,8 @@ echo "[5/6] purge-off-matrix-posts.php (agora aceita _estrato_source_url)"
 for p in "${PORTALS[@]}"; do
 	portal_resolve "$p"
 	echo "  → $PORTAL_DOMAIN"
-	ESTRATO_PURGE_DRY_RUN="$DRY" portal_wp eval-file "$REPO/scripts/victor/purge-off-matrix-posts.php" 2>&1 | tail -6
+	_portal_wp_env ESTRATO_PURGE_DRY_RUN "$DRY" \
+		eval-file "$REPO/scripts/victor/purge-off-matrix-posts.php" 2>&1 | tail -6
 done
 
 echo ""

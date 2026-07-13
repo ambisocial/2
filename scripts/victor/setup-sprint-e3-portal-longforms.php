@@ -173,7 +173,7 @@ foreach ( $items as $item ) {
 	$existing = get_posts(
 		array(
 			'post_type'      => 'post',
-			'post_status'    => 'any',
+			'post_status'    => 'publish',
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
 			'meta_key'       => '_estrato_pipeline_id',

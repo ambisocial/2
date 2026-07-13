@@ -617,9 +617,13 @@ function estrato_regression_pipeline_without_source() {
 		FROM {$wpdb->posts} p
 		INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_estrato_pipeline_id'
 		LEFT JOIN {$wpdb->postmeta} src ON src.post_id = p.ID AND src.meta_key = '_estrato_source_url'
+		LEFT JOIN {$wpdb->postmeta} ed ON ed.post_id = p.ID AND ed.meta_key = '_estrato_editorial_source'
+		LEFT JOIN {$wpdb->postmeta} mode ON mode.post_id = p.ID AND mode.meta_key = '_estrato_content_mode'
 		WHERE p.post_type = 'post'
 		  AND p.post_status = 'publish'
 		  AND (src.meta_value IS NULL OR TRIM(src.meta_value) = '')
+		  AND (ed.meta_value IS NULL OR TRIM(ed.meta_value) = '')
+		  AND (mode.meta_value IS NULL OR mode.meta_value <> 'analysis')
 	";
 
 	return (int) $wpdb->get_var( $sql );

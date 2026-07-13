@@ -14,6 +14,9 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   export ESTRATO_PORTAL="$PORTAL_ID"
   export ESTRATO_REPO="$REPO"
   portal_sync_plugins 2>/dev/null || true
+  if [[ "$PORTAL_ID" == "estrato-finance" ]]; then
+    portal_wp eval-file "$REPO/scripts/victor/ensure-data-page.php" 2>/dev/null || true
+  fi
   portal_wp eval-file "$REPO/scripts/victor/fix-gate-satellites.php" 2>/dev/null || true
   portal_wp eval-file "$REPO/scripts/victor/boost-mid-posts-300.php" 2>/dev/null || true
   portal_wp eval-file "$REPO/scripts/victor/trim-mid-posts-for-ratio.php" 2>/dev/null || true
@@ -22,5 +25,11 @@ for PORTAL_ID in "${PORTALS[@]}"; do
 done
 
 systemctl reload php8.3-fpm 2>/dev/null || true
+for PORTAL_ID in "${PORTALS[@]}"; do
+  portal_resolve "$PORTAL_ID"
+  export ESTRATO_PORTAL="$PORTAL_ID"
+  links=$(portal_wp eval-file "$REPO/scripts/victor/audit-portal-links.php" 2>&1 | tail -1)
+  echo "LINKS $PORTAL_ID $links"
+done
 bash "$SCRIPT_DIR/check-portal-regression-all.sh" --strict
 echo "Gate 6/6 complete"

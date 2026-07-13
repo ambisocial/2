@@ -120,6 +120,15 @@ foreach ( $urls as $row ) {
 	if ( 0 === strpos( $path, 'category/' ) ) {
 		$slug = substr( $path, strlen( 'category/' ) );
 		$term = get_term_by( 'slug', $slug, 'category' );
+		if ( ( ! $term || is_wp_error( $term ) ) && false !== strpos( $slug, '/' ) ) {
+			$parts = array_filter( explode( '/', $slug ) );
+			$last  = (string) end( $parts );
+			$term  = get_term_by( 'slug', $last, 'category' );
+			if ( ( ! $term || is_wp_error( $term ) ) && count( $parts ) >= 2 ) {
+				$joined = sanitize_title( implode( '-', $parts ) );
+				$term   = get_term_by( 'slug', $joined, 'category' );
+			}
+		}
 		if ( $term && ! is_wp_error( $term ) ) {
 			++$ok;
 		} else {

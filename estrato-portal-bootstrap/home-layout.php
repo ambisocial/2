@@ -55,7 +55,27 @@ function estrato_home_post_kicker( $post ) {
 	}
 	$sub  = ( $deepest->term_id !== $root->term_id ) ? $deepest->name : '';
 	$area = $root->name;
-	return $sub ? strtoupper( $area . ' · ' . $sub ) : strtoupper( $area );
+	return estrato_home_kicker_uppercase( $sub ? $area . ' · ' . $sub : $area );
+}
+
+/**
+ * Uppercase seguro para UTF-8 evitando dupla codificação de entities.
+ *
+ * Nomes de categorias podem chegar com `&amp;` já aplicado. `strtoupper()` não
+ * é UTF-8 safe e transforma `amp;` em `AMP;`, além de destruir acentos. O
+ * `esc_html` do render então re-codifica em `&amp;AMP;` (bug B3 auditoria
+ * visual 2026-07-13). Decodificamos antes, uppercase com mb_strtoupper e
+ * deixamos o `esc_html` na renderização voltar a codificar corretamente.
+ *
+ * @param string $text
+ * @return string
+ */
+function estrato_home_kicker_uppercase( $text ) {
+	$decoded = html_entity_decode( (string) $text, ENT_QUOTES, 'UTF-8' );
+	if ( function_exists( 'mb_strtoupper' ) ) {
+		return mb_strtoupper( $decoded, 'UTF-8' );
+	}
+	return strtoupper( $decoded );
 }
 
 /**
@@ -245,7 +265,7 @@ function estrato_home_render_layout() {
 			continue;
 		}
 		$color = estrato_ds_editoria_color( $slug );
-		$html .= '<section class="estrato-home-block" style="--estrato-cat-color:' . esc_attr( $color ) . '" aria-label="' . esc_attr( $term->name ) . '">';
+		$html .= '<section class="estrato-home-block" style="--estrato-cat-color:' . esc_attr( $color ) . '" aria-label="' . esc_attr( html_entity_decode( $term->name, ENT_QUOTES, 'UTF-8' ) ) . '">';
 		$html .= '<header class="estrato-home-block__head"><h2 class="estrato-display"><a href="' . esc_url( get_category_link( $term ) ) . '">' . esc_html( $term->name ) . '</a></h2></header>';
 		$html .= '<div class="estrato-home-block__grid">';
 		$first = true;

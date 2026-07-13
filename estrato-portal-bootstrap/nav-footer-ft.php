@@ -234,6 +234,96 @@ function estrato_ft_footer_accordion_sections() {
 }
 
 /**
+ * Footer 4 colunas — Editorias, Institucional, Newsletter, Rede (P1).
+ *
+ * @return string
+ */
+function estrato_ft_footer_four_columns_html() {
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+
+	$editoria_links = array();
+	if ( function_exists( 'estrato_aeo_portal_editorias' ) ) {
+		foreach ( estrato_aeo_portal_editorias() as $slug ) {
+			$term = get_term_by( 'slug', $slug, 'category' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$editoria_links[] = array(
+					'label' => $term->name,
+					'url'   => get_category_link( $term ),
+				);
+			}
+		}
+	}
+
+	$institutional = array(
+		array( 'label' => 'Sobre nós', 'url' => home_url( '/sobre/' ) ),
+		array( 'label' => 'Contato', 'url' => home_url( '/contato/' ) ),
+		array( 'label' => 'Política editorial', 'url' => home_url( '/politica-editorial/' ) ),
+		array( 'label' => 'Privacidade', 'url' => home_url( '/politica-de-privacidade/' ) ),
+	);
+	$institutional = array_values(
+		array_filter(
+			$institutional,
+			function ( $link ) {
+				return estrato_ft_footer_link_ok( $link['url'] );
+			}
+		)
+	);
+
+	$network = array();
+	if ( function_exists( 'estrato_nav_network_catalog' ) ) {
+		$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		foreach ( estrato_nav_network_catalog() as $node ) {
+			$node_host = (string) wp_parse_url( $node['url'], PHP_URL_HOST );
+			if ( $node_host === $host ) {
+				continue;
+			}
+			$network[] = array(
+				'label' => $node['name'],
+				'url'   => $node['url'],
+			);
+		}
+	}
+
+	ob_start();
+	?>
+	<div class="estrato-ft-cols" aria-label="Rodapé em quatro colunas">
+		<div class="estrato-ft-cols__col">
+			<h3 class="estrato-ft-cols__title">Editorias</h3>
+			<ul>
+				<?php foreach ( array_slice( $editoria_links, 0, 8 ) as $link ) : ?>
+					<li><a href="<?php echo esc_url( $link['url'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a></li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+		<div class="estrato-ft-cols__col">
+			<h3 class="estrato-ft-cols__title">Institucional</h3>
+			<ul>
+				<?php foreach ( $institutional as $link ) : ?>
+					<li><a href="<?php echo esc_url( $link['url'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a></li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+		<div class="estrato-ft-cols__col estrato-ft-cols__col--newsletter">
+			<h3 class="estrato-ft-cols__title">Newsletter</h3>
+			<p class="estrato-ft-cols__lead">Receba os destaques no seu e-mail.</p>
+			<?php if ( shortcode_exists( 'estrato_newsletter' ) ) : ?>
+				<?php echo do_shortcode( '[estrato_newsletter]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php endif; ?>
+		</div>
+		<div class="estrato-ft-cols__col">
+			<h3 class="estrato-ft-cols__title">Rede Estrato</h3>
+			<ul>
+				<?php foreach ( $network as $link ) : ?>
+					<li><a href="<?php echo esc_url( $link['url'] ); ?>"><?php echo esc_html( $link['label'] ); ?></a></li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
  * Renderiza o footer FT completo.
  */
 function estrato_ft_render_footer() {
@@ -245,10 +335,12 @@ function estrato_ft_render_footer() {
 	$businesses = estrato_ft_group_businesses_all();
 	$site_name = get_bloginfo( 'name' );
 	$year      = gmdate( 'Y' );
+	$four_cols = estrato_ft_footer_four_columns_html();
 
 	?>
 	<footer id="estrato-ft-footer" class="estrato-ft-footer" role="contentinfo" aria-label="Rodapé institucional">
 		<div class="estrato-ft-footer__inner">
+			<?php echo $four_cols; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<nav class="estrato-ft-accordion" aria-label="Links do rodapé">
 				<?php foreach ( $sections as $section ) : ?>
 					<?php if ( empty( $section['links'] ) ) : ?>
@@ -343,6 +435,18 @@ function estrato_ft_footer_styles() {
 	.site-footer,.pg-footer,.pg-site-footer{padding:0!important;background:transparent!important;border:0!important;margin:0!important}
 	.estrato-ft-footer{background:#262a33;color:#ced4da;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin-top:2rem}
 	.estrato-ft-footer__inner{max-width:1200px;margin:0 auto;padding:0 1rem 1.5rem}
+	.estrato-ft-cols{display:grid;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,.12)}
+	@media(min-width:768px){.estrato-ft-cols{grid-template-columns:repeat(4,minmax(0,1fr))}}
+	.estrato-ft-cols__title{font-size:.9375rem;font-weight:700;color:#fff;margin:0 0 .75rem}
+	.estrato-ft-cols ul{list-style:none;margin:0;padding:0}
+	.estrato-ft-cols a{color:#ced4da;text-decoration:none;font-size:.875rem;line-height:1.8}
+	.estrato-ft-cols a:hover{color:#fff;text-decoration:underline}
+	.estrato-ft-cols__lead{font-size:.8125rem;margin:0 0 .75rem;color:#9aa3ad}
+	.estrato-ft-cols__col--newsletter .estrato-newsletter{background:transparent;padding:0;margin:0}
+	.estrato-ft-cols__col--newsletter .estrato-newsletter h2,.estrato-ft-cols__col--newsletter .estrato-newsletter>p:not(.estrato-nl-success){display:none}
+	.estrato-ft-cols__col--newsletter .estrato-newsletter__form{display:flex;flex-direction:column;gap:.5rem}
+	.estrato-ft-cols__col--newsletter input[type=email]{padding:.5rem;border:1px solid rgba(255,255,255,.2);background:#1a1d24;color:#fff;border-radius:4px}
+	.estrato-ft-cols__col--newsletter button{align-self:flex-start;padding:.45rem .9rem;background:#fff;color:#262a33;border:0;border-radius:4px;font-weight:600;cursor:pointer}
 	.estrato-ft-accordion__item{border-top:1px solid rgba(255,255,255,.12)}
 	.estrato-ft-accordion__item:last-of-type{border-bottom:1px solid rgba(255,255,255,.12)}
 	.estrato-ft-accordion__head{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;cursor:pointer;list-style:none;font-weight:700;color:#fff;font-size:.9375rem}

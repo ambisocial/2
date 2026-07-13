@@ -304,7 +304,9 @@ function estrato_bridge_publish_post( $request ) {
 		);
 	}
 
-	if ( function_exists( 'estrato_content_post_word_count' ) ) {
+	if ( function_exists( 'estrato_content_gate_rss_import' ) ) {
+		estrato_content_gate_rss_import( $post_id );
+	} elseif ( function_exists( 'estrato_content_post_word_count' ) ) {
 		$words = estrato_content_post_word_count( $post_id );
 		if ( $words < 200 ) {
 			wp_update_post(

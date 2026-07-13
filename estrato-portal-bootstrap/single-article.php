@@ -69,6 +69,27 @@ function estrato_single_related_same_subcategory( $post_id, $limit = 3 ) {
 }
 
 /**
+ * Tempo de leitura (fallback quando PressGrid ausente).
+ *
+ * @param int $post_id
+ * @return string
+ */
+function estrato_single_reading_time( $post_id = 0 ) {
+	if ( function_exists( 'pressgrid_reading_time' ) ) {
+		$read = pressgrid_reading_time();
+		if ( $read ) {
+			return $read;
+		}
+	}
+	$post_id = $post_id ? $post_id : get_the_ID();
+	$words   = function_exists( 'estrato_content_post_word_count' )
+		? estrato_content_post_word_count( $post_id )
+		: str_word_count( wp_strip_all_tags( get_post_field( 'post_content', $post_id ) ) );
+	$mins    = max( 1, (int) ceil( $words / 200 ) );
+	return $mins . ' min de leitura';
+}
+
+/**
  * Cabeçalho editorial do single (via the_content).
  */
 function estrato_single_render_header_fallback( $content ) {
@@ -87,11 +108,14 @@ function estrato_single_render_header_fallback( $content ) {
 	$dek     = estrato_single_dek( $post_id );
 	$author  = get_the_author();
 	$job     = get_the_author_meta( 'estrato_job_title' );
-	$read    = '';
-	if ( function_exists( 'pressgrid_reading_time' ) ) {
-		$read = pressgrid_reading_time();
-	}
+	$read    = estrato_single_reading_time( $post_id );
+	$crumb   = function_exists( 'estrato_archive_render_breadcrumb' )
+		? estrato_archive_render_breadcrumb( estrato_archive_breadcrumb_trail( $post_id ) )
+		: '';
 	ob_start();
+	if ( $crumb ) {
+		echo '<div class="estrato-single-breadcrumb-wrap">' . $crumb . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 	?>
 	<div class="estrato-single-header" style="--estrato-cat-color:<?php echo esc_attr( $color ); ?>">
 		<?php if ( $kicker ) : ?>
@@ -104,9 +128,7 @@ function estrato_single_render_header_fallback( $content ) {
 		<div class="estrato-single-byline">
 			<span class="estrato-single-author">Por <?php echo esc_html( $job ? $author . ', ' . $job : $author ); ?></span>
 			<time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'd/m/Y H:i' ) ); ?></time>
-			<?php if ( $read ) : ?>
-				<span class="estrato-single-read"><?php echo esc_html( $read ); ?></span>
-			<?php endif; ?>
+			<span class="estrato-single-read"><?php echo esc_html( $read ); ?></span>
 			<?php
 			$post = get_post( $post_id );
 			if ( $post && get_post_time( 'U', true, $post ) < get_post_modified_time( 'U', true, $post ) ) :
@@ -212,6 +234,7 @@ function estrato_single_styles() {
 	}
 	?>
 	<style id="estrato-single-css">
+	.estrato-single-breadcrumb-wrap{max-width:680px;margin:0 auto;padding:0 1rem}
 	.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4);padding:0 1rem}
 	.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted);margin:.75rem 0 1rem}
 	.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted)}

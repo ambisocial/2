@@ -1,0 +1,56 @@
+# Portal Sustentabilidade, economia alternativa e política de nicho
+id: estrato-sustain
+domain: sustain.estrato.cc
+title: Estrato Sustain
+tagline: Sustentabilidade, economia alternativa e política de nicho
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-sustain
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-sustain-taxonomy.php
+
+# 3 editorias × 4 nichos (fonte canônica: estrato-sustain-taxonomy.php, schema v2)
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-sustain-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - agro-sustentavel
+  - economia-alternativa
+  - vida-nomade
+
+branding:
+  primary_color: "#1B4332"
+  accent_color: "#95D5B2"
+  secondary_color: "#2D6A4F"
+  logo_file: estrato-logo.png
+  breaking_category: agro-sustentavel
+  breaking_label: "Terra"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/sustain.estrato.cc

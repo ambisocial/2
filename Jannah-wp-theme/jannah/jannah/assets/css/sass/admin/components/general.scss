@@ -1,0 +1,122 @@
+.tie-message-hint{
+	background-color: #FFF8DC;
+	border: 0 solid #ffeb8e;
+	border-left-width: 5px;
+	margin: 0 !important;
+	padding: 10px;
+	line-height: 1.9;
+	color: #444;
+
+	.widget-content &{
+		margin: 15px 0 !important;
+	}
+
+	&.tie-message-error{
+		background-color: #FBEAEA;
+		border-color: #DC3232;
+	}
+
+	&.tie-message-success{
+		background-color: #e9f9dd;
+		border-color: #67d218;
+	}
+
+	&.tie-message-info{
+		background-color: #e8f5ff;
+		border-color: #2196F3;
+	}
+
+	.tie-builder-content-area &{
+		margin-top: 15px !important;
+	}
+
+	ul{
+		list-style: disc;
+		list-style-position: inside;
+	}
+}
+
+
+
+.clear {
+	clear: both;
+}
+
+.tie-primary-button.button{
+	text-align: center;
+}
+
+
+#theme_not_authorized{
+	background-color: #ffe14f;
+  background-image: url("../assets/images/activate-license.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: right;
+	max-width: 900px;
+	border: none;
+	border-radius: 8px;
+	box-shadow: 0 10px 40px -10px rgba(0,0,0,.1);
+	padding: 30px;
+	
+	@include breakpoint(max_min_md){
+		background-image: none;
+	}
+
+	h3{
+		font-size: 20px;
+		margin-bottom: 15px;
+		font-weight: 500;
+		max-width: 460px;
+		color: #000;
+	}
+
+	h3,
+	.tie-notice-content{
+		max-width: 460px;
+		padding: 0;
+	}
+
+}
+
+
+#tie-license-registration{
+	.button{
+		float: right;
+		font-weight: normal;
+		margin-top: -5px;
+		clear: none;
+		margin-left: 10px;
+	}
+}
+
+
+
+/**
+ * Switch button
+ */
+.switchery {
+	background-color: #fff;
+	border: 1px solid #dfdfdf;
+	border-radius: 20px;
+	cursor: pointer;
+	display: inline-block;
+	height: 24px;
+	position: relative;
+	vertical-align: middle;
+	width: 48px;
+	box-sizing: content-box;
+	user-select: none;
+}
+
+.switchery > small {
+	background: #fff;
+	border-radius: 100%;
+	box-shadow: inset 0px 0px 0px 1px #dfdfdf;
+	//box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+	height: 24px;
+	position: absolute;
+	top: 0;
+	width: 24px;
+}
+

@@ -1,0 +1,119 @@
+// Sliders
+
+.slider-area{
+	.tie-media-icon {
+		float: left;
+		margin: -9px 10px 0 -5px;
+	}
+
+	.post-rating,
+	.digital-rating{
+		float: left;
+		left: -5px;
+		right: auto;
+	}
+}
+
+.slider-area .digital-rating .pie-wrap,
+.tie-slider-nav li:last-child{
+  float: left;
+}
+
+.slider-area .post-cat-wrap,
+.slick-slide,
+.fullwidth-slider-wrapper .tie-slick-dots li,
+.tie-slider-nav li,
+.video-duration{
+	float: right;
+}
+
+.wide-slider-wrapper{
+	div.post-rating,
+	div.digital-rating{
+		float: right;
+	}
+}
+
+// sliders navigation
+
+.tie-slider-nav li > span,
+.mag-box .mag-box-options .slider-arrow-nav a,
+.megamenu-pagination{
+	transform: rotate(180deg);
+	backface-visibility: hidden;
+}
+
+.boxed-slider-wrapper {
+	@include breakpoint(md){
+		.thumb-content{
+			right: 0;
+			left: auto;
+		}
+	}
+
+	.tie-slick-dots{
+	  width: auto;
+	  left: 30px;
+	  right: auto;
+	}
+}
+
+.tie-slider-nav li:last-child > span {
+	left: 0;
+	right: auto;
+}
+
+
+
+// Slider #18 & Read Next Slider
+.read-next-block-title{
+	right: 40px;
+	left: auto;
+
+	&:after{
+		right: 0;
+		left: auto;
+	}
+
+	.layout-1 &{
+		right: 0;
+	}
+}
+
+.slider-vertical-navigation{
+	span.icon{
+		float: right;
+		margin-left: 10px;
+		margin-right: 0;
+	}
+
+	.slider-main-container{
+
+		@include breakpoint(sm){
+			.thumb-overlay {
+				.container{
+					margin-right: 0;
+				}
+			}
+		}
+	}
+
+	// In Two column layout
+	.has-sidebar &{
+		.wide-slider-nav-wrapper{
+			padding: 0 0 0 15px;
+		}
+	}
+}
+
+
+// Slider Vertical Nav
+.vertical-slider-nav{
+	left: 0;
+	right: auto;
+
+	.tie-slider-nav{
+		right: calc(50% - 23px);
+		left: auto;
+	}
+}

@@ -1,0 +1,60 @@
+name: Estrato Anti-Regression
+
+on:
+  pull_request:
+    branches: [Preditivit, 'cursor/**']
+    paths:
+      - 'estrato-portal-bootstrap/**'
+      - 'estrato-publisher-bridge/**'
+      - 'estrato-rss-bootstrap/**'
+      - 'portals/**'
+      - 'scripts/victor/**'
+      - '.github/workflows/estrato-anti-regression.yml'
+  push:
+    branches: [Preditivit, 'cursor/**']
+    paths:
+      - 'estrato-portal-bootstrap/**'
+      - 'estrato-publisher-bridge/**'
+      - 'estrato-rss-bootstrap/**'
+      - 'portals/**'
+      - 'scripts/victor/**'
+  workflow_dispatch:
+
+jobs:
+  static-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PHP CLI
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq php-cli
+
+      - name: Static anti-regression check
+        run: bash scripts/victor/check-portal-regression-ci.sh
+
+      - name: Strict shellcheck (check-portal-regression)
+        run: |
+          bash -n scripts/victor/check-portal-regression.sh
+          bash -n scripts/victor/check-portal-regression-all.sh
+
+  victor-regression:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/Preditivit' || startsWith(github.ref, 'refs/heads/cursor/')))
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Victor strict regression (optional)
+        env:
+          VICTOR_SSH_HOST: ${{ secrets.VICTOR_SSH_HOST }}
+          VICTOR_SSH_USER: ${{ secrets.VICTOR_SSH_USER }}
+          VICTOR_SSH_PASSWORD: ${{ secrets.VICTOR_SSH_PASSWORD }}
+        run: |
+          if [[ -z "${VICTOR_SSH_HOST:-}" ]]; then
+            echo "VICTOR_SSH_* secrets não configurados — pulando check remoto"
+            exit 0
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+          export SSHPASS="$VICTOR_SSH_PASSWORD"
+          sshpass -e ssh -o StrictHostKeyChecking=no "${VICTOR_SSH_USER}@${VICTOR_SSH_HOST}" \
+            'bash /var/www/estrato/repo/scripts/victor/check-portal-regression-all.sh --strict'

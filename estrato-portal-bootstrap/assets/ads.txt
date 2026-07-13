@@ -1,0 +1,3 @@
+# ads.txt — placeholder (Google Ad Manager futuro)
+# Sprint 6 — estrato.cc
+contact=redacao@estrato.cc

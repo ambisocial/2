@@ -1,0 +1,74 @@
+# Portal financeiro — Estrato (estrato.cc)
+id: estrato-finance
+domain: estrato.cc
+title: Estrato
+tagline: Economia, mercados e finanças
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+  # Repo: https://github.com/stantchev/PressGrid-WordPress-Theme
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-financeiro
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-finance-taxonomy.php
+
+# 7 editorias financeiras (fonte canônica: estrato-finance-taxonomy.php, schema v2)
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-finance-taxonomy.php
+  template: portals/estrato-finance-taxonomy.template.yaml
+  layers:
+    - categories    # editorias (menu principal)
+    - subcategories # tópicos dentro da editoria
+    - columns       # colunas de nicho com marca e cores próprias
+
+categories:
+  - economia
+  - mercados
+  - negocios
+  - financas-pessoais
+  - criptomoedas
+  - agronegocio
+  - mundo
+
+legacy_categories:
+  merge:
+    politica: economia
+    tecnologia: negocios
+    brasil: mundo
+  noindex:
+    - politica
+    - tecnologia
+    - brasil
+    - sem-categoria
+
+branding:
+  primary_color: "#000000"
+  accent_color: "#9AFF33"
+  secondary_color: "#1a1a1a"
+  logo_file: estrato-logo.png
+  breaking_category: mercados
+  breaking_label: "Mercados"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/estrato.cc

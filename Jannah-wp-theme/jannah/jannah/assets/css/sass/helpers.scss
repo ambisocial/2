@@ -1,0 +1,442 @@
+// MIXINS & GLOBAL VARIALS ALL OVER THE THEME & CSS3 MIXINS
+@import "utils/mixins";
+@import "utils/variables";
+
+
+@import "header/_mega_menus.scss"; // 8 KB
+
+/** Breaking News */
+@import "header/breaking-news"; // 3 KB
+
+
+/** Header :: Mobile Menu */
+@import "header/mobile-nav"; // 4 KB
+
+/** Side Aside (Secondary Sidebar) (Hidden Sidebar) */
+@import "components/side-aside"; // 3 KB
+
+//Remove/Close buttons
+// Element Story :)
+// as the Woocommerce uses .remove class for remove buttons, we will use the same class
+// all over the theme for remove/close buttons
+
+a.remove{
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: block;
+	speak: never;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	width: 20px;
+	height: 20px;
+	display: block;
+	line-height: 20px;
+	text-align: center;
+	font-size: 15px;
+
+	&:before{
+		content: "\e117";
+		font-family: 'tiefonticon';
+		color: $danger_color;
+		transition: color 0.15s;
+	}
+
+	&:hover:before{
+		color: darken($danger_color, 15%);
+	}
+
+	&.big-btn{
+		width: 25px;
+		height: 25px;
+		line-height: 25px;
+		font-size: 22px;
+	}
+
+	&.light-btn:not(:hover){
+		&:before{
+			color: #ffffff;
+		}
+	}
+
+	// side aside
+	.side-aside &{
+		z-index: 1;
+		top: 15px;
+		@include center(x);
+
+		.admin-bar &{
+			top: 47px;
+		}
+
+		.admin-bar.is-mobile &{
+			top: 61px;
+		}
+
+		&:not(:hover){
+			&:before{
+				color: #111;
+			}
+		}
+	}
+
+	.side-aside.dark-skin &{
+		&:not(:hover){
+			&:before{
+				color: #ffffff;
+			}
+		}
+	}
+
+	// popup module [login & search]
+	.tie-popup &{
+		transition: 0.3s;
+		transform: scale(0.2);
+		opacity: 0;
+		top: 15px;
+		right: 15px;
+		z-index: 1;
+
+		.tie-popup-is-opend &{
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+}
+
+// Sticky Sidebars
+.theiaStickySidebar:after{
+	content: "";
+	display: table;
+	clear: both;
+}
+
+.side-aside,
+.has-custom-scroll{
+	overflow-x: hidden;
+	scrollbar-width: thin;
+
+	&::-webkit-scrollbar {
+		width: 5px;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		border-radius: 20px;
+		background:rgba( 0,0,0, 0.2);
+
+		.dark-skin &{
+			background:rgba( 0,0,0, 1);
+		}
+	}
+}
+
+// z-index of #tie-wrapper is 108
+.ui-front{
+	z-index: 110;
+}
+
+// PopUps
+@import "components/_popup";
+
+// TieFontIcon
+@import "vendors/tiefonticon";
+
+// Woocommerce - buddypress - bbpress notices
+@import "vendors/wp-bp-bb-notices";
+
+// TirpAdvisor
+@import "vendors/tripadvisor";
+ 
+
+// -- Weather Animation
+
+// Thunder
+.icon-thunder-animi {
+	&:before {
+		.is-animated & {
+			animation: flashing 2s ease-out infinite;
+		}
+	}
+
+	&:after {
+		.is-animated & {
+			animation: flashing-reverse 2s steps(1) infinite;
+		}
+	}
+}
+
+
+.is-animated .icon-rainy-animi {
+	&:after {
+		animation: rain-animi-effect 0.2s ease-out infinite;
+	}
+}
+
+.icon-rainy-animi-2 {
+	.is-animated &:after {
+		animation: rain-animi-effect 0.25s ease-out infinite;
+	}
+}
+
+.icon-rainy-animi-4 {
+	.is-animated &:after {
+		animation: rain-animi-effect 0.35s ease-out infinite;
+	}
+}
+
+.icon-rainy-animi-5 {
+	.is-animated &:after {
+		animation: rain-animi-effect 0.4s ease-out infinite;
+	}
+}
+
+.drizzle-icons {
+	.icon-rainy-animi {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 2.2s ease-out infinite;
+		}
+	}
+
+	.icon-rainy-animi-2 {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 2.3s ease-out infinite;
+		}
+	}
+
+	.icon-rainy-animi-4 {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 2.5s ease-out infinite;
+		}
+	}
+
+	.icon-rainy-animi-5 {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 2.6s ease-out infinite;
+		}
+	}
+}
+
+// Showers icons
+.showers-icons {
+	.icon-rainy-animi {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 0.2s ease-out infinite;
+		}
+	}
+
+	.icon-rainy-animi-2 {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 0.23s ease-out infinite;
+		}
+	}
+
+	.icon-rainy-animi-4 {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 0.18s ease-out infinite;
+		}
+	}
+
+	.icon-rainy-animi-5 {
+		.is-animated &:after {
+			animation: drizzle-animi-effect 0.44s ease-out infinite;
+		}
+	}
+}
+
+// Windy Snow icons
+.icon-windysnow-animi,
+.icon-windysnow-animi-2 {
+	&:after {
+		.is-animated & {
+			animation: rain-animi-effect-with-rotate 2s ease-out infinite;
+		}
+	}
+}
+
+.icon-windysnow-animi-2 {
+	&:after {
+		.is-animated & {
+			animation: rain-animi-effect-with-rotate 1.5s ease-out infinite;
+		}
+	}
+}
+
+// Moon
+.icon-moon {
+	&:after {
+		.is-animated & {
+			animation: tie-float-y 2s linear infinite;
+		}
+	}
+}
+
+.icon-moon-animi:before {
+	.is-animated & {
+		animation: tie-float-y 2s linear infinite;
+	}
+}
+
+.icon-sun:after {
+	.is-animated & {
+		animation: tie-spin 8s infinite linear;
+	}
+}
+
+
+.icon-sun-animi:after {
+	.is-animated & {
+		animation: tie-spin 8s infinite linear;
+	}
+}
+
+.icon-cloud-behind:after {
+	.is-animated & {
+		animation: passing 2s linear infinite;
+	}
+}
+
+.icon-mist:before {
+	.is-animated & {
+		animation: tie-float-x 2s infinite ease;
+	}
+}
+
+.icon-mist-animi:before {
+	.is-animated & {
+		display: inline-block;
+		animation: burst 2s infinite linear;
+	}
+}
+
+// Weather Animation
+@keyframes rain-animi-effect {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(3em);
+	}
+}
+
+@keyframes rain-animi-effect-with-rotate {
+	0% {
+		opacity: 1;
+		transform: translateY(0) rotate(0deg);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(1em) rotate(360deg);
+	}
+}
+
+@keyframes drizzle-animi-effect{
+	0% {
+		opacity: 1;
+		transform: translateY(0) translateX(0) rotate(10deg);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(3em) translateX(-3em) rotate(20deg);
+	}
+}
+
+@keyframes tie-float-y {
+	0% {
+		transform: translateY(0);
+	}
+
+	50% {
+		transform: translateY(-6px);
+	}
+
+	100% {
+		transform: translateY(0);
+	}
+}
+
+@keyframes tie-spin{
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes passing{
+	0% {
+		transform: translateX(50%);
+		opacity: 0;
+	}
+
+	50% {
+		transform: translateX(0);
+		opacity: 1;
+	}
+
+	100% {
+		transform: translateX(-50%);
+		opacity: 0;
+	}
+}
+
+
+@keyframes burst{
+	0% {
+		opacity: .6;
+	}
+
+	50% {
+		transform: scale(1.8);
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes tie-float-x{
+	0% {
+		transform: translateX(0);
+	}
+
+	50% {
+		transform: translateX(-6px);
+	}
+
+	100% {
+		transform: translateX(0);
+	}
+}
+
+@keyframes flashing{
+	0%,
+	100%,
+	50% {
+		opacity: 1;
+	}
+
+	25%,
+	75% {
+		opacity: 0;
+	}
+}
+
+@keyframes flashing-reverse{
+	0%,
+	100%,
+	50% {
+		opacity: 0;
+	}
+
+	25%,
+	75% {
+		opacity: 1;
+	}
+}

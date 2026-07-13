@@ -1,0 +1,41 @@
+# Portal generalista — modelo para novos portais de notícias
+id: estrato-general
+domain: portal-exemplo.com
+title: Portal Exemplo
+tagline: Notícias do Brasil e do mundo
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: newspack
+  slug: newspack-scott
+  base_theme: newspack-theme
+  child_source: https://github.com/Automattic/newspack-theme/releases/download/v2.22.3/newspack-scott.zip
+  plugin_source: https://github.com/Automattic/newspack-plugin/releases/download/v5.12.0/newspack-plugin.zip
+  # Alternativas child: newspack-joseph, newspack-katharine, newspack-nelson, newspack-sacha
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: rss_and_pipeline
+  rss_preset: brasil-geral
+  pipeline_enabled: true
+
+branding:
+  primary_color: "#0066cc"
+  breaking_label: "Em alta"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/portal-exemplo.com

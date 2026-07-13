@@ -1,0 +1,180 @@
+# Template — taxonomia estrato.cc (schema v2)
+# Preencha e envie para importação. Campos marcados com * são obrigatórios quando a seção existir.
+#
+# Hierarquia:
+#   categories     → editorias (menu principal)
+#   subcategories  → tópicos dentro da editoria
+#   columns        → colunas de nicho com marca e cores próprias (estilo G1)
+
+schema_version: 2
+
+# Ordem no menu principal (slugs de categories)
+menu_order:
+  - economia
+  - mercados
+  - negocios
+  - financas-pessoais
+  - criptomoedas
+  - agronegocio
+  - mundo
+
+# Ordem das colunas na faixa/menu secundário (slugs completos: categoria-slug-coluna)
+column_order: []
+  # - mercados-radar-b3
+  # - economia-painel-selic
+
+# ---------------------------------------------------------------------------
+# EDITORIAS (categories)
+# ---------------------------------------------------------------------------
+categories:
+  economia:
+    name: "Economia"                    # * nome WP
+    description: "..."                    # * texto SEO da página de categoria
+    branding:
+      brand_name: "Economia"            # nome exibido no header (pode diferir do name)
+      primary_color: "#0D1B2A"           # fundo header / destaque
+      accent_color: "#E85D04"           # links, labels, breaking
+      secondary_color: "#1B263B"        # barras, bordas
+      header_variant: editoria          # editoria | column | default
+    keywords:                           # filtro RSS (vazio = aceita tudo do feed)
+      include: []                       # pelo menos 1 termo no título/resumo
+      exclude: []                       # rejeita se qualquer termo aparecer
+      match_in: [title, excerpt, content]
+    feeds:
+      - title: "InfoMoney"
+        url: "https://www.infomoney.com.br/feed/"
+        tier: 1                         # 1 = prioritário, 2 = secundário
+        keywords:                       # opcional — filtro só deste feed
+          include: []
+          exclude: []
+    subcategories:
+      macro:
+        name: "Macroeconomia"
+        description: "..."
+        keywords:
+          include: [pib, inflação, ipca]
+          exclude: []
+      selic:
+        name: "Selic e juros"
+        description: "..."
+        keywords:
+          include: [selic, copom, juros]
+          exclude: []
+
+  mercados:
+    name: "Mercados"
+    description: "..."
+    branding:
+      brand_name: "Mercados"
+      primary_color: "#003049"
+      accent_color: "#FCBF49"
+      secondary_color: "#1D3557"
+      header_variant: editoria
+    keywords:
+      include: []
+      exclude: []
+    feeds: []
+    subcategories:
+      ibovespa:
+        name: "Ibovespa"
+        description: "..."
+        keywords:
+          include: [ibovespa, b3, ações]
+          exclude: []
+      cambio:
+        name: "Câmbio"
+        description: "..."
+        keywords:
+          include: [dólar, câmbio, ptax]
+          exclude: []
+
+  negocios:
+    name: "Negócios"
+    description: "..."
+    branding: {}
+    keywords: {}
+    feeds: []
+    subcategories: {}
+
+  financas-pessoais:
+    name: "Finanças Pessoais"
+    description: "..."
+    branding: {}
+    keywords: {}
+    feeds: []
+    subcategories: {}
+
+  criptomoedas:
+    name: "Criptomoedas"
+    description: "..."
+    branding: {}
+    keywords: {}
+    feeds: []
+    subcategories: {}
+
+  agronegocio:
+    name: "Agronegócio"
+    description: "..."
+    branding: {}
+    keywords: {}
+    feeds: []
+    subcategories: {}
+
+  mundo:
+    name: "Internacional"
+    description: "..."
+    branding: {}
+    keywords: {}
+    feeds: []
+    subcategories: {}
+
+# ---------------------------------------------------------------------------
+# COLUNAS DE NICHO (columns) — marca própria + cores ao entrar na seção
+# ---------------------------------------------------------------------------
+# slug da coluna (curto) → WP slug final: {category}-{slug}
+columns:
+  radar-b3:
+    brand_name: "Radar B3"              # * nome da marca (ex.: como "G1 Economia")
+    name: "Radar B3"                    # rótulo curto no menu (opcional)
+    tagline: "Plantão da bolsa"         # subtítulo no header da coluna
+    category: mercados                  # * editoria pai (slug)
+    subcategory: ibovespa               # subcategoria pai opcional (slug curto)
+    description: "..."
+    show_in_nav: true                   # aparece no menu secundário
+    show_in_home_strip: true            # faixa na home
+    branding:
+      primary_color: "#003049"
+      accent_color: "#FCBF49"
+      secondary_color: "#1D3557"
+      header_variant: column
+      logo_file: ""                     # opcional: estrato-columns/radar-b3.png
+    keywords:
+      include: [ibovespa, b3, ações]
+      exclude: [cripto, bitcoin]
+      match_in: [title, excerpt]
+    feeds:
+      - title: "InfoMoney Mercados"
+        url: "https://www.infomoney.com.br/mercados/feed/"
+        tier: 1
+        keywords:
+          include: [ibovespa]
+          exclude: []
+
+  painel-selic:
+    brand_name: "Painel Selic"
+    name: "Painel Selic"
+    tagline: "Copom, Focus e curva de juros"
+    category: economia
+    subcategory: selic
+    description: "..."
+    show_in_nav: true
+    show_in_home_strip: false
+    branding:
+      primary_color: "#0D1B2A"
+      accent_color: "#E85D04"
+      secondary_color: "#1B263B"
+      header_variant: column
+    keywords:
+      include: [selic, copom, focus]
+      exclude: []
+    feeds: []

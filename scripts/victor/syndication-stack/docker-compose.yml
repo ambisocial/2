@@ -1,0 +1,88 @@
+services:
+  gotosocial:
+    image: superseriousbusiness/gotosocial:0.17.0
+    container_name: estrato-gotosocial
+    user: 1000:1000
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8085:8080"
+    volumes:
+      - ./gotosocial:/gotosocial/storage
+    environment:
+      GTS_HOST: ${GTS_PUBLIC_HOST:-127.0.0.1:8085}
+      GTS_BIND_ADDRESS: 0.0.0.0
+      GTS_PORT: 8080
+      GTS_DB_TYPE: sqlite
+      GTS_DB_ADDRESS: /gotosocial/storage/sqlite.db
+      GTS_PROTOCOL: ${GTS_PUBLIC_PROTOCOL:-http}
+      GTS_TRUSTED_PROXIES: ${GTS_TRUSTED_PROXIES:-127.0.0.1/32,::1}
+      GTS_ACCOUNTS_REGISTRATION_OPEN: "false"
+      GTS_ACCOUNTS_APPROVAL_REQUIRED: "false"
+      TZ: America/Sao_Paulo
+
+  masto-rss:
+    image: ghcr.io/aserper/masto-rss:latest
+    container_name: estrato-masto-rss
+    restart: unless-stopped
+    depends_on:
+      - gotosocial
+    environment:
+      MASTODON_INSTANCE_URL: http://gotosocial:8080
+      MASTODON_CLIENT_ID: ${MASTODON_CLIENT_ID:-}
+      MASTODON_CLIENT_SECRET: ${MASTODON_CLIENT_SECRET:-}
+      MASTODON_ACCESS_TOKEN: ${MASTODON_ACCESS_TOKEN:-}
+      FEEDS_FILE: /config/masto-rss-feeds.txt
+      CHECK_INTERVAL: "300"
+      TOOT_VISIBILITY: unlisted
+    volumes:
+      - ./masto-rss-state:/state
+      - ./masto-rss-feeds.txt:/config/masto-rss-feeds.txt:ro
+
+  rss-filter:
+    image: ghcr.io/rverst/rss-filter:latest
+    container_name: estrato-rss-filter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:80"
+    environment:
+      DISABLE_AUTH: "true"
+      LISTEN_ADDR: ":80"
+
+  rss-bridge:
+    image: rssbridge/rss-bridge:latest
+    container_name: estrato-rss-bridge
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    volumes:
+      - ./rss-bridge-config:/config
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: estrato-n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5679:5678"
+    environment:
+      N8N_HOST: ${N8N_PUBLIC_HOST:-n8n.estrato.cc}
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: https://${N8N_PUBLIC_HOST:-n8n.estrato.cc}/
+      GENERIC_TIMEZONE: America/Sao_Paulo
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./n8n-data:/home/node/.n8n
+
+  freshrss:
+    image: freshrss/freshrss:1.24.0
+    container_name: estrato-freshrss
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8088:80"
+    volumes:
+      - ./freshrss/data:/var/www/FreshRSS/data
+      - ./freshrss/extensions:/var/www/FreshRSS/extensions
+    environment:
+      TZ: America/Sao_Paulo
+      CRON_MIN: "*/15"
+      COPY_LOG_TO_SYSLOG: "false"

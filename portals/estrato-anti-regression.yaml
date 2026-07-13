@@ -1,0 +1,514 @@
+# Estrato.cc — Regras Anti-Regressão do Portal
+# Versão: 1.0.0
+# Validação: scripts/victor/check-portal-regression.sh
+# Referências: ESTRATO-BENCHMARK-ROADMAP.md, ESTRATO-BENCHMARK-TECNICO.md
+
+portal: estrato-finance
+domain: estrato.cc
+language: pt_BR
+
+# Severidades:
+#   blocker  — deploy falha; corrige antes de publicar
+#   warning  — alerta; corrige em 48h
+#   info     — recomendação
+
+rules:
+
+  # ═══════════════════════════════════════════════════════════════
+  # A. ROBOTS.TXT & CRAWLERS
+  # Referência: BPMoney, Folha, ND Mais
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-ROBOTS-001
+    severity: blocker
+    category: robots
+    name: robots.txt deve responder HTTP 200
+    check: http_status
+    url: https://estrato.cc/robots.txt
+    expect_status: 200
+
+  - id: AR-ROBOTS-002
+    severity: blocker
+    category: robots
+    name: robots.txt deve declarar sitemap_index
+    check: body_contains
+    url: https://estrato.cc/robots.txt
+    expect: "Sitemap: https://estrato.cc/sitemap_index.xml"
+
+  - id: AR-ROBOTS-003
+    severity: warning
+    category: robots
+    name: robots.txt deve bloquear wp-admin
+    check: body_contains
+    url: https://estrato.cc/robots.txt
+    expect: "Disallow: /wp-admin/"
+
+  - id: AR-ROBOTS-004
+    severity: warning
+    category: robots
+    name: robots.txt deve bloquear busca interna (?s=)
+    check: body_contains
+    url: https://estrato.cc/robots.txt
+    expect: "Disallow: /?s="
+
+  - id: AR-ROBOTS-005
+    severity: warning
+    category: robots
+    name: robots.txt deve declarar news-sitemap
+    check: body_contains
+    url: https://estrato.cc/robots.txt
+    expect: "news-sitemap"
+
+  - id: AR-ROBOTS-006
+    severity: blocker
+    category: robots
+    name: robots.txt não pode exigir JavaScript challenge (Cloudflare)
+    check: body_not_contains
+    url: https://estrato.cc/robots.txt
+    expect: "Just a moment"
+
+  # ═══════════════════════════════════════════════════════════════
+  # B. SITEMAP
+  # Referência: Money Times, ND Mais, BPMoney, Metrópoles
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-SITEMAP-001
+    severity: blocker
+    category: sitemap
+    name: sitemap_index.xml deve responder HTTP 200
+    check: http_status
+    url: https://estrato.cc/sitemap_index.xml
+    expect_status: 200
+
+  - id: AR-SITEMAP-002
+    severity: blocker
+    category: sitemap
+    name: post-sitemap deve existir
+    check: http_status
+    url: https://estrato.cc/post-sitemap.xml
+    expect_status: 200
+
+  - id: AR-SITEMAP-003
+    severity: warning
+    category: sitemap
+    name: news-sitemap.xml deve existir
+    check: http_status
+    url: https://estrato.cc/news-sitemap.xml
+    expect_status: 200
+
+  - id: AR-SITEMAP-004
+    severity: warning
+    category: sitemap
+    name: sitemap não deve conter posts anteriores a 2024
+    check: wp_cli
+    command: "post list --post_type=post --before=2024-01-01 --post_status=publish --format=count"
+    expect_max: 0
+
+  - id: AR-SITEMAP-005
+    severity: warning
+    category: sitemap
+    name: category-sitemap deve listar apenas categorias financeiras ativas
+    check: wp_cli
+    command: "term list category --slug=politica,tecnologia,brasil,sem-categoria --field=count"
+    expect_max: 0
+
+  # ═══════════════════════════════════════════════════════════════
+  # C. SCHEMA & META (SEO técnico)
+  # Referência: InfoMoney, Money Times, Brasil 247, Metrópoles
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-SCHEMA-001
+    severity: blocker
+    category: schema
+    name: Home deve ter schema WebSite
+    check: html_schema_contains
+    url: https://estrato.cc/
+    expect_type: WebSite
+
+  - id: AR-SCHEMA-002
+    severity: blocker
+    category: schema
+    name: Home deve ter schema Organization ou NewsMediaOrganization
+    check: html_schema_contains_any
+    url: https://estrato.cc/
+    expect_types: [Organization, NewsMediaOrganization]
+
+  - id: AR-SCHEMA-003
+    severity: warning
+    category: schema
+    name: Home deve preferir NewsMediaOrganization (padrão Metrópoles/ND Mais)
+    check: html_schema_contains
+    url: https://estrato.cc/
+    expect_type: NewsMediaOrganization
+
+  - id: AR-SCHEMA-004
+    severity: blocker
+    category: schema
+    name: Post deve ter NewsArticle ou Article no schema
+    check: html_schema_contains_any
+    url_sample: latest_post
+    expect_types: [NewsArticle, Article]
+
+  - id: AR-SCHEMA-005
+    severity: blocker
+    category: schema
+    name: Post deve ter Person (autor) no schema
+    check: html_schema_contains
+    url_sample: latest_post
+    expect_type: Person
+
+  - id: AR-SCHEMA-006
+    severity: warning
+    category: schema
+    name: Post não deve ter schema Article E NewsArticle duplicado
+    check: html_schema_not_duplicate_news
+    url_sample: latest_post
+
+  - id: AR-SCHEMA-007
+    severity: blocker
+    category: meta
+    name: Post deve ter rel=canonical
+    check: html_contains
+    url_sample: latest_post
+    expect: 'rel="canonical"'
+
+  - id: AR-SCHEMA-008
+    severity: blocker
+    category: meta
+    name: Post deve ter og:title
+    check: html_contains
+    url_sample: latest_post
+    expect: 'property="og:title"'
+
+  - id: AR-SCHEMA-009
+    severity: warning
+    category: meta
+    name: Post deve ter article:published_time
+    check: html_contains
+    url_sample: latest_post
+    expect: 'article:published_time'
+
+  - id: AR-SCHEMA-010
+    severity: warning
+    category: meta
+    name: Categoria não pode ter title "Archives" em inglês
+    check: html_title_not_contains
+    url: https://estrato.cc/category/economia/
+    expect_not: Archives
+
+  # ═══════════════════════════════════════════════════════════════
+  # D. E-E-A-T & PÁGINAS INSTITUCIONAIS
+  # Referência: Jota, Poder360, Valor, Folha
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-EEAT-001
+    severity: blocker
+    category: eeat
+    name: Página /sobre/ deve existir (HTTP 200)
+    check: http_status
+    url: https://estrato.cc/sobre/
+    expect_status: 200
+
+  - id: AR-EEAT-002
+    severity: blocker
+    category: eeat
+    name: Página /politica-editorial/ deve existir
+    check: http_status
+    url: https://estrato.cc/politica-editorial/
+    expect_status: 200
+
+  - id: AR-EEAT-003
+    severity: blocker
+    category: eeat
+    name: Página /contato/ deve existir
+    check: http_status
+    url: https://estrato.cc/contato/
+    expect_status: 200
+
+  - id: AR-EEAT-004
+    severity: blocker
+    category: eeat
+    name: Política de privacidade publicada
+    check: http_status
+    url: https://estrato.cc/politica-de-privacidade/
+    expect_status: 200
+
+  - id: AR-EEAT-005
+    severity: blocker
+    category: eeat
+    name: Mínimo 7 autores com display_name real (não tpb genérico)
+    check: wp_cli
+    command: "user list --role=author,editor,administrator --format=count"
+    expect_min: 7
+
+  - id: AR-EEAT-006
+    severity: warning
+    category: eeat
+    name: Nenhum post publicado por usuário sem bio
+    check: wp_cli_eval
+    command: "estrato_regression_authors_without_bio"
+    expect_max: 0
+
+  # ═══════════════════════════════════════════════════════════════
+  # E. CONTEÚDO & EDITORIAL
+  # Referência: Valor, InfoMoney, Exame
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-CONTENT-001
+    severity: blocker
+    category: content
+    name: Nenhum post publicado com menos de 200 palavras
+    check: wp_cli_eval
+    command: "estrato_regression_thin_posts"
+    expect_max: 0
+    threshold_words: 200
+
+  - id: AR-CONTENT-002
+    severity: warning
+    category: content
+    name: Pelo menos 80% dos posts com 300+ palavras
+    check: wp_cli_eval
+    command: "estrato_regression_word_ratio"
+    expect_min_ratio: 0.80
+    threshold_words: 300
+
+  - id: AR-CONTENT-003
+    severity: blocker
+    category: content
+    name: Zero posts em "Sem categoria"
+    check: wp_cli
+    command: "post list --category_name=sem-categoria --post_status=publish --format=count"
+    expect_max: 0
+
+  - id: AR-CONTENT-004
+    severity: blocker
+    category: content
+    name: Todo post deve ter featured image
+    check: wp_cli_eval
+    command: "estrato_regression_posts_without_thumbnail"
+    expect_max: 0
+
+  - id: AR-CONTENT-005
+    severity: warning
+    category: content
+    name: Posts pipeline devem ter source_url em meta
+    check: wp_cli_eval
+    command: "estrato_regression_pipeline_without_source"
+    expect_max: 5
+
+  # ═══════════════════════════════════════════════════════════════
+  # F. ESTRUTURA & NAVEGAÇÃO
+  # Referência: Exame, InfoMoney, Money Times
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-NAV-001
+    severity: blocker
+    category: navigation
+    name: Menu primário atribuído (location primary)
+    check: wp_cli
+    command: "menu location list --format=json"
+    expect_json_key: primary
+
+  - id: AR-NAV-002
+    severity: blocker
+    category: navigation
+    name: Menu deve ter 7 categorias financeiras
+    check: wp_cli
+    command: "menu item list estrato-principal --format=count"
+    expect_min: 8
+
+  - id: AR-NAV-003
+    severity: warning
+    category: navigation
+    name: Hubs /tudo-sobre/ devem existir (mínimo 3)
+    check: http_status_multi
+    urls:
+      - https://estrato.cc/tudo-sobre/selic/
+      - https://estrato.cc/tudo-sobre/ibovespa/
+      - https://estrato.cc/tudo-sobre/dolar/
+    expect_min_ok: 3
+
+  - id: AR-NAV-004
+    severity: warning
+    category: navigation
+    name: RSS feed deve responder 200
+    check: http_status
+    url: https://estrato.cc/feed/
+    expect_status: 200
+
+  # ═══════════════════════════════════════════════════════════════
+  # G. BRANDING & VISUAL
+  # Referência: identidade estrato. + padrões Valor/Exame
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-VISUAL-001
+    severity: blocker
+    category: branding
+    name: custom_logo deve estar configurado
+    check: wp_theme_mod
+    key: custom_logo
+    expect_not_empty: true
+
+  - id: AR-VISUAL-002
+    severity: blocker
+    category: branding
+    name: Accent color deve ser verde da marca (#9AFF33)
+    check: wp_theme_mod
+    key: pressgrid_accent_color
+    expect: "#9AFF33"
+
+  - id: AR-VISUAL-003
+    severity: warning
+    category: branding
+    name: Home não deve exibir strings em búlgaro (i18n PressGrid)
+    check: html_not_contains
+    url: https://estrato.cc/
+    expect_not: "Свързани"
+
+  - id: AR-VISUAL-004
+    severity: warning
+    category: branding
+    name: Forex/ticker mercados habilitado na topbar
+    check: wp_theme_mod
+    key: pressgrid_breaking_news_category
+    expect_not_empty: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # H. AEO / GEO
+  # Referência: InfoMoney guias, BPMoney, Folha IA rules
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-AEO-001
+    severity: warning
+    category: aeo
+    name: llms.txt deve existir na raiz
+    check: http_status
+    url: https://estrato.cc/llms.txt
+    expect_status: 200
+
+  - id: AR-AEO-002
+    severity: info
+    category: geo
+    name: Posts evergreen devem ter FAQ schema
+    check: wp_cli_eval
+    command: "estrato_regression_hub_faq_schema"
+    expect_min: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # I. INDEXAÇÃO & BOT
+  # Referência: Metrópoles news sitemap, Fase 4 roadmap
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-INDEX-001
+    severity: warning
+    category: indexing
+    name: IndexNow key file deve existir
+    check: http_status
+    url: https://estrato.cc/estrato-indexnow-key.txt
+    expect_status: 200
+
+  - id: AR-INDEX-002
+    severity: info
+    category: indexing
+    name: Plugin bridge deve pingar após publish
+    check: wp_option
+    key: estrato_bridge_indexnow_enabled
+    expect: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # J. SEGURANÇA & PERFORMANCE
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: AR-PERF-001
+    severity: blocker
+    category: security
+    name: Site deve responder HTTPS 200
+    check: http_status
+    url: https://estrato.cc/
+    expect_status: 200
+
+  - id: AR-PERF-002
+    severity: warning
+    category: security
+    name: Headers de segurança (X-Content-Type-Options)
+    check: header_contains
+    url: https://estrato.cc/
+    header: x-content-type-options
+    expect: nosniff
+
+  - id: AR-PERF-003
+    severity: warning
+    category: performance
+    name: Home LCP < 4s (curl time)
+    check: curl_time
+    url: https://estrato.cc/
+    expect_max_seconds: 4
+
+# Categorias financeiras obrigatórias no menu e RSS
+required_categories:
+  - economia
+  - mercados
+  - negocios
+  - financas-pessoais
+  - criptomoedas
+  - agronegocio
+  - mundo
+
+# Categorias proibidas no menu principal (legado generalista)
+forbidden_menu_categories:
+  - politica
+  - tecnologia
+  - brasil
+  - sem-categoria
+
+# Melhores práticas consolidadas (referência humana + bot)
+best_practices:
+
+  robots_sitemap:
+    - "Declarar sitemap_index + news-sitemap.xml no robots.txt"
+    - "Bloquear /wp-admin/, /?s=, /xmlrpc.php, /wp-login.php"
+    - "Segmentar sitemaps: posts, categories, authors, news (BPMoney/Money Times)"
+    - "News sitemap com news:publication_date em timezone America/Sao_Paulo (ND Mais)"
+    - "Remover URLs pré-2024 do sitemap (migração)"
+    - "Não aplicar Cloudflare challenge em robots.txt/sitemap (O Bastidor anti-pattern)"
+
+  schema:
+    - "NewsMediaOrganization na home (Metrópoles, ND Mais, Jota, Poder360)"
+    - "NewsArticle + Person + BreadcrumbList em todo post (InfoMoney, Money Times)"
+    - "Um único bloco JSON-LD por tipo — sem Article+NewsArticle duplicado (Estrato fix)"
+    - "FAQPage em hubs evergreen (AEO)"
+    - "Organization com sameAs redes sociais"
+
+  meta:
+    - "canonical único por URL"
+    - "og:image 1200x630 em posts (não logo)"
+    - "article:published_time e article:modified_time"
+    - "title template pt_BR sem 'Archives' (Yoast)"
+
+  eeat:
+    - "Páginas: Sobre, Política Editorial, Contato, Privacidade (Jota, Valor)"
+    - "7+ autores com bio, foto, jobTitle (todos os líderes)"
+    - "Byline visível no single"
+    - "Rodapé com razão social / CNPJ"
+
+  content:
+    - "Mínimo 300 palavras para indexação (Valor/InfoMoney)"
+    - "Resumo AEO nos primeiros 100 palavras (InfoMoney guias)"
+    - "3+ links internos por post (todos)"
+    - "Fonte citada com link, mas conteúdo reescrito (não cópia)"
+
+  structure:
+    - "Hubs /tudo-sobre/{tema}/ (InfoMoney, Exame)"
+    - "Ticker Ibovespa/USD/Selic na home (G1, Money Times, Valor)"
+    - "Bloco Mais Lidas real (Money Times, Exame)"
+    - "Newsletter funcional (todos)"
+
+  aeo_geo:
+    - "llms.txt na raiz com links dos guias"
+    - "Regras robots para bots IA explícitas (Folha, BPMoney, ND Mais)"
+    - "Dados citáveis com fonte e data no corpo (GEO)"
+
+  indexing:
+    - "IndexNow após cada publish"
+    - "GSC URL inspection bot por categoria (roadmap Fase 4)"
+    - "news-sitemap atualizado a cada hora para posts <48h"

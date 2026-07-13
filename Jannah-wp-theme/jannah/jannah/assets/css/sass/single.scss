@@ -1,0 +1,67 @@
+@charset "UTF-8";
+
+// MIXINS & GLOBAL VARIALS ALL OVER THE THEME & CSS3 MIXINS
+@import "utils/mixins";
+@import "utils/variables";
+
+// Sticky Menu
+#single-sticky-menu-contents{
+	display: none;
+}
+
+.has-custom-sticky-menu{
+	
+	&.fixed-nav:not(.just-before-sticky){
+		
+		#menu-components-wrap{
+			flex-wrap: nowrap;
+		}
+
+		#single-sticky-menu-contents{
+			display: flex;
+			align-items: flex-start;
+			width: 100%;
+		}
+
+		.share-buttons{
+			padding: 8px 0;
+			margin: 0;
+			justify-content: end;
+			display: flex;
+		}
+	
+		.main-menu-wrap,
+		.components{
+			display: none;
+		}
+	}
+}
+
+.sticky-post-title{
+	font-size: 18px;
+	font-weight: 500;
+	flex: 1;
+	color: $base-color;
+	padding: 0 10px;
+
+	white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+	.main-nav-dark &{
+		color: #fff;
+	}
+}
+
+#sticky-next-prev-posts{
+	position: relative;
+	flex: 0 0 75px;
+	margin-top: 0 !important;
+	padding: 0;
+}
+
+/* Post Entry Content */
+@import "components/post-content";
+
+/* Gutenberg */
+@import "components/gutenberg";

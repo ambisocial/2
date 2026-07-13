@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>Estrato Finance — Editorias</title>
+  </head>
+  <body>
+    <outline text="Estrato" title="Estrato">
+      <outline type="rss" text="Estrato — Todas" title="Estrato — Todas"
+        xmlUrl="https://estrato.cc/feed/" htmlUrl="https://estrato.cc/" />
+      <outline type="rss" text="Economia" title="Economia"
+        xmlUrl="https://estrato.cc/category/economia/feed/" htmlUrl="https://estrato.cc/category/economia/" />
+      <outline type="rss" text="Mercados" title="Mercados"
+        xmlUrl="https://estrato.cc/category/mercados/feed/" htmlUrl="https://estrato.cc/category/mercados/" />
+      <outline type="rss" text="Negócios" title="Negócios"
+        xmlUrl="https://estrato.cc/category/negocios/feed/" htmlUrl="https://estrato.cc/category/negocios/" />
+      <outline type="rss" text="Finanças Pessoais" title="Finanças Pessoais"
+        xmlUrl="https://estrato.cc/category/financas-pessoais/feed/" htmlUrl="https://estrato.cc/category/financas-pessoais/" />
+      <outline type="rss" text="Criptomoedas" title="Criptomoedas"
+        xmlUrl="https://estrato.cc/category/criptomoedas/feed/" htmlUrl="https://estrato.cc/category/criptomoedas/" />
+      <outline type="rss" text="Agronegócio" title="Agronegócio"
+        xmlUrl="https://estrato.cc/category/agronegocio/feed/" htmlUrl="https://estrato.cc/category/agronegocio/" />
+      <outline type="rss" text="Mundo" title="Mundo"
+        xmlUrl="https://estrato.cc/category/mundo/feed/" htmlUrl="https://estrato.cc/category/mundo/" />
+    </outline>
+  </body>
+</opml>

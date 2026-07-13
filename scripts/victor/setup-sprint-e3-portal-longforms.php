@@ -183,6 +183,7 @@ foreach ( $items as $item ) {
 	if ( ! empty( $existing[0] ) ) {
 		$post_id = (int) $existing[0];
 		update_post_meta( $post_id, '_estrato_content_mode', 'analysis' );
+		update_post_meta( $post_id, '_estrato_editorial_source', '1' );
 		$current = get_post_field( 'post_content', $post_id );
 		$padded  = estrato_e3_pad_words( $current, $title, $cat_slug, 1500 );
 		if ( $padded !== $current ) {
@@ -190,6 +191,17 @@ foreach ( $items as $item ) {
 				array(
 					'ID'           => $post_id,
 					'post_content' => $padded,
+				)
+			);
+		}
+		if ( function_exists( 'estrato_bridge_set_fallback_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
+			estrato_bridge_set_fallback_thumbnail( $post_id );
+		}
+		if ( 'publish' !== get_post_status( $post_id ) ) {
+			wp_update_post(
+				array(
+					'ID'          => $post_id,
+					'post_status' => 'publish',
 				)
 			);
 		}
@@ -219,9 +231,14 @@ foreach ( $items as $item ) {
 			'post_title'    => $title,
 			'post_content'  => $content,
 			'post_excerpt'  => $item['excerpt'],
-			'post_status'   => 'publish',
+			'post_status'   => 'draft',
 			'post_author'   => $author_id,
 			'post_category' => array( (int) $term->term_id ),
+			'meta_input'    => array(
+				'_estrato_pipeline_id'       => $key,
+				'_estrato_content_mode'      => 'analysis',
+				'_estrato_editorial_source'  => '1',
+			),
 		),
 		true
 	);
@@ -231,10 +248,6 @@ foreach ( $items as $item ) {
 		continue;
 	}
 
-	update_post_meta( $post_id, '_estrato_pipeline_id', $key );
-	update_post_meta( $post_id, '_estrato_content_mode', 'analysis' );
-	update_post_meta( $post_id, '_estrato_editorial_source', '1' );
-
 	if ( function_exists( 'estrato_content_enrich_post' ) && ! defined( 'ESTRATO_ENRICHING' ) ) {
 		define( 'ESTRATO_ENRICHING', true );
 		estrato_content_enrich_post( (int) $post_id );
@@ -243,6 +256,13 @@ foreach ( $items as $item ) {
 	if ( function_exists( 'estrato_bridge_set_fallback_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
 		estrato_bridge_set_fallback_thumbnail( (int) $post_id );
 	}
+
+	wp_update_post(
+		array(
+			'ID'          => (int) $post_id,
+			'post_status' => 'publish',
+		)
+	);
 
 	++$created;
 	WP_CLI::log( "Longform #{$post_id} — {$title}" );

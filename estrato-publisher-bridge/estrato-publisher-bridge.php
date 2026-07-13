@@ -727,6 +727,12 @@ function estrato_bridge_unpublish_without_original_image( $limit = 50 ) {
 		if ( $removed >= $limit ) {
 			break;
 		}
+		if ( get_post_meta( $post_id, '_estrato_editorial_source', true ) ) {
+			continue;
+		}
+		if ( 'analysis' === get_post_meta( $post_id, '_estrato_content_mode', true ) ) {
+			continue;
+		}
 		if ( estrato_bridge_post_has_original_thumbnail( $post_id ) ) {
 			continue;
 		}

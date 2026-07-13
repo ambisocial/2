@@ -32,6 +32,75 @@ function estrato_perf_home_hero_post_id() {
 }
 
 /**
+ * Remove hints e bloat do PressGrid que competem com LCP.
+ */
+function estrato_perf_disable_pressgrid_bloat() {
+	remove_action( 'wp_head', 'pressgrid_preconnect_hints', 1 );
+}
+add_action( 'after_setup_theme', 'estrato_perf_disable_pressgrid_bloat', 99 );
+
+/**
+ * Featured do single: medium_large em vez de pressgrid-wide (1200px).
+ *
+ * @param string       $html
+ * @param int          $post_id
+ * @param int          $post_thumbnail_id
+ * @param string|int[] $size
+ * @param string|array $attr
+ * @return string
+ */
+function estrato_perf_single_thumbnail_size( $html, $post_id, $post_thumbnail_id, $size, $attr ) {
+	if ( ! is_singular( 'post' ) || (int) get_the_ID() !== (int) $post_id ) {
+		return $html;
+	}
+	$heavy = array( 'pressgrid-wide', 'large', 'full', 'pressgrid-hero' );
+	if ( ! in_array( $size, $heavy, true ) ) {
+		return $html;
+	}
+	$attrs = is_array( $attr ) ? $attr : array();
+	return wp_get_attachment_image( $post_thumbnail_id, 'medium_large', false, $attrs );
+}
+add_filter( 'post_thumbnail_html', 'estrato_perf_single_thumbnail_size', 1, 5 );
+
+/**
+ * CSS crítico do single (header + featured) cedo no head.
+ */
+function estrato_perf_critical_single_css() {
+	if ( ! is_singular( 'post' ) ) {
+		return;
+	}
+	?>
+	<style id="estrato-critical-single">
+	.pg-single-header,.pg-single-meta{display:none!important}
+	.pg-featured-image img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px}
+	.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4,24px);padding:0 1rem}
+	.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted,#5E5E5E);margin:.75rem 0 1rem}
+	.estrato-display.estrato-h1{font-size:clamp(26px,4vw,48px);line-height:1.1}
+	.entry-content,.post-content,.pg-entry-content{max-width:680px;margin:0 auto}
+	</style>
+	<?php
+}
+add_action( 'wp_head', 'estrato_perf_critical_single_css', 2 );
+
+/**
+ * PressGrid style.css tem @import Google Fonts — carrega sem bloquear.
+ *
+ * @param string $html
+ * @param string $handle
+ * @return string
+ */
+function estrato_perf_async_pressgrid_style( $html, $handle ) {
+	if ( 'pressgrid-style' !== $handle ) {
+		return $html;
+	}
+	if ( false !== strpos( $html, 'media=' ) ) {
+		return preg_replace( '/media=[\'"]all[\'"]/', 'media="print" onload="this.media=\'all\'"', $html, 1 );
+	}
+	return str_replace( "rel='stylesheet'", "rel='stylesheet' media='print' onload=\"this.media='all'\"", $html );
+}
+add_filter( 'style_loader_tag', 'estrato_perf_async_pressgrid_style', 10, 2 );
+
+/**
  * Preconnect + preload LCP (imagem hero / featured).
  */
 function estrato_perf_preload_lcp() {
@@ -189,12 +258,14 @@ add_filter( 'post_thumbnail_html', 'estrato_perf_post_thumbnail_attrs', 10, 5 );
  */
 function estrato_perf_lcp_status() {
 	return array(
-		'preload'       => true,
-		'async_fonts'   => true,
-		'defer_js'      => true,
-		'ticker_cron'   => true,
-		'fonts_cdn'     => 'bunny',
-		'lcp_image_size'=> 'medium_large',
-		'version'       => defined( 'ESTRATO_PORTAL_VERSION' ) ? ESTRATO_PORTAL_VERSION : '',
+		'preload'        => true,
+		'async_fonts'    => true,
+		'defer_js'       => true,
+		'ticker_cron'    => true,
+		'fonts_cdn'      => 'bunny',
+		'lcp_image_size' => 'medium_large',
+		'single_resize'  => true,
+		'pressgrid_hints'=> false,
+		'version'        => defined( 'ESTRATO_PORTAL_VERSION' ) ? ESTRATO_PORTAL_VERSION : '',
 	);
 }

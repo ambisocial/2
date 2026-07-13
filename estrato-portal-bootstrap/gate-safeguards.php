@@ -71,6 +71,12 @@ function estrato_gate_require_original_thumbnail( $post_id ) {
 	if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) {
 		return;
 	}
+	if ( get_post_meta( $post_id, '_estrato_editorial_source', true ) ) {
+		return;
+	}
+	if ( 'analysis' === get_post_meta( $post_id, '_estrato_content_mode', true ) && has_post_thumbnail( $post_id ) ) {
+		return;
+	}
 	if ( ! function_exists( 'estrato_bridge_post_has_original_thumbnail' ) ) {
 		return;
 	}

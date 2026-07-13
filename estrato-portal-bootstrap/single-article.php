@@ -321,16 +321,30 @@ function estrato_single_share_bar() {
 
 /**
  * Fallback footer do single (related + share).
+ *
+ * Fix pós auditoria 2026-07-13: `static $done` era engatilhado por qualquer
+ * `apply_filters('the_content', ...)` disparado por outro plugin/query antes
+ * do render principal (excerpts, feed, Yoast schema, sitemap), então quando
+ * o template do PressGrid finalmente executava `the_content()` o footer já
+ * havia sido "consumido". Trocar por registry por post_id + guard
+ * `in_the_loop() && is_main_query()`.
  */
 function estrato_single_footer_fallback( $content ) {
 	if ( ! is_singular( 'post' ) || is_admin() || is_feed() ) {
 		return $content;
 	}
-	static $done = false;
-	if ( $done ) {
+	if ( ! in_the_loop() || ! is_main_query() ) {
 		return $content;
 	}
-	$done = true;
+	$post_id = get_the_ID();
+	if ( ! $post_id ) {
+		return $content;
+	}
+	static $rendered = array();
+	if ( isset( $rendered[ $post_id ] ) ) {
+		return $content;
+	}
+	$rendered[ $post_id ] = true;
 	ob_start();
 	estrato_single_share_bar();
 	estrato_single_render_prev_next();

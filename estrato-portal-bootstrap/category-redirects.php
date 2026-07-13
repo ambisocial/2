@@ -17,24 +17,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * V6 — Detecta em `parse_request` se a URL curta é um slug de categoria e
+ * dispara redirect 301 antes de o WP marcar 404. Redirect em
+ * `template_redirect` também funciona, mas o handler 404 do PressGrid roda
+ * antes por causa de outros hooks, quebrando o redirect.
+ *
  * @param WP $wp
  */
 function estrato_category_legacy_redirect_maybe( $wp ) {
-	if ( ! is_404() ) {
-		return;
-	}
 	if ( is_admin() ) {
 		return;
 	}
-	$request = isset( $wp->request ) ? trim( (string) $wp->request, '/' ) : '';
-	if ( '' === $request ) {
+	if ( ! isset( $wp->query_vars['name'] ) && ! isset( $wp->query_vars['pagename'] ) ) {
 		return;
 	}
-	if ( false !== strpos( $request, '/' ) ) {
+	$slug = '';
+	if ( ! empty( $wp->query_vars['name'] ) ) {
+		$slug = (string) $wp->query_vars['name'];
+	} elseif ( ! empty( $wp->query_vars['pagename'] ) ) {
+		$slug = (string) $wp->query_vars['pagename'];
+	}
+	if ( '' === $slug || false !== strpos( $slug, '/' ) ) {
 		return;
 	}
-	$slug = sanitize_title( $request );
-	if ( '' === $slug ) {
+	if ( isset( $wp->query_vars['category_name'] ) && $wp->query_vars['category_name'] === $slug ) {
+		return;
+	}
+	if ( get_page_by_path( $slug, OBJECT, array( 'post', 'page' ) ) ) {
 		return;
 	}
 	$term = get_term_by( 'slug', $slug, 'category' );
@@ -48,7 +57,7 @@ function estrato_category_legacy_redirect_maybe( $wp ) {
 	wp_safe_redirect( $url, 301 );
 	exit;
 }
-add_action( 'template_redirect', 'estrato_category_legacy_redirect_maybe', 5 );
+add_action( 'parse_request', 'estrato_category_legacy_redirect_maybe', 5 );
 
 /**
  * V6 — Redirect antigos slugs de subcategoria (com prefixo redundante do pai)

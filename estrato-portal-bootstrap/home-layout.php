@@ -290,7 +290,7 @@ function estrato_home_template_include( $template ) {
 	if ( ! estrato_home_is_active() ) {
 		return $template;
 	}
-	$plugin_tpl = plugin_dir_path( __DIR__ ) . 'templates/home-v2.php';
+	$plugin_tpl = __DIR__ . '/templates/home-v2.php';
 	return is_readable( $plugin_tpl ) ? $plugin_tpl : $template;
 }
 add_filter( 'template_include', 'estrato_home_template_include', 99 );

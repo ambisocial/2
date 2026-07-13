@@ -146,13 +146,32 @@ function estrato_home_render_card( $post, $variant = 'list' ) {
 	$color = estrato_ds_editoria_color( $slug );
 	$kicker = estrato_home_post_kicker( $post );
 	$time   = estrato_home_relative_time( $post->ID );
-	$thumb  = get_the_post_thumbnail( $post->ID, 'medium', array( 'loading' => 'lazy' ) );
-	$eager  = 'hero' === $variant ? ' loading="eager" fetchpriority="high"' : '';
+	if ( 'hero' === $variant ) {
+		$thumb = get_the_post_thumbnail(
+			$post->ID,
+			'large',
+			array(
+				'loading'       => 'eager',
+				'fetchpriority' => 'high',
+				'decoding'      => 'async',
+			)
+		);
+	} else {
+		$thumb = get_the_post_thumbnail(
+			$post->ID,
+			'medium',
+			array(
+				'loading'  => 'lazy',
+				'decoding' => 'async',
+			)
+		);
+	}
+	$eager = '';
 
 	$html = '<article class="estrato-home-card estrato-home-card--' . esc_attr( $variant ) . '" style="--estrato-cat-color:' . esc_attr( $color ) . '">';
 	$html .= '<a href="' . esc_url( get_permalink( $post ) ) . '" class="estrato-home-card__link">';
 	if ( $thumb && 'list' !== $variant ) {
-		$html .= '<div class="estrato-home-card__media">' . str_replace( '<img ', '<img' . $eager . ' ', $thumb ) . '</div>';
+		$html .= '<div class="estrato-home-card__media">' . $thumb . '</div>';
 	}
 	$html .= '<div class="estrato-home-card__body">';
 	if ( $kicker ) {

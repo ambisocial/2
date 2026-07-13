@@ -39,12 +39,22 @@ foreach ( $users as $u ) {
 	$login = (string) $u->user_login;
 	// só personas geradas: padrão `{parent-slug}-{sub-slug}` ou terminado em `-editoria|-coluna`.
 	// Descobrir sub_slug: se user_meta `estrato_author_term_slug` existe usa-o.
-	$term_slug = (string) get_user_meta( $u->ID, 'estrato_author_term_slug', true );
-	$term_type = (string) get_user_meta( $u->ID, 'estrato_author_type', true );
+	$term_slug   = (string) get_user_meta( $u->ID, 'estrato_author_term_slug', true );
+	$term_type   = (string) get_user_meta( $u->ID, 'estrato_author_type', true );
+	$parent_meta = (string) get_user_meta( $u->ID, 'estrato_author_parent', true );
 	if ( '' === $term_slug ) {
 		continue;
 	}
 	$term = get_term_by( 'slug', $term_slug, 'category' );
+	// Fallback: `estrato_author_term_slug` foi gravado como slug composto
+	// (`{parent}-{sub}`) que não existe como termo no WP. Reconstruir a partir
+	// do prefixo `estrato_author_parent`.
+	if ( ( ! $term || is_wp_error( $term ) ) && '' !== $parent_meta ) {
+		$sub_from_composite = preg_replace( '/^' . preg_quote( $parent_meta . '-', '/' ) . '/', '', $term_slug );
+		if ( $sub_from_composite && $sub_from_composite !== $term_slug ) {
+			$term = get_term_by( 'slug', $sub_from_composite, 'category' );
+		}
+	}
 	if ( ! $term || is_wp_error( $term ) ) {
 		continue;
 	}

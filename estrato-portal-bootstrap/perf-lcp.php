@@ -141,7 +141,7 @@ function estrato_perf_critical_home_css() {
 	.estrato-home-hero{display:grid;gap:var(--estrato-space-4,24px);margin-bottom:var(--estrato-space-5,40px)}
 	@media(min-width:900px){.estrato-home-hero{grid-template-columns:1.4fr 1fr}}
 	.estrato-home-card__link{color:inherit;text-decoration:none;display:block}
-	.estrato-home-card__media img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px}
+	.estrato-home-card__media img{width:100%;height:auto;border-radius:4px}
 	.estrato-home-card--hero .estrato-home-card__title{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:.35rem 0}
 	</style>
 	<?php

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.8.1
+ * Version: 1.8.2
  * Author: Cursor Agent
  */
 

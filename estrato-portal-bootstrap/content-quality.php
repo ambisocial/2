@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'ESTRATO_MIN_PUBLISH_WORDS', 200 );
 define( 'ESTRATO_TARGET_WORDS', 300 );
 define( 'ESTRATO_AEO_MARKER', '<!-- estrato-aeo -->' );
+define( 'ESTRATO_DISABLE_GENERIC_AEO', true );
 
 /**
  * @param string $html
@@ -330,7 +331,7 @@ function estrato_content_enrich_post( $post_id ) {
 		$cat_slug = $cats[0]->slug;
 	}
 
-	if ( $words < ESTRATO_TARGET_WORDS && false === strpos( $content, ESTRATO_AEO_MARKER ) ) {
+	if ( ! ESTRATO_DISABLE_GENERIC_AEO && $words < ESTRATO_TARGET_WORDS && false === strpos( $content, ESTRATO_AEO_MARKER ) ) {
 		$content .= "\n" . estrato_content_build_aeo_blocks(
 			$post->post_title,
 			$post->post_excerpt,
@@ -342,7 +343,7 @@ function estrato_content_enrich_post( $post_id ) {
 	$content = estrato_content_inject_internal_links( $content, $post_id );
 	$words   = estrato_content_word_count( $content );
 
-	if ( $words < ESTRATO_TARGET_WORDS && $words >= ESTRATO_MIN_PUBLISH_WORDS ) {
+	if ( ! ESTRATO_DISABLE_GENERIC_AEO && $words < ESTRATO_TARGET_WORDS && $words >= ESTRATO_MIN_PUBLISH_WORDS ) {
 		$content .= "\n" . estrato_content_build_extension_block( $post->post_title, $cat_slug );
 		$words    = estrato_content_word_count( $content );
 	}
@@ -515,6 +516,31 @@ function estrato_regression_posts_without_aeo() {
 	}
 	return $count;
 }
+
+/**
+ * Remove blocos AEO genéricos do HTML renderizado e armazenado.
+ *
+ * @param string $content
+ * @return string
+ */
+function estrato_content_strip_generic_aeo( $content ) {
+	if ( ! ESTRATO_DISABLE_GENERIC_AEO || is_admin() || is_feed() ) {
+		return $content;
+	}
+	$marker = preg_quote( ESTRATO_AEO_MARKER, '/' );
+	$content = preg_replace(
+		'/' . $marker . '[\s\S]*?(?=<div class="estrato-internal-links"|<h2>Análise complementar|$)/iu',
+		'',
+		$content
+	);
+	$content = preg_replace(
+		'/<h2>Análise complementar<\/h2>[\s\S]*?(?=<div class="estrato-internal-links"|$)/iu',
+		'',
+		$content
+	);
+	return $content;
+}
+add_filter( 'the_content', 'estrato_content_strip_generic_aeo', 4 );
 
 /**
  * Longforms publicados (modo analysis, ≥1500 palavras).

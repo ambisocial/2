@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Publisher Bridge
  * Description: Recebe artigos do pipeline Victor (scout/curator/writer/publisher) via REST API.
- * Version: 1.7.0
+ * Version: 1.7.1
  * Author: Cursor Agent
  */
 
@@ -161,6 +161,17 @@ function estrato_bridge_publish_post( $request ) {
 		return new WP_Error( 'missing_fields', 'title e content são obrigatórios', array( 'status' => 400 ) );
 	}
 
+	if ( function_exists( 'estrato_pipeline_gate_title_language' ) ) {
+		$gate = estrato_pipeline_gate_title_language( $title );
+		if ( ! $gate['ok'] ) {
+			return new WP_Error( 'language_gate', 'Título fora do idioma PT-BR', array( 'status' => 422 ) );
+		}
+		$title = $gate['title'];
+	}
+	if ( function_exists( 'estrato_pipeline_sanitize_content_html' ) ) {
+		$content = estrato_pipeline_sanitize_content_html( $content );
+	}
+
 	if ( ! $guid && ! empty( $params['source_url'] ) ) {
 		$guid = esc_url_raw( $params['source_url'] );
 	}
@@ -302,9 +313,13 @@ function estrato_bridge_publish_post( $request ) {
 					'post_status' => 'draft',
 				)
 			);
-		} else	if ( function_exists( 'estrato_content_sync_yoast_index' ) ) {
+		} elseif ( function_exists( 'estrato_content_sync_yoast_index' ) ) {
 			estrato_content_sync_yoast_index( $post_id, $words );
 		}
+	}
+
+	if ( function_exists( 'estrato_pipeline_apply_category' ) ) {
+		estrato_pipeline_apply_category( $post_id, $title, $content );
 	}
 
 	if ( function_exists( 'estrato_aeo_ping_indexnow' ) ) {

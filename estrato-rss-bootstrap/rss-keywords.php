@@ -175,10 +175,22 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 					$stats['skipped']++;
 					continue;
 				}
+				if ( function_exists( 'estrato_pipeline_gate_title_language' ) ) {
+					$gate = estrato_pipeline_gate_title_language( $title );
+					if ( ! $gate['ok'] ) {
+						$stats['skipped']++;
+						estrato_rss_mark_guid_imported( $guid );
+						continue;
+					}
+					$title = $gate['title'];
+				}
 				$content = $item->get_content();
 				$excerpt = $item->get_description();
 				$body    = $content ? $content : $excerpt;
 				$body    = wp_kses_post( $body );
+				if ( function_exists( 'estrato_pipeline_sanitize_content_html' ) ) {
+					$body = estrato_pipeline_sanitize_content_html( $body );
+				}
 				if ( ! estrato_rss_item_matches_keywords( $title, $body, $keywords ) ) {
 					$stats['skipped']++;
 					continue;
@@ -256,6 +268,9 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 					continue;
 				}
 				update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
+				if ( function_exists( 'estrato_pipeline_apply_category' ) ) {
+					estrato_pipeline_apply_category( $post_id, $title, $body );
+				}
 				estrato_rss_mark_guid_imported( $guid );
 				$imported[ $guid ] = true;
 				$stats['imported']++;

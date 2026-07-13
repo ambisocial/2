@@ -324,3 +324,37 @@ function estrato_g1_header_scripts() {
 	<?php
 }
 add_action( 'wp_footer', 'estrato_g1_header_scripts', 25 );
+
+/**
+ * Remove header/nav legado PressGrid do DOM (menu único — Sprint 1 / B5).
+ */
+function estrato_g1_strip_pressgrid_nav_start() {
+	if ( is_admin() || is_feed() || wp_doing_ajax() || wp_is_json_request() ) {
+		return;
+	}
+	ob_start( 'estrato_g1_strip_pressgrid_nav_callback' );
+}
+add_action( 'template_redirect', 'estrato_g1_strip_pressgrid_nav_start', 0 );
+
+/**
+ * @param string $html
+ * @return string
+ */
+function estrato_g1_strip_pressgrid_nav_callback( $html ) {
+	if ( ! is_string( $html ) || '' === $html ) {
+		return $html;
+	}
+	$patterns = array(
+		'/<div[^>]*class="[^"]*\bpg-topbar\b[^"]*"[^>]*>[\s\S]*?<\/div>/iu',
+		'/<header[^>]*class="[^"]*\bpg-masthead\b[^"]*"[^>]*>[\s\S]*?<\/header>/iu',
+		'/<nav[^>]*class="[^"]*\bpg-nav-wrap\b[^"]*"[^>]*>[\s\S]*?<\/nav>/iu',
+	);
+	foreach ( $patterns as $pattern ) {
+		$prev = '';
+		while ( $prev !== $html ) {
+			$prev = $html;
+			$html = preg_replace( $pattern, '', $html );
+		}
+	}
+	return $html;
+}

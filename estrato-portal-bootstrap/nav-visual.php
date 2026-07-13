@@ -33,7 +33,29 @@ function estrato_nav_author_byline( $name ) {
 
 	return $job ? $name . ', ' . sanitize_text_field( $job ) : $name;
 }
-add_filter( 'the_author', 'estrato_nav_author_byline', 10, 1 );
+/**
+ * Fix pós-auditoria visual 2026-07-13 (P1 byline duplicada):
+ * o filter global `the_author` era aplicado em qualquer chamada de
+ * `get_the_author()` e `the_author()`, incluindo a byline do template
+ * single, onde o próprio código já concatena `$author . ', ' . $job`.
+ * Resultado: duas cópias de `, Repórter de X · X` na tela.
+ *
+ * Mantemos a função (usada como helper em widgets que sabem chamar
+ * `estrato_nav_author_byline` explicitamente), mas removemos o hook global.
+ */
+if ( ! function_exists( 'estrato_author_byline_string' ) ) {
+	/**
+	 * @param int $user_id
+	 * @return string
+	 */
+	function estrato_author_byline_string( $user_id ) {
+		$user = $user_id ? get_userdata( (int) $user_id ) : null;
+		if ( ! $user ) {
+			return '';
+		}
+		return estrato_nav_author_byline( $user->display_name );
+	}
+}
 
 /**
  * PressGrid renderiza custom_html só quando id === custom_html e sem do_shortcode.

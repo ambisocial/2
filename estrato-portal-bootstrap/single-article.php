@@ -75,18 +75,25 @@ function estrato_single_related_same_subcategory( $post_id, $limit = 3 ) {
  * @return string
  */
 function estrato_single_reading_time( $post_id = 0 ) {
+	// Fix pós auditoria visual 2026-07-13 (P3 contador "3" solto):
+	// `pressgrid_reading_time()` em alguns builds retorna apenas o número (sem
+	// "min de leitura"), o que a nossa byline exibia como um "3" órfão ao lado
+	// da data. Sempre normalizar para "N min de leitura".
+	$post_id = $post_id ? $post_id : get_the_ID();
+	$mins    = 0;
 	if ( function_exists( 'pressgrid_reading_time' ) ) {
-		$read = pressgrid_reading_time();
-		if ( $read ) {
-			return $read;
+		$raw = trim( (string) pressgrid_reading_time() );
+		if ( preg_match( '/(\d+)/', $raw, $m ) ) {
+			$mins = (int) $m[1];
 		}
 	}
-	$post_id = $post_id ? $post_id : get_the_ID();
-	$words   = function_exists( 'estrato_content_post_word_count' )
-		? estrato_content_post_word_count( $post_id )
-		: str_word_count( wp_strip_all_tags( get_post_field( 'post_content', $post_id ) ) );
-	$mins    = max( 1, (int) ceil( $words / 200 ) );
-	return $mins . ' min de leitura';
+	if ( $mins < 1 ) {
+		$words = function_exists( 'estrato_content_post_word_count' )
+			? estrato_content_post_word_count( $post_id )
+			: str_word_count( wp_strip_all_tags( get_post_field( 'post_content', $post_id ) ) );
+		$mins  = max( 1, (int) ceil( $words / 200 ) );
+	}
+	return sprintf( '%d min de leitura', $mins );
 }
 
 /**
@@ -151,15 +158,40 @@ function estrato_single_render_header_fallback( $content ) {
 	$kicker  = estrato_home_post_kicker( get_post( $post_id ) );
 	$kicker  = estrato_single_kicker_or_fallback( $kicker, $post_id );
 	$dek     = estrato_single_dek( $post_id );
-	$author  = get_the_author();
-	$job     = get_the_author_meta( 'estrato_job_title' );
-	$read    = estrato_single_reading_time( $post_id );
-	$crumb   = function_exists( 'estrato_archive_render_breadcrumb' )
+
+	// Fix pós auditoria visual 2026-07-13:
+	// - Byline duplicada: usar `display_name` cru + `estrato_job_title` uma vez.
+	//   (Antes: filter global em `nav-visual.php` já concatenava, e o template
+	//   somava de novo.)
+	// - Persona placeholder marcada com badge para não passar como jornalista.
+	$author_id  = (int) get_the_author_meta( 'ID' );
+	$author_data = $author_id ? get_userdata( $author_id ) : null;
+	$author_name = $author_data ? $author_data->display_name : get_the_author();
+	$job         = $author_id ? (string) get_user_meta( $author_id, 'estrato_job_title', true ) : '';
+	$is_persona  = $author_data && preg_match( '/-editoria$|-coluna$/', $author_data->user_login );
+	$read        = estrato_single_reading_time( $post_id );
+	$crumb       = function_exists( 'estrato_archive_render_breadcrumb' )
 		? estrato_archive_render_breadcrumb( estrato_archive_breadcrumb_trail( $post_id ) )
 		: '';
 	ob_start();
 	if ( $crumb ) {
 		echo '<div class="estrato-single-breadcrumb-wrap">' . $crumb . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+	// Fix pós auditoria visual 2026-07-13 (P1 featured hidden):
+	// escondemos o header antigo do PressGrid; para não perder o featured
+	// (que ficava dentro do wrapper `.pg-featured-image` acima), renderizamos
+	// aqui, dentro do nosso header, com fetchpriority=high para o LCP.
+	$thumb_html = '';
+	if ( has_post_thumbnail( $post_id ) ) {
+		$thumb_html = get_the_post_thumbnail(
+			$post_id,
+			'large',
+			array(
+				'class'         => 'estrato-single-featured-img',
+				'fetchpriority' => 'high',
+				'loading'       => 'eager',
+			)
+		);
 	}
 	?>
 	<div class="estrato-single-header" style="--estrato-cat-color:<?php echo esc_attr( $color ); ?>">
@@ -170,8 +202,13 @@ function estrato_single_render_header_fallback( $content ) {
 		<?php if ( $dek ) : ?>
 			<p class="estrato-single-dek"><?php echo esc_html( $dek ); ?></p>
 		<?php endif; ?>
+		<?php if ( $thumb_html ) : ?>
+			<figure class="estrato-single-featured"><?php echo $thumb_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></figure>
+		<?php endif; ?>
 		<div class="estrato-single-byline">
-			<span class="estrato-single-author">Por <?php echo esc_html( $job ? $author . ', ' . $job : $author ); ?></span>
+			<span class="estrato-single-author">
+				Por <?php echo esc_html( $author_name ); ?><?php if ( $job ) : ?>, <?php echo esc_html( $job ); ?><?php endif; ?><?php if ( $is_persona ) : ?> <span class="estrato-persona-badge" title="Persona editorial coletiva do Estrato">Redação</span><?php endif; ?>
+			</span>
 			<time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'd/m/Y H:i' ) ); ?></time>
 			<span class="estrato-single-read"><?php echo esc_html( $read ); ?></span>
 			<?php
@@ -214,6 +251,36 @@ function estrato_single_thumbnail_caption_filter( $content ) {
 	return preg_replace( '/(<img[^>]+>)/i', '$1' . $fig, $content, 1 );
 }
 add_filter( 'the_content', 'estrato_single_thumbnail_caption_filter', 12 );
+
+/**
+ * Anterior / Próximo com títulos completos (evita truncamento e traduz os
+ * rótulos EN do PressGrid). Substitui o `<nav class="navigation
+ * post-navigation">` do tema, escondido via CSS na função de estilos.
+ */
+function estrato_single_render_prev_next() {
+	if ( ! is_singular( 'post' ) ) {
+		return;
+	}
+	$prev = get_previous_post( true );
+	$next = get_next_post( true );
+	if ( ! $prev && ! $next ) {
+		return;
+	}
+	echo '<nav class="estrato-single-prevnext" aria-label="Navegação de matérias">';
+	if ( $prev ) {
+		echo '<a class="estrato-single-prev" href="' . esc_url( get_permalink( $prev ) ) . '" rel="prev">'
+			. '<span class="estrato-single-prevnext__label">← Anterior</span>'
+			. '<span class="estrato-single-prevnext__title">' . esc_html( get_the_title( $prev ) ) . '</span>'
+			. '</a>';
+	}
+	if ( $next ) {
+		echo '<a class="estrato-single-next" href="' . esc_url( get_permalink( $next ) ) . '" rel="next">'
+			. '<span class="estrato-single-prevnext__label">Próxima →</span>'
+			. '<span class="estrato-single-prevnext__title">' . esc_html( get_the_title( $next ) ) . '</span>'
+			. '</a>';
+	}
+	echo '</nav>';
+}
 
 /**
  * Related da mesma subcategoria.
@@ -265,6 +332,7 @@ function estrato_single_footer_fallback( $content ) {
 	$done = true;
 	ob_start();
 	estrato_single_share_bar();
+	estrato_single_render_prev_next();
 	estrato_single_render_related();
 	return $content . ob_get_clean();
 }
@@ -278,14 +346,32 @@ function estrato_single_styles() {
 		return;
 	}
 	$css = '.estrato-single-breadcrumb-wrap{max-width:680px;margin:0 auto;padding:0 1rem}'
+		. '.estrato-single-breadcrumb-wrap ol li:last-child{max-width:60ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}'
 		. '.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4);padding:0 1rem}'
 		. '.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted);margin:.75rem 0 1rem}'
-		. '.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted)}'
+		. '.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted);align-items:center}'
+		. '.estrato-single-byline br{display:none}'
+		. '.estrato-persona-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--estrato-line);color:var(--estrato-muted);padding:.1rem .45rem;border-radius:3px;margin-left:.35rem;vertical-align:baseline}'
+		. '.estrato-updated-badge{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--estrato-cat-color,#5B3E96)}'
 		. '.entry-content,.post-content{max-width:680px;margin:0 auto;font-size:18px;line-height:1.6}'
+		. '.estrato-single-featured{margin:0 0 var(--estrato-space-4);max-width:680px}'
+		. '.estrato-single-featured-img,.estrato-single-featured img{width:100%;height:auto;border-radius:4px;display:block}'
+		. '.pg-featured-image,.pg-post-thumbnail,.pg-single-thumbnail{display:none!important}'
 		. '.estrato-single-caption{display:block;margin-top:.35rem}'
 		. '.estrato-single-related{max-width:680px;margin:var(--estrato-space-5) auto;padding:0 1rem}'
-		. '.estrato-share-bar{position:fixed;left:max(1rem,calc(50% - 420px));top:40%;display:flex;flex-direction:column;gap:.5rem;font-size:12px;font-weight:600}'
-		. '@media(max-width:1100px){.estrato-share-bar{position:sticky;bottom:0;left:0;flex-direction:row;justify-content:center;background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;z-index:100}}';
+		. '.estrato-single-prevnext{max-width:680px;margin:var(--estrato-space-5) auto var(--estrato-space-4);padding:0 1rem;display:grid;gap:1rem;grid-template-columns:1fr}'
+		. '@media(min-width:640px){.estrato-single-prevnext{grid-template-columns:1fr 1fr}}'
+		. '.estrato-single-prev,.estrato-single-next{display:flex;flex-direction:column;gap:.25rem;padding:.85rem 1rem;border:1px solid var(--estrato-line);border-radius:6px;text-decoration:none;color:inherit;transition:border-color .15s}'
+		. '.estrato-single-prev:hover,.estrato-single-next:hover{border-color:var(--estrato-cat-color,#5B3E96)}'
+		. '.estrato-single-next{text-align:right}'
+		. '.estrato-single-prevnext__label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--estrato-muted)}'
+		. '.estrato-single-prevnext__title{font-size:14px;font-weight:600;line-height:1.35;color:var(--estrato-ink)}'
+		. '.estrato-share-bar{position:fixed;left:max(1rem,calc(50% - 420px));top:40%;display:flex;flex-direction:column;gap:.5rem;font-size:12px;font-weight:600;z-index:50}'
+		. '@media(max-width:1100px){.estrato-share-bar{position:sticky;bottom:0;left:0;flex-direction:row;justify-content:center;background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;z-index:100}}'
+		// PressGrid back-to-top: escapa do overflow do .single-content e não sobe sobre o related grid.
+		. '.pg-scroll-top,.pg-back-to-top,#back-to-top{z-index:60!important;bottom:calc(1rem + env(safe-area-inset-bottom,0px))!important;margin-bottom:calc(env(safe-area-inset-bottom,0px) + 3.5rem)!important}'
+		// PressGrid navigation post-navigation com Previous/Next crus: fica em CSS oculto até termos a versão PT-BR abaixo.
+		. '.navigation.post-navigation{display:none!important}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-single-css', $css, 'main' );
 	} else {

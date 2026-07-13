@@ -159,7 +159,12 @@ function estrato_gate_require_source_in_matrix( $post_id ) {
 	if ( 'analysis' === get_post_meta( $post_id, '_estrato_content_mode', true ) ) {
 		return;
 	}
+	// Fix pós V3-V8: publisher-bridge grava `_estrato_source_url`; RSS legado
+	// grava `_estrato_rss_source_url`. Aceitar ambas.
 	$src = get_post_meta( $post_id, '_estrato_rss_source_url', true );
+	if ( ! $src ) {
+		$src = get_post_meta( $post_id, '_estrato_source_url', true );
+	}
 	if ( ! $src ) {
 		return;
 	}
@@ -252,6 +257,9 @@ function estrato_regression_off_matrix_posts() {
 	$off = 0;
 	foreach ( $ids as $id ) {
 		$src = get_post_meta( $id, '_estrato_rss_source_url', true );
+		if ( ! $src ) {
+			$src = get_post_meta( $id, '_estrato_source_url', true );
+		}
 		if ( ! $src ) {
 			continue;
 		}

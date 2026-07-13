@@ -172,6 +172,14 @@ function estrato_g1_header_hide_pressgrid() {
 	}
 	$css = '.pg-topbar,.pg-masthead,.pg-nav-wrap{display:none!important}'
 		. '.estrato-columns-ribbon{display:none!important}'
+		// Fix pós auditoria visual 2026-07-13 (P1 featured hidden + P1 kicker dup):
+		// esconde SÓ o cabeçalho antigo do PressGrid; o wrapper do featured
+		// (`.pg-featured-image`, `.pg-single-thumbnail`) continua visível para
+		// o nosso featured render logo abaixo do header. Também esconde
+		// `.pg-single-breadcrumbs` que duplica o breadcrumb do template.
+		. 'header.pg-single-header,.pg-single-header .pg-single-title,.pg-single-header .pg-single-meta,.pg-single-header .pg-post-category,.pg-single-breadcrumbs,.pg-single-breadcrumb{display:none!important}'
+		// Aumenta z-index e adiciona safe-area no back-to-top do PressGrid.
+		. '.pg-back-to-top,.pg-scroll-top,#back-to-top{bottom:calc(1rem + env(safe-area-inset-bottom,0px))!important}'
 		. '.pg-forex-bar,.pg-breaking-bar{background:#fff1e5!important;border-top:1px solid #e8d5c4;border-bottom:1px solid #e8d5c4;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:.8125rem;color:#333}'
 		. '.pg-forex-label,.pg-breaking-label{background:#C4170C!important;color:#fff!important;font-weight:700;padding:.35rem .75rem}'
 		. '.pg-forex-ticker a,.pg-forex-item{color:#333!important}';

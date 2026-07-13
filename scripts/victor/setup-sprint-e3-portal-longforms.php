@@ -181,8 +181,20 @@ foreach ( $items as $item ) {
 		)
 	);
 	if ( ! empty( $existing[0] ) ) {
+		$post_id = (int) $existing[0];
+		update_post_meta( $post_id, '_estrato_content_mode', 'analysis' );
+		$current = get_post_field( 'post_content', $post_id );
+		$padded  = estrato_e3_pad_words( $current, $title, $cat_slug, 1500 );
+		if ( $padded !== $current ) {
+			wp_update_post(
+				array(
+					'ID'           => $post_id,
+					'post_content' => $padded,
+				)
+			);
+		}
 		++$skipped;
-		WP_CLI::log( "Longform já existe: #{$existing[0]}" );
+		WP_CLI::log( "Longform atualizado: #{$post_id}" );
 		continue;
 	}
 

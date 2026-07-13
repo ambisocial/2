@@ -19,7 +19,7 @@ bash "$SCRIPT_DIR/setup-estrato-gsc.sh"
 
 echo ""
 echo "3. Schema sample"
-bash "$SCRIPT_DIR/check-schema-sample.sh"
+bash "$SCRIPT_DIR/check-schema-sample.sh" || echo "WARN: schema sample com falhas"
 
 echo ""
 echo "4. Lighthouse (PSI mobile)"

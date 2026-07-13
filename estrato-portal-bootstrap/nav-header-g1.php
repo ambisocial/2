@@ -338,22 +338,51 @@ add_action( 'template_redirect', 'estrato_g1_strip_pressgrid_nav_start', 0 );
 
 /**
  * @param string $html
+ * @param string $class
+ * @return string
+ */
+function estrato_g1_remove_block_by_class( $html, $class ) {
+	$pattern = '/<(div|header|nav)\b[^>]*\b' . preg_quote( $class, '/' ) . '\b[^>]*>/iu';
+	if ( ! preg_match( $pattern, $html, $match, PREG_OFFSET_CAPTURE ) ) {
+		return $html;
+	}
+	$tag   = strtolower( $match[1][0] );
+	$start = (int) $match[0][1];
+	$pos   = $start + strlen( $match[0][0] );
+	$depth = 1;
+	$len   = strlen( $html );
+	while ( $pos < $len && $depth > 0 ) {
+		if ( preg_match( '/<\/?' . $tag . '\b[^>]*>/iu', $html, $token, PREG_OFFSET_CAPTURE, $pos ) ) {
+			$token_str = $token[0][0];
+			$pos       = (int) $token[0][1] + strlen( $token_str );
+			if ( '/' === $token_str[1] ) {
+				--$depth;
+			} elseif ( ! str_ends_with( rtrim( $token_str ), '/>' ) ) {
+				++$depth;
+			}
+			continue;
+		}
+		break;
+	}
+	if ( $depth > 0 ) {
+		return $html;
+	}
+	return substr( $html, 0, $start ) . substr( $html, $pos );
+}
+
+/**
+ * @param string $html
  * @return string
  */
 function estrato_g1_strip_pressgrid_nav_callback( $html ) {
 	if ( ! is_string( $html ) || '' === $html ) {
 		return $html;
 	}
-	$patterns = array(
-		'/<div[^>]*class="[^"]*\bpg-topbar\b[^"]*"[^>]*>[\s\S]*?<\/div>/iu',
-		'/<header[^>]*class="[^"]*\bpg-masthead\b[^"]*"[^>]*>[\s\S]*?<\/header>/iu',
-		'/<nav[^>]*class="[^"]*\bpg-nav-wrap\b[^"]*"[^>]*>[\s\S]*?<\/nav>/iu',
-	);
-	foreach ( $patterns as $pattern ) {
+	foreach ( array( 'pg-topbar', 'pg-masthead', 'pg-nav-wrap' ) as $class ) {
 		$prev = '';
 		while ( $prev !== $html ) {
 			$prev = $html;
-			$html = preg_replace( $pattern, '', $html );
+			$html = estrato_g1_remove_block_by_class( $html, $class );
 		}
 	}
 	return $html;

@@ -64,10 +64,43 @@ function estrato_syndicate_on_publish( $post_id ) {
 		escapeshellarg( $log )
 	);
 
-	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
-	exec( $cmd );
+	// PHP-FPM deste host desabilita exec(); nunca fatalizar o publish path.
+	if ( function_exists( 'exec' ) && false === stripos( (string) ini_get( 'disable_functions' ), 'exec' ) ) {
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
+		@exec( $cmd );
+		return;
+	}
+
+	// Fallback: agenda cron WP (o scout de syndication periódico ainda cobre URLs).
+	if ( ! wp_next_scheduled( 'estrato_syndicate_async_event', array( $post_id ) ) ) {
+		wp_schedule_single_event( time() + 30, 'estrato_syndicate_async_event', array( $post_id ) );
+	}
 }
 add_action( 'publish_post', 'estrato_syndicate_on_publish', 25, 1 );
+
+/**
+ * @param int $post_id Post ID.
+ */
+function estrato_syndicate_async_event( $post_id ) {
+	// Sem exec disponível: só garante log de intenção (cron externo faz o restante).
+	$log = estrato_syndicate_log_path();
+	if ( ! is_dir( ESTRATO_SYNDICATE_LOG_DIR ) ) {
+		wp_mkdir_p( ESTRATO_SYNDICATE_LOG_DIR );
+	}
+	$url = get_permalink( (int) $post_id );
+	if ( ! $url ) {
+		return;
+	}
+	$line = sprintf(
+		"[%s] async-fallback post_id=%d url=%s exec_disabled=1\n",
+		gmdate( 'c' ),
+		(int) $post_id,
+		$url
+	);
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	file_put_contents( $log, $line, FILE_APPEND );
+}
+add_action( 'estrato_syndicate_async_event', 'estrato_syndicate_async_event', 10, 1 );
 
 /**
  * @return string

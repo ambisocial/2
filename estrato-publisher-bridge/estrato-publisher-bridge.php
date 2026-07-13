@@ -230,13 +230,16 @@ function estrato_bridge_publish_post( $request ) {
 	$post_data = array(
 		'post_title'   => $title,
 		'post_content' => $content,
-		'post_status'  => ! empty( $params['status'] ) ? sanitize_key( $params['status'] ) : 'publish',
+		// Sempre nasce draft; só publica após fonte + thumbnail original.
+		'post_status'  => 'draft',
 		'post_author'  => $author_id,
 	);
 
 	if ( ! empty( $params['excerpt'] ) ) {
 		$post_data['post_excerpt'] = wp_strip_all_tags( $params['excerpt'] );
 	}
+
+	$desired_status = ! empty( $params['status'] ) ? sanitize_key( $params['status'] ) : 'publish';
 
 	if ( $existing_id ) {
 		$post_data['ID'] = $existing_id;
@@ -285,12 +288,6 @@ function estrato_bridge_publish_post( $request ) {
 	}
 
 	if ( ! $attached || ! estrato_bridge_post_has_original_thumbnail( $post_id ) ) {
-		wp_update_post(
-			array(
-				'ID'          => $post_id,
-				'post_status' => 'draft',
-			)
-		);
 		update_post_meta( $post_id, ESTRATO_BRIDGE_SKIP_IMAGE_META, 'no_original_image' );
 		return new WP_REST_Response(
 			array(
@@ -301,6 +298,22 @@ function estrato_bridge_publish_post( $request ) {
 				'url'     => get_permalink( $post_id ),
 			),
 			422
+		);
+	}
+
+	if ( 'publish' === $desired_status ) {
+		wp_update_post(
+			array(
+				'ID'          => (int) $post_id,
+				'post_status' => 'publish',
+			)
+		);
+	} elseif ( $desired_status && 'draft' !== $desired_status ) {
+		wp_update_post(
+			array(
+				'ID'          => (int) $post_id,
+				'post_status' => $desired_status,
+			)
 		);
 	}
 

@@ -154,6 +154,11 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 			if ( $stats['imported'] >= $max_run || empty( $feed_info['url'] ) ) {
 				break;
 			}
+			if ( function_exists( 'estrato_rss_guard_allow_insert' )
+				&& ! estrato_rss_guard_allow_insert( $feed_info['url'] ) ) {
+				$stats['skipped']++;
+				continue;
+			}
 			$feed = fetch_feed( $feed_info['url'] );
 			if ( is_wp_error( $feed ) ) {
 				$stats['errors']++;

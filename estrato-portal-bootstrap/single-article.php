@@ -90,21 +90,66 @@ function estrato_single_reading_time( $post_id = 0 ) {
 }
 
 /**
+ * V5 (auditoria visual 2026-07-13) — Fallback do kicker quando o post está
+ * apenas na editoria root (sem subcategoria) ou sem categorias válidas.
+ *
+ * @param string $kicker
+ * @param int    $post_id
+ * @return string
+ */
+function estrato_single_kicker_or_fallback( $kicker, $post_id ) {
+	if ( $kicker ) {
+		return $kicker;
+	}
+	$cats = get_the_category( $post_id );
+	if ( is_array( $cats ) && ! empty( $cats ) ) {
+		$root = $cats[0];
+		while ( $root->parent ) {
+			$parent = get_term( $root->parent, 'category' );
+			if ( ! $parent || is_wp_error( $parent ) ) {
+				break;
+			}
+			$root = $parent;
+		}
+		if ( ! empty( $root->name ) ) {
+			$decoded = html_entity_decode( $root->name, ENT_QUOTES, 'UTF-8' );
+			return function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $decoded, 'UTF-8' ) : strtoupper( $decoded );
+		}
+	}
+	$site = get_bloginfo( 'name' );
+	if ( $site ) {
+		return function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $site, 'UTF-8' ) : strtoupper( $site );
+	}
+	return 'EDITORIAL';
+}
+
+/**
  * Cabeçalho editorial do single (via the_content).
+ *
+ * V5: substituído `static $done` por meta transiente por post_id, para
+ * evitar cenário em que outra chamada de the_content (ex.: preview, excerpt)
+ * consumia a única execução e o template principal ficava sem header.
  */
 function estrato_single_render_header_fallback( $content ) {
 	if ( ! is_singular( 'post' ) || is_admin() || is_feed() ) {
 		return $content;
 	}
-	static $done = false;
-	if ( $done ) {
+	if ( ! in_the_loop() || ! is_main_query() ) {
 		return $content;
 	}
-	$done    = true;
 	$post_id = get_the_ID();
+	if ( ! $post_id ) {
+		return $content;
+	}
+	static $rendered = array();
+	if ( isset( $rendered[ $post_id ] ) ) {
+		return $content;
+	}
+	$rendered[ $post_id ] = true;
 	$slug    = estrato_ds_post_editoria_slug( $post_id );
 	$color   = estrato_ds_editoria_color( $slug );
 	$kicker  = estrato_home_post_kicker( get_post( $post_id ) );
+	$kicker  = estrato_single_kicker_or_fallback( $kicker, $post_id );
 	$dek     = estrato_single_dek( $post_id );
 	$author  = get_the_author();
 	$job     = get_the_author_meta( 'estrato_job_title' );
@@ -232,24 +277,19 @@ function estrato_single_styles() {
 	if ( ! is_singular( 'post' ) || is_admin() || is_feed() ) {
 		return;
 	}
-	?>
-	<style id="estrato-single-css">
-	.estrato-single-breadcrumb-wrap{max-width:680px;margin:0 auto;padding:0 1rem}
-	.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4);padding:0 1rem}
-	.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted);margin:.75rem 0 1rem}
-	.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted)}
-	.entry-content,.post-content{max-width:680px;margin:0 auto;font-size:18px;line-height:1.6}
-	.estrato-single-caption{display:block;margin-top:.35rem}
-	.estrato-single-related{max-width:680px;margin:var(--estrato-space-5) auto;padding:0 1rem}
-	.estrato-share-bar{
-		position:fixed;left:max(1rem,calc(50% - 420px));top:40%;display:flex;flex-direction:column;gap:.5rem;
-		font-size:12px;font-weight:600
+	$css = '.estrato-single-breadcrumb-wrap{max-width:680px;margin:0 auto;padding:0 1rem}'
+		. '.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4);padding:0 1rem}'
+		. '.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted);margin:.75rem 0 1rem}'
+		. '.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted)}'
+		. '.entry-content,.post-content{max-width:680px;margin:0 auto;font-size:18px;line-height:1.6}'
+		. '.estrato-single-caption{display:block;margin-top:.35rem}'
+		. '.estrato-single-related{max-width:680px;margin:var(--estrato-space-5) auto;padding:0 1rem}'
+		. '.estrato-share-bar{position:fixed;left:max(1rem,calc(50% - 420px));top:40%;display:flex;flex-direction:column;gap:.5rem;font-size:12px;font-weight:600}'
+		. '@media(max-width:1100px){.estrato-share-bar{position:sticky;bottom:0;left:0;flex-direction:row;justify-content:center;background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;z-index:100}}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-single-css', $css, 'main' );
+	} else {
+		echo '<style id="estrato-single-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
-	@media(max-width:1100px){
-		.estrato-share-bar{position:sticky;bottom:0;left:0;flex-direction:row;justify-content:center;
-			background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;z-index:100}
-	}
-	</style>
-	<?php
 }
-add_action( 'wp_head', 'estrato_single_styles', 27 );
+add_action( 'wp_head', 'estrato_single_styles', 20 );

@@ -60,22 +60,29 @@ function estrato_fonts_print_selfhosted_css() {
 		return;
 	}
 	$base = estrato_fonts_assets_url();
-	echo "<style id=\"estrato-fonts-selfhosted\">\n";
+	$css  = '';
 	foreach ( estrato_fonts_selfhosted_faces() as $face ) {
 		if ( ! is_readable( estrato_fonts_assets_dir() . $face['file'] ) ) {
 			continue;
 		}
-		printf(
-			"@font-face{font-family:'%s';font-style:%s;font-weight:%d;font-display:swap;src:url('%s') format('woff2');}\n",
+		$css .= sprintf(
+			"@font-face{font-family:'%s';font-style:%s;font-weight:%d;font-display:swap;src:url('%s') format('woff2');}",
 			esc_attr( $face['family'] ),
 			esc_attr( $face['style'] ),
 			(int) $face['weight'],
 			esc_url( $base . $face['file'] )
 		);
 	}
-	echo "</style>\n";
+	if ( '' === $css ) {
+		return;
+	}
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-fonts-selfhosted', $css, 'critical' );
+	} else {
+		echo '<style id="estrato-fonts-selfhosted">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
-add_action( 'wp_head', 'estrato_fonts_print_selfhosted_css', 3 );
+add_action( 'wp_head', 'estrato_fonts_print_selfhosted_css', 2 );
 
 /**
  * Preload fontes críticas (body + display).

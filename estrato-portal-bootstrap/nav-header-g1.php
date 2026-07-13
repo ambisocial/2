@@ -170,21 +170,18 @@ function estrato_g1_header_hide_pressgrid() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
-	?>
-	<style id="estrato-g1-header-hide-pressgrid">
-	.pg-topbar,.pg-masthead,.pg-nav-wrap{display:none!important}
-	.estrato-columns-ribbon{display:none!important}
-	.pg-forex-bar,.pg-breaking-bar{
-		background:#fff1e5!important;border-top:1px solid #e8d5c4;border-bottom:1px solid #e8d5c4;
-		font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-		font-size:.8125rem;color:#333
+	$css = '.pg-topbar,.pg-masthead,.pg-nav-wrap{display:none!important}'
+		. '.estrato-columns-ribbon{display:none!important}'
+		. '.pg-forex-bar,.pg-breaking-bar{background:#fff1e5!important;border-top:1px solid #e8d5c4;border-bottom:1px solid #e8d5c4;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:.8125rem;color:#333}'
+		. '.pg-forex-label,.pg-breaking-label{background:#C4170C!important;color:#fff!important;font-weight:700;padding:.35rem .75rem}'
+		. '.pg-forex-ticker a,.pg-forex-item{color:#333!important}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-g1-header-hide-pressgrid', $css, 'critical' );
+	} else {
+		echo '<style id="estrato-g1-header-hide-pressgrid">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
-	.pg-forex-label,.pg-breaking-label{background:#C4170C!important;color:#fff!important;font-weight:700;padding:.35rem .75rem}
-	.pg-forex-ticker a,.pg-forex-item{color:#333!important}
-	</style>
-	<?php
 }
-add_action( 'wp_head', 'estrato_g1_header_hide_pressgrid', 20 );
+add_action( 'wp_head', 'estrato_g1_header_hide_pressgrid', 2 );
 
 /**
  * CSS header G1.
@@ -193,8 +190,8 @@ function estrato_g1_header_styles() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
+	ob_start();
 	?>
-	<style id="estrato-g1-header-css">
 	.estrato-g1-header{
 		--estrato-g1-bar-bg:#C4170C;--estrato-g1-bar-fg:#fff;
 		--estrato-g1-rede-bg:#1e1e1e;--estrato-g1-nav-bg:#fff;--estrato-g1-nav-fg:#1e1e1e;
@@ -271,10 +268,15 @@ function estrato_g1_header_styles() {
 		.estrato-g1-header__nav--open .estrato-g1-menu>li.estrato-mega-open>.sub-menu{display:block}
 		.estrato-g1-header__nav--open .estrato-g1-menu .sub-menu a{color:#fff}
 	}
-	</style>
 	<?php
+	$css = trim( ob_get_clean() );
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-g1-header-css', $css, 'main' );
+	} else {
+		echo '<style id="estrato-g1-header-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
-add_action( 'wp_head', 'estrato_g1_header_styles', 28 );
+add_action( 'wp_head', 'estrato_g1_header_styles', 20 );
 
 /**
  * JS — menu mobile, busca e mega menu.

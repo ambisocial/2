@@ -286,17 +286,14 @@ function estrato_retention_dark_mode_assets() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
+	$css = '[data-estrato-theme="dark"]{--estrato-bg:#121212;--estrato-ink:#f2f2f2;--estrato-muted:#a8a8a8;--estrato-line:#2e2e2e}'
+		. '.estrato-theme-toggle{position:fixed;bottom:1rem;right:1rem;z-index:10060;border:1px solid var(--estrato-line);background:var(--estrato-bg);color:var(--estrato-ink);padding:.4rem .75rem;border-radius:var(--estrato-radius,4px);font-size:12px;cursor:pointer}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-dark-mode', $css, 'main' );
+	} else {
+		echo '<style id="estrato-dark-mode">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 	?>
-	<style id="estrato-dark-mode">
-	[data-estrato-theme="dark"]{
-		--estrato-bg:#121212;--estrato-ink:#f2f2f2;--estrato-muted:#a8a8a8;--estrato-line:#2e2e2e
-	}
-	.estrato-theme-toggle{
-		position:fixed;bottom:1rem;right:1rem;z-index:10060;border:1px solid var(--estrato-line);
-		background:var(--estrato-bg);color:var(--estrato-ink);padding:.4rem .75rem;border-radius:var(--estrato-radius,4px);
-		font-size:12px;cursor:pointer
-	}
-	</style>
 	<button type="button" class="estrato-theme-toggle" id="estrato-theme-toggle" aria-label="Alternar tema">Modo escuro</button>
 	<script>
 	(function(){

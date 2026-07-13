@@ -41,35 +41,52 @@ add_filter( 'wpseo_opengraph_image', 'estrato_yoast_fallback_og_image', 20 );
 add_filter( 'wpseo_twitter_image', 'estrato_yoast_fallback_og_image', 20 );
 
 /**
- * Garante dimensões OG no output.
+ * NOTA (V1 visual audit 2026-07-13):
+ * O antigo `estrato_yoast_og_dimensions()` ligado a `wpseo_opengraph_image` retornava
+ * `URL + <meta ...>` no valor do filtro, que Yoast escreve dentro de
+ * `<meta property="og:image" content="…">`. Resultado: og:image virava um
+ * blob "URL.pngmeta%20property=og:image:width…" em todos os posts, derrubando
+ * compartilhamento social. Removido.
  *
- * @param string $tag
- * @return string
+ * Yoast já injeta og:image:width/height automaticamente quando o attachment
+ * tem `wp_get_attachment_metadata`. Como fallback (imagem OG default), usamos
+ * `wpseo_add_opengraph_images` para adicionar via API oficial com dimensões
+ * corretas, evitando qualquer manipulação por concatenação.
+ *
+ * @param \WPSEO_OpenGraph_Image|null $image_container
+ * @return void
  */
-function estrato_yoast_og_dimensions( $tag ) {
-	if ( ! is_singular() && ! is_front_page() && ! is_home() ) {
-		return $tag;
+function estrato_yoast_register_default_og_image( $image_container ) {
+	if ( ! $image_container || ! is_object( $image_container ) ) {
+		return;
 	}
-	if ( false !== strpos( $tag, 'og:image:width' ) ) {
-		return $tag;
-	}
-	$aid = estrato_yoast_default_og_attachment_id();
-	if ( ! $aid && has_post_thumbnail() ) {
-		$aid = get_post_thumbnail_id();
-	}
-	if ( $aid ) {
-		$meta = wp_get_attachment_metadata( $aid );
-		if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-			return $tag . sprintf(
-				'<meta property="og:image:width" content="%d" />' . "\n" . '<meta property="og:image:height" content="%d" />' . "\n",
-				(int) $meta['width'],
-				(int) $meta['height']
-			);
+	if ( ! is_front_page() && ! is_home() && ! is_archive() && ! is_search() && ! is_404() ) {
+		if ( is_singular() && has_post_thumbnail() ) {
+			return;
 		}
 	}
-	return $tag . '<meta property="og:image:width" content="1200" />' . "\n" . '<meta property="og:image:height" content="630" />' . "\n";
+	$aid = estrato_yoast_default_og_attachment_id();
+	if ( ! $aid ) {
+		return;
+	}
+	$url = wp_get_attachment_image_url( $aid, 'full' );
+	if ( ! $url ) {
+		return;
+	}
+	if ( method_exists( $image_container, 'add_image' ) ) {
+		$meta   = wp_get_attachment_metadata( $aid );
+		$width  = ! empty( $meta['width'] ) ? (int) $meta['width'] : 1200;
+		$height = ! empty( $meta['height'] ) ? (int) $meta['height'] : 630;
+		$image_container->add_image(
+			array(
+				'url'    => $url,
+				'width'  => $width,
+				'height' => $height,
+			)
+		);
+	}
 }
-add_filter( 'wpseo_opengraph_image', 'estrato_yoast_og_dimensions', 99 );
+add_action( 'wpseo_add_opengraph_images', 'estrato_yoast_register_default_og_image', 15 );
 
 /**
  * sameAs padrão da rede quando Yoast social vazio.

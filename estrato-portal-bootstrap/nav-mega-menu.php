@@ -325,38 +325,29 @@ function estrato_nav_mega_menu_styles() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
-	?>
-	<style id="estrato-mega-menu-css">
-	.estrato-columns-ribbon{background:#0d1b2a;border-bottom:1px solid rgba(255,255,255,.08);font-size:.8125rem}
-	.estrato-columns-ribbon ul{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;margin:0 auto;max-width:1200px;padding:.45rem 1rem}
-	.estrato-columns-ribbon a{color:#e8eef5;font-weight:600;text-decoration:none;border-bottom:2px solid var(--estrato-col-accent,#9aff33);padding-bottom:1px}
-	.estrato-columns-ribbon a:hover{color:#fff}
-	.estrato-mega-nav>li.estrato-mega-parent{position:static}
-	.estrato-mega-nav>li.estrato-mega-parent>.sub-menu{
-		background:#fff;border:1px solid #e2e8f0;border-radius:0 0 6px 6px;box-shadow:0 12px 32px rgba(15,23,42,.12);
-		display:none;left:0;list-style:none;margin:0;min-width:220px;padding:1rem 1.25rem;position:absolute;right:0;top:100%;z-index:9999;
-		grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.35rem 1.5rem
+	$css = '.estrato-columns-ribbon{background:#0d1b2a;border-bottom:1px solid rgba(255,255,255,.08);font-size:.8125rem}'
+		. '.estrato-columns-ribbon ul{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;margin:0 auto;max-width:1200px;padding:.45rem 1rem}'
+		. '.estrato-columns-ribbon a{color:#e8eef5;font-weight:600;text-decoration:none;border-bottom:2px solid var(--estrato-col-accent,#9aff33);padding-bottom:1px}'
+		. '.estrato-columns-ribbon a:hover{color:#fff}'
+		. '.estrato-mega-nav>li.estrato-mega-parent{position:static}'
+		. '.estrato-mega-nav>li.estrato-mega-parent>.sub-menu{background:#fff;border:1px solid #e2e8f0;border-radius:0 0 6px 6px;box-shadow:0 12px 32px rgba(15,23,42,.12);display:none;left:0;list-style:none;margin:0;min-width:220px;padding:1rem 1.25rem;position:absolute;right:0;top:100%;z-index:9999;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.35rem 1.5rem}'
+		. '.estrato-mega-nav>li.estrato-mega-parent:hover>.sub-menu,'
+		. '.estrato-mega-nav>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:grid}'
+		. '.estrato-mega-nav .sub-menu .menu-item{margin:0;padding:0}'
+		. '.estrato-mega-nav .sub-menu a{color:#1e293b;display:block;font-size:.875rem;font-weight:500;line-height:1.35;padding:.35rem 0;text-decoration:none}'
+		. '.estrato-mega-nav .sub-menu a:hover{color:#0f766e}'
+		. '.estrato-mega-nav .estrato-mega-column>a{font-weight:700;color:#0d1b2a;border-left:3px solid #9aff33;padding-left:.5rem}'
+		. '.estrato-mega-headlines{grid-column:1/-1;border-top:1px solid #e2e8f0;margin-top:.75rem;padding-top:.75rem;display:grid;gap:.35rem}'
+		. '.estrato-mega-headline{font-size:.8125rem;font-weight:600;color:#334155;text-decoration:none}'
+		. '.estrato-mega-headline:hover{color:#0b6e4f}'
+		. '@media (max-width:960px){.estrato-mega-nav>li.estrato-mega-parent{position:relative}.estrato-mega-nav>li.estrato-mega-parent>.sub-menu{position:relative;box-shadow:none;border:0;border-top:1px solid #e2e8f0;border-radius:0;grid-template-columns:1fr;padding:.75rem 0 .75rem 1rem}}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-mega-menu-css', $css, 'main' );
+	} else {
+		echo '<style id="estrato-mega-menu-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
-	.estrato-mega-nav>li.estrato-mega-parent:hover>.sub-menu,
-	.estrato-mega-nav>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:grid}
-	.estrato-mega-nav .sub-menu .menu-item{margin:0;padding:0}
-	.estrato-mega-nav .sub-menu a{color:#1e293b;display:block;font-size:.875rem;font-weight:500;line-height:1.35;padding:.35rem 0;text-decoration:none}
-	.estrato-mega-nav .sub-menu a:hover{color:#0f766e}
-	.estrato-mega-nav .estrato-mega-column>a{font-weight:700;color:#0d1b2a;border-left:3px solid #9aff33;padding-left:.5rem}
-	.estrato-mega-headlines{grid-column:1/-1;border-top:1px solid #e2e8f0;margin-top:.75rem;padding-top:.75rem;display:grid;gap:.35rem}
-	.estrato-mega-headline{font-size:.8125rem;font-weight:600;color:#334155;text-decoration:none}
-	.estrato-mega-headline:hover{color:#0b6e4f}
-	@media (max-width:960px){
-		.estrato-mega-nav>li.estrato-mega-parent{position:relative}
-		.estrato-mega-nav>li.estrato-mega-parent>.sub-menu{
-			position:relative;box-shadow:none;border:0;border-top:1px solid #e2e8f0;border-radius:0;
-			grid-template-columns:1fr;padding:.75rem 0 .75rem 1rem
-		}
-	}
-	</style>
-	<?php
 }
-add_action( 'wp_head', 'estrato_nav_mega_menu_styles', 30 );
+add_action( 'wp_head', 'estrato_nav_mega_menu_styles', 20 );
 
 /**
  * Toggle mobile para submenus.

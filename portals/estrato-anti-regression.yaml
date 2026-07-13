@@ -296,6 +296,19 @@ rules:
     command: "estrato_regression_pipeline_without_source"
     expect_max: 5
 
+  - id: AR-CONTENT-006
+    severity: blocker
+    category: content
+    name: Zero posts publicados com fonte RSS fora da matriz do portal
+    check: wp_cli_eval
+    command: "estrato_regression_off_matrix_posts"
+    expect_max: 0
+    notes: |
+      Bug de origem: auditoria visual 2026-07-13 (B2). Um snapshot do RSS pipeline
+      importou preset financeiro em cada satélite, contaminando 66-82% do conteúdo
+      com posts fora da editoria (ex.: "Mercado do boi gordo" em "Narrativas & Som").
+      Este gate impede regressão.
+
   # ═══════════════════════════════════════════════════════════════
   # F. ESTRUTURA & NAVEGAÇÃO
   # Referência: Exame, InfoMoney, Money Times

@@ -129,3 +129,142 @@ function estrato_gate_default_category_slug( $category_slug ) {
 	}
 	return 'economia';
 }
+
+/**
+ * AR-CONTENT-005 — Impede publicação de posts com fonte RSS fora da matriz
+ * de RSS do portal atual (`estrato_rss_import_matrix`).
+ *
+ * Bug de origem: auditoria visual 2026-07-13 (B2). Historicamente, um snapshot
+ * antigo do RSS pipeline importou o preset `brasil-financeiro` em cada
+ * satélite, categorizando forçadamente na editoria root default e contaminando
+ * 66-82% do conteúdo com posts financeiros em portais de nicho (Culture,
+ * Mente, Lifestyle, Science, Sustain). Este gate impede regressão.
+ *
+ * @param int $post_id
+ */
+function estrato_gate_require_source_in_matrix( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	if ( wp_is_post_revision( $post_id ) ) {
+		return;
+	}
+	$post = get_post( $post_id );
+	if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) {
+		return;
+	}
+	if ( get_post_meta( $post_id, '_estrato_editorial_source', true ) ) {
+		return;
+	}
+	if ( 'analysis' === get_post_meta( $post_id, '_estrato_content_mode', true ) ) {
+		return;
+	}
+	$src = get_post_meta( $post_id, '_estrato_rss_source_url', true );
+	if ( ! $src ) {
+		return;
+	}
+	$src_host = strtolower( (string) wp_parse_url( $src, PHP_URL_HOST ) );
+	if ( ! $src_host ) {
+		return;
+	}
+	$allowed_hosts = estrato_gate_rss_matrix_hosts();
+	if ( empty( $allowed_hosts ) ) {
+		return;
+	}
+	if ( isset( $allowed_hosts[ $src_host ] ) ) {
+		return;
+	}
+	remove_action( 'save_post_post', 'estrato_gate_require_source_in_matrix', 105 );
+	wp_update_post(
+		array(
+			'ID'          => $post_id,
+			'post_status' => 'draft',
+		)
+	);
+	add_action( 'save_post_post', 'estrato_gate_require_source_in_matrix', 105 );
+	update_post_meta( $post_id, '_estrato_skip_reason', 'source_off_matrix' );
+	update_post_meta( $post_id, '_estrato_skip_source_host', $src_host );
+}
+add_action( 'save_post_post', 'estrato_gate_require_source_in_matrix', 105 );
+
+/**
+ * @return array<string, bool>
+ */
+function estrato_gate_rss_matrix_hosts() {
+	$cached = wp_cache_get( 'estrato_gate_rss_matrix_hosts', 'estrato' );
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+	$matrix        = get_option( 'estrato_rss_import_matrix' );
+	$allowed_hosts = array();
+	if ( is_array( $matrix ) ) {
+		foreach ( $matrix as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+			$node = $entry['node'] ?? null;
+			if ( is_string( $node ) ) {
+				$decoded = json_decode( $node, true );
+				if ( is_array( $decoded ) ) {
+					$node = $decoded;
+				}
+			}
+			$feeds = ( is_array( $node ) && ! empty( $node['feeds'] ) ) ? $node['feeds'] : ( ! empty( $entry['feeds'] ) && is_array( $entry['feeds'] ) ? $entry['feeds'] : array() );
+			foreach ( (array) $feeds as $feed ) {
+				$url = is_string( $feed ) ? $feed : ( isset( $feed['url'] ) ? (string) $feed['url'] : '' );
+				if ( ! $url ) {
+					continue;
+				}
+				$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+				if ( $host ) {
+					$allowed_hosts[ $host ] = true;
+				}
+			}
+		}
+	}
+	wp_cache_set( 'estrato_gate_rss_matrix_hosts', $allowed_hosts, 'estrato', 300 );
+	return $allowed_hosts;
+}
+
+/**
+ * Métrica para AR-CONTENT-005 — retorna quantos posts publicados têm
+ * `_estrato_rss_source_url` fora da matriz.
+ *
+ * @return int
+ */
+function estrato_regression_off_matrix_posts() {
+	$ids = get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		)
+	);
+	if ( ! is_array( $ids ) ) {
+		return 0;
+	}
+	$allowed = estrato_gate_rss_matrix_hosts();
+	if ( empty( $allowed ) ) {
+		return 0;
+	}
+	$off = 0;
+	foreach ( $ids as $id ) {
+		$src = get_post_meta( $id, '_estrato_rss_source_url', true );
+		if ( ! $src ) {
+			continue;
+		}
+		if ( get_post_meta( $id, '_estrato_editorial_source', true ) ) {
+			continue;
+		}
+		if ( 'analysis' === get_post_meta( $id, '_estrato_content_mode', true ) ) {
+			continue;
+		}
+		$host = strtolower( (string) wp_parse_url( $src, PHP_URL_HOST ) );
+		if ( $host && ! isset( $allowed[ $host ] ) ) {
+			++$off;
+		}
+	}
+	return $off;
+}

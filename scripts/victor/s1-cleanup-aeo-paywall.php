@@ -31,6 +31,13 @@ foreach ( get_posts(
 		++$skipped;
 		continue;
 	}
+	$needs = false !== strpos( $content, ESTRATO_AEO_MARKER )
+		|| preg_match( ESTRATO_PAYWALL_PATTERNS, wp_strip_all_tags( $content ) )
+		|| preg_match( '/glbimg\.com|globo\.com\/multimedia/i', $content );
+	if ( ! $needs ) {
+		++$skipped;
+		continue;
+	}
 	$clean = $content;
 	if ( function_exists( 'estrato_content_strip_generic_aeo' ) ) {
 		$clean = estrato_content_strip_generic_aeo( $clean );

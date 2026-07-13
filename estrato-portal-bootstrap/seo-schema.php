@@ -10,10 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Remove JSON-LD duplicado do PressGrid (mantém Yoast).
+ * Remove JSON-LD e meta social duplicados do PressGrid (mantém Yoast).
  */
 function estrato_seo_disable_pressgrid_schema() {
 	remove_action( 'wp_head', 'pressgrid_schema_output' );
+	remove_action( 'wp_head', 'pressgrid_social_meta' );
 }
 add_action( 'after_setup_theme', 'estrato_seo_disable_pressgrid_schema', 20 );
 

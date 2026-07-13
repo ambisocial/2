@@ -62,14 +62,19 @@ function estrato_home_post_kicker( $post ) {
  * Hero determinístico (hash, nunca random).
  *
  * @param array<int, WP_Post> $candidates
+ * @param array<int, string>  $editorias    Slugs de editoria do portal.
  * @return WP_Post|null
  */
-function estrato_home_pick_hero( $candidates ) {
+function estrato_home_pick_hero( $candidates, $editorias = array() ) {
 	if ( ! $candidates ) {
 		return null;
 	}
+	if ( ! $editorias ) {
+		$editorias = array( 'economia', 'mercados', 'negocios' );
+	}
 	$hour_slot = (int) gmdate( 'G' );
-	$priority  = $hour_slot < 12 ? 'mercados' : ( $hour_slot < 18 ? 'economia' : 'negocios' );
+	$slot_idx  = $hour_slot < 12 ? 0 : ( $hour_slot < 18 ? 1 : 2 );
+	$priority  = $editorias[ min( $slot_idx, count( $editorias ) - 1 ) ] ?? $editorias[0];
 	$scored    = array();
 	foreach ( $candidates as $post ) {
 		$slug   = estrato_ds_post_editoria_slug( $post->ID );
@@ -167,11 +172,13 @@ function estrato_home_render_card( $post, $variant = 'list' ) {
  * @return string
  */
 function estrato_home_render_layout() {
-	$used     = array();
-	$editorias = array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' );
+	$used      = array();
+	$editorias = function_exists( 'estrato_aeo_portal_editorias' )
+		? estrato_aeo_portal_editorias()
+		: array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' );
 
 	$pool = estrato_home_fetch_posts( array( 'posts_per_page' => 40 ) );
-	$hero = estrato_home_pick_hero( $pool );
+	$hero = estrato_home_pick_hero( $pool, $editorias );
 	if ( $hero ) {
 		$used[] = $hero->ID;
 	}
@@ -231,10 +238,17 @@ function estrato_home_render_layout() {
 	}
 
 	$html .= '<section class="estrato-home-guias" aria-label="Guias"><h2 class="estrato-kicker">Guias</h2><ul class="estrato-home-guias__list">';
-	foreach ( array( 'selic', 'ibovespa', 'dolar' ) as $hub ) {
-		$page = get_page_by_path( 'tudo-sobre/' . $hub, OBJECT, 'page' );
-		if ( $page ) {
-			$html .= '<li><a href="' . esc_url( get_permalink( $page ) ) . '">Tudo sobre ' . esc_html( ucfirst( $hub ) ) . '</a></li>';
+	$hubs = function_exists( 'estrato_aeo_portal_hubs' ) ? estrato_aeo_portal_hubs() : array();
+	if ( $hubs ) {
+		foreach ( array_slice( $hubs, 0, 6 ) as $hub ) {
+			$html .= '<li><a href="' . esc_url( $hub['url'] ) . '">' . esc_html( $hub['title'] ) . '</a></li>';
+		}
+	} else {
+		foreach ( array( 'selic', 'ibovespa', 'dolar' ) as $hub ) {
+			$page = get_page_by_path( 'tudo-sobre/' . $hub, OBJECT, 'page' );
+			if ( $page ) {
+				$html .= '<li><a href="' . esc_url( get_permalink( $page ) ) . '">Tudo sobre ' . esc_html( ucfirst( $hub ) ) . '</a></li>';
+			}
 		}
 	}
 	$html .= '</ul></section>';
@@ -249,7 +263,34 @@ function estrato_home_render_layout() {
 add_shortcode( 'estrato_home_v2', 'estrato_home_render_layout' );
 
 /**
- * Injeta home v2 na front page.
+ * PressGrid home não usa the_content — substitui seções pelo layout v2.
+ *
+ * @param mixed $sections
+ * @return mixed
+ */
+function estrato_home_pressgrid_sections( $sections ) {
+	if ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		return $sections;
+	}
+	if ( ! function_exists( 'is_front_page' ) || ! is_front_page() ) {
+		return $sections;
+	}
+	return array(
+		array(
+			'id'          => 'estrato_home_v2',
+			'label'       => 'Home Estrato',
+			'enabled'     => true,
+			'layout'      => 'custom_html',
+			'category'    => 0,
+			'post_count'  => 0,
+			'custom_html' => '[estrato_home_v2]',
+		),
+	);
+}
+add_filter( 'option_pressgrid_layout_sections', 'estrato_home_pressgrid_sections', 4 );
+
+/**
+ * Injeta home v2 na front page (fallback para temas que usam the_content).
  */
 function estrato_home_inject_front_page( $content ) {
 	if ( ! is_front_page() || is_admin() || is_feed() ) {

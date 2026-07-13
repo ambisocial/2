@@ -13,6 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! function_exists( 'estrato_content_enrich_post' ) ) {
+	if ( defined( 'ESTRATO_OPS_EMBED' ) ) {
+		$GLOBALS['estrato_ops_boost_stats'] = array( 'skipped' => true );
+		return;
+	}
 	WP_CLI::error( 'estrato_content_enrich_post ausente' );
 }
 
@@ -65,5 +69,10 @@ foreach (
 
 $ratio = function_exists( 'estrato_regression_word_ratio' ) ? estrato_regression_word_ratio() : -1;
 $stats['ratio_300'] = $ratio;
+
+if ( defined( 'ESTRATO_OPS_EMBED' ) ) {
+	$GLOBALS['estrato_ops_boost_stats'] = $stats;
+	return;
+}
 
 WP_CLI::success( wp_json_encode( $stats, JSON_UNESCAPED_UNICODE ) );

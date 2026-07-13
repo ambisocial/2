@@ -52,4 +52,13 @@ while ( $candidates && function_exists( 'estrato_regression_word_ratio' ) ) {
 }
 
 $final = function_exists( 'estrato_regression_word_ratio' ) ? estrato_regression_word_ratio() : -1;
+
+if ( defined( 'ESTRATO_OPS_EMBED' ) ) {
+	$GLOBALS['estrato_ops_trim_stats'] = array(
+		'drafted'   => $drafted,
+		'ratio_300' => $final,
+	);
+	return;
+}
+
 WP_CLI::success( "drafted=$drafted ratio_300=$final" );

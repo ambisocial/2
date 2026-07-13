@@ -126,13 +126,15 @@ $no_bio = function_exists( 'estrato_regression_authors_without_bio' )
 	? estrato_regression_authors_without_bio()
 	: -1;
 
-WP_CLI::success(
-	wp_json_encode(
-		array(
-			'portal'  => $portal,
-			'fixed'   => $fixed,
-			'no_bio'  => $no_bio,
-		),
-		JSON_UNESCAPED_UNICODE
-	)
+$result = array(
+	'portal' => $portal,
+	'fixed'  => $fixed,
+	'no_bio' => $no_bio,
 );
+
+if ( defined( 'ESTRATO_OPS_EMBED' ) ) {
+	$GLOBALS['estrato_ops_satellite_fix'] = $result;
+	return;
+}
+
+WP_CLI::success( wp_json_encode( $result, JSON_UNESCAPED_UNICODE ) );

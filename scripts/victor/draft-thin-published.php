@@ -40,4 +40,9 @@ foreach ( get_posts(
 	++$drafted;
 }
 
+if ( defined( 'ESTRATO_OPS_EMBED' ) ) {
+	$GLOBALS['estrato_ops_draft_thin'] = $drafted;
+	return;
+}
+
 WP_CLI::success( "Thin posts drafted: $drafted (min=$min words)" );

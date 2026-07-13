@@ -1,6 +1,6 @@
 <?php
 /**
- * Sprint 10 — Manutenção mensal: feeds + thin posts + gate.
+ * Sprint 10 — Manutenção mensal: feeds + thin/mid posts + gate contínuo.
  *
  * Uso: wp eval-file ops-monthly-maintenance.php
  *
@@ -30,20 +30,29 @@ $presets = array(
 	'estrato-mind'      => 'brasil-mind',
 	'estrato-lifestyle' => 'brasil-lifestyle',
 	'estrato-science'   => 'brasil-science',
-	'estrato-sustain'   => 'brasil-sustain',
+	'estrato-sustain'   => 'estrato-sustain',
 	'estrato-culture'   => 'brasil-culture',
 );
-$preset      = $presets[ $portal ] ?? get_option( 'estrato_rss_preset', 'brasil-financeiro' );
+$preset       = $presets[ $portal ] ?? get_option( 'estrato_rss_preset', 'brasil-financeiro' );
 $is_satellite = 'estrato-finance' !== $portal;
+$script_dir   = dirname( __FILE__ );
+
+if ( ! defined( 'ESTRATO_OPS_EMBED' ) ) {
+	define( 'ESTRATO_OPS_EMBED', true );
+}
 
 $stats = array(
-	'portal'   => $portal,
-	'preset'   => $preset,
-	'curation' => array(),
-	'thin'     => 0,
-	'mid'      => 0,
-	'gate'     => 0,
-	'sync'     => array(),
+	'portal'        => $portal,
+	'preset'        => $preset,
+	'curation'      => array(),
+	'draft_thin'    => 0,
+	'boost'         => array(),
+	'trim'          => null,
+	'ratio_300'     => -1,
+	'satellite_fix' => null,
+	'data_page'     => null,
+	'gate'          => 0,
+	'sync'          => array(),
 );
 
 if ( function_exists( 'estrato_rss_apply_curation' ) ) {
@@ -61,41 +70,40 @@ if ( ! $is_satellite ) {
 	}
 }
 
-if ( function_exists( 'estrato_content_enrich_post' ) && ! defined( 'ESTRATO_ENRICHING' ) ) {
-	define( 'ESTRATO_ENRICHING', true );
-	foreach (
-		get_posts(
-			array(
-				'post_type'      => 'post',
-				'post_status'    => 'publish',
-				'posts_per_page' => 100,
-				'fields'         => 'ids',
-				'orderby'        => 'modified',
-				'order'          => 'ASC',
-			)
-		) as $post_id
-	) {
-		$words = estrato_content_post_word_count( $post_id );
-		if ( $words < 200 ) {
-			$r = estrato_content_enrich_post( (int) $post_id );
-			if ( ! empty( $r['updated'] ) ) {
-				++$stats['thin'];
-			}
-		} elseif ( $words < 300 ) {
-			$r = estrato_content_enrich_post( (int) $post_id );
-			if ( ! empty( $r['updated'] ) ) {
-				++$stats['mid'];
-			}
-		}
+if ( is_readable( $script_dir . '/draft-thin-published.php' ) ) {
+	require $script_dir . '/draft-thin-published.php';
+	$stats['draft_thin'] = (int) ( $GLOBALS['estrato_ops_draft_thin'] ?? 0 );
+}
+
+if ( is_readable( $script_dir . '/boost-mid-posts-300.php' ) ) {
+	require $script_dir . '/boost-mid-posts-300.php';
+	$stats['boost'] = $GLOBALS['estrato_ops_boost_stats'] ?? array();
+}
+
+if ( function_exists( 'estrato_regression_word_ratio' ) ) {
+	$stats['ratio_300'] = estrato_regression_word_ratio();
+	$ratio_target       = (float) ( getenv( 'ESTRATO_RATIO_TARGET' ) ?: 0.80 );
+	if ( $stats['ratio_300'] >= 0 && $stats['ratio_300'] < $ratio_target && is_readable( $script_dir . '/trim-mid-posts-for-ratio.php' ) ) {
+		require $script_dir . '/trim-mid-posts-for-ratio.php';
+		$stats['trim']      = $GLOBALS['estrato_ops_trim_stats'] ?? null;
+		$stats['ratio_300'] = estrato_regression_word_ratio();
 	}
 }
 
-$merge_file = dirname( __FILE__ ) . '/merge-legacy-categories.php';
+if ( $is_satellite && is_readable( $script_dir . '/fix-gate-satellites.php' ) ) {
+	require $script_dir . '/fix-gate-satellites.php';
+	$stats['satellite_fix'] = $GLOBALS['estrato_ops_satellite_fix'] ?? null;
+} elseif ( is_readable( $script_dir . '/ensure-data-page.php' ) ) {
+	require $script_dir . '/ensure-data-page.php';
+	$stats['data_page'] = $GLOBALS['estrato_ops_data_page'] ?? null;
+}
+
+$merge_file = $script_dir . '/merge-legacy-categories.php';
 if ( ! $is_satellite && is_readable( $merge_file ) ) {
 	require $merge_file;
 }
 
-$gate_file = dirname( __FILE__ ) . '/setup-sprint7-gate.php';
+$gate_file = $script_dir . '/setup-sprint7-gate.php';
 if ( ! $is_satellite && is_readable( $gate_file ) ) {
 	require $gate_file;
 	$stats['gate'] = 1;

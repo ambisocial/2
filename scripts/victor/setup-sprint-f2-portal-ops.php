@@ -27,7 +27,7 @@ if ( is_readable( $weekly ) ) {
 }
 
 $monthly = dirname( __FILE__ ) . '/ops-monthly-maintenance.php';
-if ( is_readable( $monthly ) && 'estrato-finance' === $portal ) {
+if ( is_readable( $monthly ) ) {
 	require $monthly;
 }
 

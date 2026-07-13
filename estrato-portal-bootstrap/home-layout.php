@@ -250,7 +250,7 @@ function estrato_home_render_layout() {
 		$html .= '<div class="estrato-home-block__grid">';
 		$first = true;
 		foreach ( $block['items'] as $post ) {
-			$html .= estrato_home_render_card( $post, $first ? 'hero' : 'list' );
+			$html .= estrato_home_render_card( $post, $first ? 'secondary' : 'list' );
 			$first = false;
 		}
 		$html .= '</div></section>';

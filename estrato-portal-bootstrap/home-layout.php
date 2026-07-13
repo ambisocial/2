@@ -287,13 +287,14 @@ function estrato_home_is_active() {
  * @return string
  */
 function estrato_home_pressgrid_template( $template ) {
-	if ( ! estrato_home_is_active() || 'posts' !== get_option( 'show_on_front' ) ) {
+	if ( is_paged() ) {
 		return $template;
 	}
 	$front = locate_template( 'front-page.php' );
 	return $front ? $front : $template;
 }
-add_filter( 'template_include', 'estrato_home_pressgrid_template', 99 );
+add_filter( 'home_template', 'estrato_home_pressgrid_template', 99 );
+add_filter( 'frontpage_template', 'estrato_home_pressgrid_template', 99 );
 
 /**
  * PressGrid home não usa the_content — substitui seções pelo layout v2.

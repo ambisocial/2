@@ -281,20 +281,19 @@ function estrato_home_is_active() {
 }
 
 /**
- * PressGrid Layout Builder — template plugin na home (blog index ou estática).
+ * Template plugin na home — template_include aceita path absoluto fora do tema.
  *
  * @param string $template
  * @return string
  */
-function estrato_home_pressgrid_template( $template ) {
+function estrato_home_template_include( $template ) {
 	if ( ! estrato_home_is_active() ) {
 		return $template;
 	}
 	$plugin_tpl = plugin_dir_path( __DIR__ ) . 'templates/home-v2.php';
 	return is_readable( $plugin_tpl ) ? $plugin_tpl : $template;
 }
-add_filter( 'home_template', 'estrato_home_pressgrid_template', 99 );
-add_filter( 'frontpage_template', 'estrato_home_pressgrid_template', 99 );
+add_filter( 'template_include', 'estrato_home_template_include', 99 );
 
 /**
  * PressGrid home não usa the_content — substitui seções pelo layout v2 (fallback).

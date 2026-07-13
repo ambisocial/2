@@ -263,16 +263,46 @@ function estrato_home_render_layout() {
 add_shortcode( 'estrato_home_v2', 'estrato_home_render_layout' );
 
 /**
+ * Home editorial ativa (blog index ou página estática).
+ *
+ * @return bool
+ */
+function estrato_home_is_active() {
+	if ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		return false;
+	}
+	if ( is_paged() ) {
+		return false;
+	}
+	if ( function_exists( 'is_front_page' ) && is_front_page() ) {
+		return true;
+	}
+	return function_exists( 'is_home' ) && is_home() && 'posts' === get_option( 'show_on_front' );
+}
+
+/**
+ * PressGrid Layout Builder só roda em front-page.php — força template no blog index.
+ *
+ * @param string $template
+ * @return string
+ */
+function estrato_home_pressgrid_template( $template ) {
+	if ( ! estrato_home_is_active() || 'posts' !== get_option( 'show_on_front' ) ) {
+		return $template;
+	}
+	$front = locate_template( 'front-page.php' );
+	return $front ? $front : $template;
+}
+add_filter( 'template_include', 'estrato_home_pressgrid_template', 99 );
+
+/**
  * PressGrid home não usa the_content — substitui seções pelo layout v2.
  *
  * @param mixed $sections
  * @return mixed
  */
 function estrato_home_pressgrid_sections( $sections ) {
-	if ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
-		return $sections;
-	}
-	if ( ! function_exists( 'is_front_page' ) || ! is_front_page() ) {
+	if ( ! estrato_home_is_active() ) {
 		return $sections;
 	}
 	return array(
@@ -293,7 +323,7 @@ add_filter( 'option_pressgrid_layout_sections', 'estrato_home_pressgrid_sections
  * Injeta home v2 na front page (fallback para temas que usam the_content).
  */
 function estrato_home_inject_front_page( $content ) {
-	if ( ! is_front_page() || is_admin() || is_feed() ) {
+	if ( ! estrato_home_is_active() ) {
 		return $content;
 	}
 	return estrato_home_render_layout() . $content;
@@ -304,7 +334,7 @@ add_filter( 'the_content', 'estrato_home_inject_front_page', 8 );
  * CSS da home v2.
  */
 function estrato_home_styles() {
-	if ( ! is_front_page() || is_admin() || is_feed() ) {
+	if ( ! estrato_home_is_active() ) {
 		return;
 	}
 	?>

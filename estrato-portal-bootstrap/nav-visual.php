@@ -135,23 +135,9 @@ add_shortcode( 'estrato_home_editorias', 'estrato_shortcode_home_editorias' );
 function estrato_shortcode_mais_lidas( $atts ) {
 	$atts = shortcode_atts( array( 'count' => 7 ), $atts, 'estrato_mais_lidas' );
 
-	$posts = get_posts(
-		array(
-			'post_type'      => 'post',
-			'post_status'    => 'publish',
-			'posts_per_page' => (int) $atts['count'],
-			'orderby'        => 'comment_count',
-			'order'          => 'DESC',
-			'date_query'     => array(
-				array(
-					'after' => '7 days ago',
-				),
-			),
-		)
-	);
-
-	if ( ! $posts ) {
-		$posts = get_posts(
+	$posts = function_exists( 'estrato_retention_get_trending_posts' )
+		? estrato_retention_get_trending_posts( (int) $atts['count'], 7 )
+		: get_posts(
 			array(
 				'post_type'      => 'post',
 				'post_status'    => 'publish',
@@ -160,11 +146,24 @@ function estrato_shortcode_mais_lidas( $atts ) {
 				'order'          => 'DESC',
 			)
 		);
+
+	if ( ! $posts ) {
+		return '';
 	}
 
 	$html = '<div class="estrato-mais-lidas"><h2>Mais lidas</h2><ol>';
+	$n    = 1;
 	foreach ( $posts as $post ) {
-		$html .= '<li><a href="' . esc_url( get_permalink( $post ) ) . '">' . esc_html( get_the_title( $post ) ) . '</a></li>';
+		$views = function_exists( 'estrato_retention_get_trending_posts' )
+			? (int) get_post_meta( $post->ID, 'estrato_views', true )
+			: 0;
+		$html .= '<li><span class="estrato-mais-lidas__n">' . (int) $n . '</span> ';
+		$html .= '<a href="' . esc_url( get_permalink( $post ) ) . '">' . esc_html( get_the_title( $post ) ) . '</a>';
+		if ( $views > 0 ) {
+			$html .= ' <span class="estrato-caption">(' . (int) $views . ')</span>';
+		}
+		$html .= '</li>';
+		++$n;
 	}
 	$html .= '</ol></div>';
 	return $html;

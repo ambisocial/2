@@ -60,6 +60,14 @@ function estrato_retention_newsletter_handle_confirm() {
 	unset( $row );
 	if ( $changed ) {
 		update_option( ESTRATO_NEWSLETTER_OPTION, $list, false );
+		foreach ( $list as $row ) {
+			if ( is_array( $row ) && hash_equals( (string) $row['token'], $token ) && 'confirmed' === ( $row['status'] ?? '' ) ) {
+				if ( function_exists( 'estrato_newsletter_esp_subscribe' ) && ! empty( $row['email'] ) ) {
+					estrato_newsletter_esp_subscribe( $row['email'] );
+				}
+				break;
+			}
+		}
 		set_transient( 'estrato_nl_confirmed_' . get_current_user_id(), 1, MINUTE_IN_SECONDS );
 		wp_safe_redirect( add_query_arg( 'estrato_nl', 'confirmed', home_url( '/' ) ) );
 		exit;

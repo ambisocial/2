@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'ESTRATO_MIN_PUBLISH_WORDS', 200 );
 define( 'ESTRATO_TARGET_WORDS', 300 );
+define( 'ESTRATO_MIN_IMPORT_WORDS', 300 );
 define( 'ESTRATO_AEO_MARKER', '<!-- estrato-aeo -->' );
 define( 'ESTRATO_KEYPOINTS_MARKER', '<!-- estrato-keypoints -->' );
 define( 'ESTRATO_DISABLE_GENERIC_AEO', true );
@@ -499,6 +500,46 @@ function estrato_content_on_publish( $post_id ) {
 	}
 }
 add_action( 'save_post_post', 'estrato_content_on_publish', 99 );
+
+/**
+ * Gate RSS/pipeline na origem: enriquece e rejeita &lt;300 palavras.
+ *
+ * @param int $post_id
+ * @return bool True se permanece publicado.
+ */
+function estrato_content_gate_rss_import( $post_id ) {
+	if ( ! defined( 'ESTRATO_ENRICHING' ) ) {
+		define( 'ESTRATO_ENRICHING', true );
+	}
+	if ( function_exists( 'estrato_content_enrich_post' ) ) {
+		estrato_content_enrich_post( (int) $post_id );
+	}
+
+	$words = estrato_content_post_word_count( $post_id );
+	estrato_content_sync_yoast_index( $post_id, $words );
+
+	if ( $words < ESTRATO_MIN_IMPORT_WORDS ) {
+		wp_update_post(
+			array(
+				'ID'          => (int) $post_id,
+				'post_status' => 'draft',
+			)
+		);
+		return false;
+	}
+
+	if ( $words < ESTRATO_MIN_PUBLISH_WORDS ) {
+		wp_update_post(
+			array(
+				'ID'          => (int) $post_id,
+				'post_status' => 'draft',
+			)
+		);
+		return false;
+	}
+
+	return true;
+}
 
 /**
  * @return int

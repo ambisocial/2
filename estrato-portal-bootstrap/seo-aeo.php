@@ -112,43 +112,96 @@ add_action( 'wp_head', 'estrato_aeo_output_hub_faq_schema', 8 );
  * @return array<int, array{q:string,a:string}>
  */
 function estrato_aeo_get_hub_faqs( $slug, $title ) {
-	$title    = $title ? $title : ucfirst( $slug );
-	$blog     = get_bloginfo( 'name' );
+	$title      = $title ? $title : ucfirst( $slug );
+	$blog       = get_bloginfo( 'name' );
 	$is_finance = ! function_exists( 'estrato_nav_current_portal_id' )
 		|| 'estrato-finance' === estrato_nav_current_portal_id();
+
+	$thematic = estrato_aeo_hub_faq_themes();
+	if ( isset( $thematic[ $slug ] ) ) {
+		return $thematic[ $slug ];
+	}
+
+	$term   = null;
+	$parent = get_page_by_path( 'tudo-sobre/' . $slug, OBJECT, 'page' );
+	if ( $parent && preg_match( '/category="([^"]+)"/', $parent->post_content, $m ) ) {
+		$term = get_term_by( 'slug', $m[1], 'category' );
+	}
 
 	$faqs = array(
 		array(
 			'q' => sprintf( 'O que é %s e por que importa?', wp_trim_words( $title, 6, '' ) ),
-			'a' => $is_finance
-				? 'É um tema central da economia brasileira monitorado pela redação do Estrato, com impacto em juros, preços, empresas e investimentos.'
-				: sprintf(
-					'É um tema central de %s no %s, com cobertura editorial contínua e fontes verificáveis.',
-					wp_trim_words( $title, 6, '' ),
-					$blog
-				),
+			'a' => $term && ! is_wp_error( $term ) && $term->description
+				? wp_strip_all_tags( $term->description )
+				: ( $is_finance
+					? 'É um tema central da economia brasileira monitorado pela redação do Estrato, com impacto em juros, preços, empresas e investimentos.'
+					: sprintf( 'É um tema central de %s no %s, com cobertura editorial contínua e fontes verificáveis.', wp_trim_words( $title, 6, '' ), $blog ) ),
 		),
 		array(
 			'q' => sprintf( 'Com que frequência o %s atualiza esta hub?', $blog ),
-			'a' => $is_finance
-				? 'Publicamos novas matérias diariamente e revisamos o contexto quando há dados oficiais do Banco Central, IBGE, B3 ou mudanças regulatórias.'
-				: 'Publicamos novas matérias diariamente e revisamos o contexto quando surgem dados, fontes primárias ou mudanças relevantes no debate.',
+			'a' => 'Publicamos novas matérias diariamente e revisamos o contexto quando há dados oficiais ou mudanças relevantes.',
+		),
+		array(
+			'q' => sprintf( 'Como acompanhar %s no dia a dia?', wp_trim_words( $title, 5, '' ) ),
+			'a' => $term && ! is_wp_error( $term )
+				? 'Acompanhe a editoria ' . $term->name . ' em ' . get_category_link( $term ) . ' e assine a newsletter.'
+				: 'Explore as editorias relacionadas no ' . $blog . ' e os guias em /tudo-sobre/.',
 		),
 	);
 
 	if ( $is_finance ) {
 		$faqs[] = array(
 			'q' => 'Onde encontrar cotações e dados de mercado?',
-			'a' => 'Consulte a página de Cotações em ' . home_url( '/cotacoes/' ) . ' e a editoria Mercados para análises do Ibovespa, dólar e juros.',
-		);
-	} else {
-		$faqs[] = array(
-			'q' => 'Onde ver mais conteúdo sobre este tema?',
-			'a' => 'Explore as editorias relacionadas no ' . $blog . ' e os guias em /tudo-sobre/ para contexto ampliado.',
+			'a' => 'Consulte ' . home_url( '/cotacoes/' ) . ' e a editoria Mercados para Ibovespa, dólar e juros.',
 		);
 	}
 
-	return $faqs;
+	return array_slice( $faqs, 0, 5 );
+}
+
+/**
+ * FAQs temáticas por slug de hub.
+ *
+ * @return array<string, array<int, array{q:string,a:string}>>
+ */
+function estrato_aeo_hub_faq_themes() {
+	return array(
+		'selic'       => array(
+			array( 'q' => 'O que é a taxa Selic?', 'a' => 'A Selic é a taxa básica de juros da economia brasileira, definida pelo Copom do Banco Central.' ),
+			array( 'q' => 'Com que frequência o Copom reúne?', 'a' => 'O Copom se reúne a cada 45 dias em calendário publicado pelo BC.' ),
+			array( 'q' => 'Como a Selic afeta o investidor?', 'a' => 'Selic alta eleva renda fixa; Selic em queda favorece ações e crédito, com impacto na inflação.' ),
+		),
+		'ibovespa'    => array(
+			array( 'q' => 'O que é o Ibovespa?', 'a' => 'O Ibovespa é o principal índice da B3, formado pelas ações mais negociadas da bolsa brasileira.' ),
+			array( 'q' => 'Quais fatores movem o Ibovespa?', 'a' => 'Juros, câmbio, commodities, fluxo estrangeiro e resultados corporativos explicam as variações.' ),
+			array( 'q' => 'Como investir no Ibovespa?', 'a' => 'Via ETFs como BOVA11, fundos de índice ou carteiras que replicam o índice.' ),
+		),
+		'dolar'       => array(
+			array( 'q' => 'Por que o dólar importa para o Brasil?', 'a' => 'O USD/BRL afeta inflação, exportadores, turismo e política monetária.' ),
+			array( 'q' => 'O que faz o dólar subir ou cair?', 'a' => 'Fluxo de capital, juros nos EUA, commodities e risco fiscal local são drivers principais.' ),
+			array( 'q' => 'Onde acompanhar cotações?', 'a' => 'Na página de Cotações em ' . home_url( '/cotacoes/' ) . '.' ),
+		),
+		'aprendizado' => array(
+			array( 'q' => 'O que é aprendizado e cognição?', 'a' => 'Técnicas de estudo, memória e neurociência aplicada para aprender com método.' ),
+			array( 'q' => 'Quais temas são recorrentes?', 'a' => 'Hábitos de leitura, foco profundo e evidências sobre retenção de informação.' ),
+			array( 'q' => 'Para quem é esta hub?', 'a' => 'Estudantes e profissionais que buscam produtividade intelectual.' ),
+		),
+		'neuro'       => array(
+			array( 'q' => 'O que a hub Neuro cobre?', 'a' => 'Neurociência, sono e performance cerebral com rigor e clareza.' ),
+			array( 'q' => 'As matérias são baseadas em estudos?', 'a' => 'Priorizamos papers revisados por pares e instituições de pesquisa.' ),
+			array( 'q' => 'Como isso se conecta ao dia a dia?', 'a' => 'Traduzimos achados científicos em implicações práticas para saúde e trabalho.' ),
+		),
+		'ia'          => array(
+			array( 'q' => 'O que acompanhamos em IA?', 'a' => 'Modelos de linguagem, segurança, regulação e impacto no trabalho.' ),
+			array( 'q' => 'Há foco em riscos?', 'a' => 'Sim — viés, privacidade e governança de modelos são temas recorrentes.' ),
+			array( 'q' => 'Para quem é o conteúdo?', 'a' => 'Leitores que querem entender IA além do hype, com contexto brasileiro.' ),
+		),
+		'jogos'       => array(
+			array( 'q' => 'Que tipo de jogos cobrimos?', 'a' => 'Videogames, RPG de mesa, indie e lançamentos AAA.' ),
+			array( 'q' => 'Há reviews?', 'a' => 'Análises editoriais e curadoria de lançamentos relevantes.' ),
+			array( 'q' => 'Como sugerir pauta?', 'a' => 'Envie sugestões pela página de Contato.' ),
+		),
+	);
 }
 
 /**

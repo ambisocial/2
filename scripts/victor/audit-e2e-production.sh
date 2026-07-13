@@ -82,8 +82,13 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   if [[ "$w" -ge 0 && "$w" -le 8 ]]; then ok "$PORTAL_ID relatório semanal ${w}d"; else warn "$PORTAL_ID relatório semanal age=$w"; fi
   [[ "$c" == "1" ]] && ok "$PORTAL_ID crons ops" || warn "$PORTAL_ID crons ops ausentes"
 done
-if [[ -f /root/.secrets/gsc-service-account.env || -f /root/.secrets/gsc-service-account ]]; then
-  ok "Secret GSC service account presente"
+if [[ -f /root/estrato-gsc-service-account.json \
+  || -f "${GSC_SERVICE_ACCOUNT_FILE:-}" \
+  || -f /root/.secrets/gsc-service-account.env \
+  || -f /root/.secrets/gsc-service-account ]]; then
+  ok "GSC service account presente"
+elif python3 "$REPO/scripts/victor/index-bot/gsc_api.py" sites >/dev/null 2>&1; then
+  ok "GSC API acessível (SA configurada)"
 else
   warn "GSC SA ausente — métricas GSC manuais/slot vazio no relatório"
 fi

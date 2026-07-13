@@ -44,9 +44,17 @@ if ( ! is_array( $social ) ) {
 	$social = array();
 }
 $social['og_default_image_id'] = $attach_id ? (string) $attach_id : ( $social['og_default_image_id'] ?? '' );
-$social['linkedin_url']        = $social['linkedin_url'] ?? 'https://www.linkedin.com/company/estrato-media/';
-$social['twitter_site']        = $social['twitter_site'] ?? '@estrato_cc';
-$social['instagram_url']       = $social['instagram_url'] ?? 'https://www.instagram.com/estrato.cc/';
+
+$defaults = array(
+	'linkedin_url'  => 'https://www.linkedin.com/company/estrato-media/',
+	'twitter_site'  => '@estrato_cc',
+	'instagram_url' => 'https://www.instagram.com/estrato.cc/',
+);
+foreach ( $defaults as $key => $default ) {
+	if ( '' === trim( (string) ( $social[ $key ] ?? '' ) ) ) {
+		$social[ $key ] = $default;
+	}
+}
 update_option( 'wpseo_social', $social, false );
 
 WP_CLI::success(

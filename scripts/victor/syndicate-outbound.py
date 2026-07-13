@@ -34,6 +34,29 @@ SITEMAPS = [
 ]
 
 
+def apply_portal_env(wp_path: str = '', domain: str = '') -> None:
+    """Atualiza paths do portal (env ou CLI) antes de cada execução."""
+    global WP, DOMAIN, INDEXNOW_KEY, MSN_FEED_PATH, SITEMAPS
+    wp_env = (wp_path or os.getenv('ESTRATO_WP_PATH', '')).strip()
+    if wp_env:
+        WP = Path(wp_env).resolve()
+        INDEXNOW_KEY = WP / 'estrato-indexnow-key.txt'
+        MSN_FEED_PATH = WP / 'msn-feed.xml'
+    dom_env = (domain or os.getenv('ESTRATO_DOMAIN', '')).strip()
+    if dom_env:
+        DOMAIN = dom_env.rstrip('/')
+    SITEMAPS = [
+        f'{DOMAIN}/sitemap_index.xml',
+        f'{DOMAIN}/news-sitemap.xml',
+        f'{DOMAIN}/msn-feed.xml',
+    ]
+
+
+def wp_run(args: list[str]) -> subprocess.CompletedProcess[str]:
+    cmd = ['sudo', '-u', 'www-data', 'wp', f'--path={WP}', *args]
+    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+
 def load_secret(name: str) -> str:
     env_key = name.upper().replace('-', '_')
     if os.getenv(env_key):
@@ -98,8 +121,9 @@ def ping_indexnow(url: str) -> dict:
     if not INDEXNOW_KEY.is_file():
         return {'ok': False, 'skipped': True, 'error': 'indexnow_key_missing'}
     key = INDEXNOW_KEY.read_text(encoding='utf-8').strip()
+    host = urllib.parse.urlparse(DOMAIN).hostname or 'estrato.cc'
     payload = {
-        'host': 'estrato.cc',
+        'host': host,
         'key': key,
         'keyLocation': f'{DOMAIN}/estrato-indexnow-key.txt',
         'urlList': [url],
@@ -227,15 +251,33 @@ def google_news_note() -> dict:
 
 
 def wp_recent_articles(limit: int = 10) -> list[dict]:
-    cmd = [
-        'sudo', '-u', 'www-data', 'wp', f'--path={WP}',
-        'post', 'list', '--post_status=publish', '--post_type=post',
-        f'--posts_per_page={limit}', '--orderby=date', '--order=desc',
-        '--fields=ID,url,post_title,post_excerpt,post_date,post_content',
-        '--format=json',
-    ]
-    out = subprocess.check_output(cmd, text=True)
-    rows = json.loads(out)
+    proc = wp_run(
+        [
+            'post',
+            'list',
+            '--post_status=publish',
+            '--post_type=post',
+            f'--posts_per_page={limit}',
+            '--orderby=date',
+            '--order=desc',
+            '--fields=ID,url,post_title,post_excerpt,post_date',
+            '--format=json',
+        ]
+    )
+    if proc.returncode != 0:
+        log_entry(
+            {
+                'error': 'wp_post_list',
+                'path': str(WP),
+                'stderr': (proc.stderr or proc.stdout or '')[:500],
+            }
+        )
+        return []
+    try:
+        rows = json.loads(proc.stdout or '[]')
+    except json.JSONDecodeError:
+        log_entry({'error': 'wp_post_list_json', 'path': str(WP)})
+        return []
     if not isinstance(rows, list):
         return []
 
@@ -245,13 +287,21 @@ def wp_recent_articles(limit: int = 10) -> list[dict]:
         url = (row.get('url') or '').strip()
         if not url:
             continue
+        content_text = ''
+        content_html = ''
+        if post_id:
+            content_proc = wp_run(['post', 'get', str(post_id), '--field=post_content'])
+            if content_proc.returncode == 0:
+                raw = content_proc.stdout or ''
+                content_html = raw[:12000]
+                content_text = re.sub(r'\s+', ' ', re.sub('<[^>]+>', ' ', raw)).strip()
         article = {
             'id': post_id,
             'url': url,
             'title': row.get('post_title') or '',
             'excerpt': row.get('post_excerpt') or '',
-            'content_text': re.sub(r'\s+', ' ', re.sub('<[^>]+>', ' ', row.get('post_content') or '')).strip(),
-            'content_html': (row.get('post_content') or '')[:12000],
+            'content_text': content_text,
+            'content_html': content_html,
             'author': 'Estrato',
             'category': 'economia',
             'keywords': ['finance', 'economia', 'brasil'],
@@ -272,57 +322,32 @@ def wp_recent_articles(limit: int = 10) -> list[dict]:
 def _wp_post_meta(post_id: int) -> dict:
     meta: dict = {}
     try:
-        author_cmd = [
-            'sudo', '-u', 'www-data', 'wp', f'--path={WP}',
-            'post', 'meta', 'list', str(post_id), '--format=json',
-        ]
-        rows = json.loads(subprocess.check_output(author_cmd, text=True))
+        author_cmd = wp_run(['post', 'meta', 'list', str(post_id), '--format=json'])
+        if author_cmd.returncode != 0:
+            return meta
+        rows = json.loads(author_cmd.stdout or '[]')
         thumb_id = None
         for row in rows if isinstance(rows, list) else []:
             key = row.get('meta_key')
             val = row.get('meta_value')
             if key == '_thumbnail_id' and val:
                 thumb_id = val
-        author_out = subprocess.check_output(
-            [
-                'sudo', '-u', 'www-data', 'wp', f'--path={WP}',
-                'post', 'get', str(post_id), '--field=post_author',
-            ],
-            text=True,
-        ).strip()
-        if author_out:
-            name = subprocess.check_output(
-                [
-                    'sudo', '-u', 'www-data', 'wp', f'--path={WP}',
-                    'user', 'get', author_out, '--field=display_name',
-                ],
-                text=True,
-            ).strip()
-            if name:
-                meta['author'] = name
-        terms = json.loads(
-            subprocess.check_output(
-                [
-                    'sudo', '-u', 'www-data', 'wp', f'--path={WP}',
-                    'post', 'term', 'list', str(post_id), 'category', '--format=json',
-                ],
-                text=True,
-            )
-        )
-        if isinstance(terms, list) and terms:
-            meta['category'] = terms[0].get('slug') or 'economia'
-            meta['keywords'] = [terms[0].get('name', 'economia'), 'brasil', 'finance']
+        author_out = wp_run(['post', 'get', str(post_id), '--field=post_author'])
+        if author_out.returncode == 0 and author_out.stdout.strip():
+            name_proc = wp_run(['user', 'get', author_out.stdout.strip(), '--field=display_name'])
+            if name_proc.returncode == 0 and name_proc.stdout.strip():
+                meta['author'] = name_proc.stdout.strip()
+        terms_proc = wp_run(['post', 'term', 'list', str(post_id), 'category', '--format=json'])
+        if terms_proc.returncode == 0:
+            terms = json.loads(terms_proc.stdout or '[]')
+            if isinstance(terms, list) and terms:
+                meta['category'] = terms[0].get('slug') or 'economia'
+                meta['keywords'] = [terms[0].get('name', 'economia'), 'brasil', 'finance']
         if thumb_id:
-            img = subprocess.check_output(
-                [
-                    'sudo', '-u', 'www-data', 'wp', f'--path={WP}',
-                    'post', 'get', thumb_id, '--field=guid',
-                ],
-                text=True,
-            ).strip()
-            if img:
-                meta['image_url'] = img
-    except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError):
+            img_proc = wp_run(['post', 'get', thumb_id, '--field=guid'])
+            if img_proc.returncode == 0 and img_proc.stdout.strip():
+                meta['image_url'] = img_proc.stdout.strip()
+    except (json.JSONDecodeError, ValueError):
         pass
     return meta
 
@@ -422,18 +447,13 @@ def main() -> int:
     parser.add_argument('--domain', default='', help='Portal base URL')
     args = parser.parse_args()
 
-    global WP, DOMAIN, INDEXNOW_KEY, MSN_FEED_PATH, SITEMAPS
+    apply_portal_env(args.wp_path, args.domain)
     if args.wp_path:
-        WP = Path(args.wp_path).resolve()
-        INDEXNOW_KEY = WP / 'estrato-indexnow-key.txt'
-        MSN_FEED_PATH = WP / 'msn-feed.xml'
+        apply_portal_env(args.wp_path, '')
     if args.domain:
-        DOMAIN = args.domain.rstrip('/')
-    SITEMAPS = [
-        f'{DOMAIN}/sitemap_index.xml',
-        f'{DOMAIN}/news-sitemap.xml',
-        f'{DOMAIN}/msn-feed.xml',
-    ]
+        apply_portal_env('', args.domain)
+
+    global WP, DOMAIN, INDEXNOW_KEY, MSN_FEED_PATH, SITEMAPS
 
     if args.generate_msn_feed:
         print(json.dumps(generate_msn_feed(args.msn_limit), indent=2, ensure_ascii=False))

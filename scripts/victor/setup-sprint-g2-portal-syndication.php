@@ -38,11 +38,11 @@ $wp_path = ABSPATH;
 $recent  = 'estrato-finance' === $portal ? 5 : 3;
 
 $cmd = sprintf(
-	'ESTRATO_DOMAIN=%s ESTRATO_WP_PATH=%s python3 %s --recent %d >> %s 2>&1',
-	escapeshellarg( $domain ),
-	escapeshellarg( trailingslashit( $wp_path ) ),
+	'python3 %s --recent %d --wp-path %s --domain %s >> %s 2>&1',
 	escapeshellarg( $script ),
 	$recent,
+	escapeshellarg( untrailingslashit( $wp_path ) ),
+	escapeshellarg( $domain ),
 	escapeshellarg( $log_file )
 );
 

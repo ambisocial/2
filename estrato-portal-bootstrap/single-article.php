@@ -164,10 +164,11 @@ function estrato_single_render_header_fallback( $content ) {
 	//   (Antes: filter global em `nav-visual.php` já concatenava, e o template
 	//   somava de novo.)
 	// - Persona placeholder marcada com badge para não passar como jornalista.
-	$author_id  = (int) get_the_author_meta( 'ID' );
+	$author_id   = (int) get_the_author_meta( 'ID' );
 	$author_data = $author_id ? get_userdata( $author_id ) : null;
-	$author_name = $author_data ? $author_data->display_name : get_the_author();
+	$author_name = $author_data ? html_entity_decode( (string) $author_data->display_name, ENT_QUOTES, 'UTF-8' ) : get_the_author();
 	$job         = $author_id ? (string) get_user_meta( $author_id, 'estrato_job_title', true ) : '';
+	$job         = html_entity_decode( $job, ENT_QUOTES, 'UTF-8' );
 	$is_persona  = $author_data && preg_match( '/-editoria$|-coluna$/', $author_data->user_login );
 	$read        = estrato_single_reading_time( $post_id );
 	$crumb       = function_exists( 'estrato_archive_render_breadcrumb' )

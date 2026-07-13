@@ -43,7 +43,7 @@ require_once __DIR__ . '/retention.php';
 require_once __DIR__ . '/ops.php';
 require_once __DIR__ . '/category-redirects.php';
 
-define( 'ESTRATO_PORTAL_VERSION', '1.27.0' );
+define( 'ESTRATO_PORTAL_VERSION', '1.27.1' );
 define( 'ESTRATO_PORTAL_CONFIG_OPTION', 'estrato_portal_config' );
 
 register_activation_hook( __FILE__, 'estrato_portal_activate' );

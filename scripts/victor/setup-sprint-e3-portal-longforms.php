@@ -253,7 +253,9 @@ foreach ( $items as $item ) {
 		estrato_content_enrich_post( (int) $post_id );
 	}
 
-	if ( function_exists( 'estrato_bridge_set_fallback_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
+	if ( function_exists( 'estrato_bridge_set_editorial_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
+		estrato_bridge_set_editorial_thumbnail( (int) $post_id );
+	} elseif ( function_exists( 'estrato_bridge_set_fallback_thumbnail' ) && ! has_post_thumbnail( $post_id ) ) {
 		estrato_bridge_set_fallback_thumbnail( (int) $post_id );
 	}
 

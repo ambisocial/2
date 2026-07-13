@@ -72,7 +72,7 @@ function estrato_perf_critical_single_css() {
 	?>
 	<style id="estrato-critical-single">
 	.pg-single-header,.pg-single-meta{display:none!important}
-	.pg-featured-image img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px}
+	.pg-featured-image img{width:100%;height:auto;border-radius:4px}
 	.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4,24px);padding:0 1rem}
 	.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted,#5E5E5E);margin:.75rem 0 1rem}
 	.estrato-display.estrato-h1{font-size:clamp(26px,4vw,48px);line-height:1.1}

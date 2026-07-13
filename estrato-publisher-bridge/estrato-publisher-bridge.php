@@ -749,13 +749,32 @@ function estrato_bridge_unpublish_without_original_image( $limit = 50 ) {
 }
 
 /**
- * Thumbnail padrão (Yoast OG) — desativado: só publicamos com imagem original.
+ * Thumbnail padrão (Yoast OG) — desativado para pipeline RSS.
  *
  * @param int $post_id
  * @return bool
  */
 function estrato_bridge_set_fallback_thumbnail( $post_id ) {
-	return false;
+	return estrato_bridge_set_editorial_thumbnail( $post_id );
+}
+
+/**
+ * Thumbnail para conteúdo editorial (longforms, hubs) via imagem OG padrão do Yoast.
+ *
+ * @param int $post_id
+ * @return bool
+ */
+function estrato_bridge_set_editorial_thumbnail( $post_id ) {
+	$post_id = (int) $post_id;
+	if ( $post_id <= 0 || has_post_thumbnail( $post_id ) ) {
+		return (bool) has_post_thumbnail( $post_id );
+	}
+	$og_id = estrato_bridge_get_og_default_attachment_id();
+	if ( ! $og_id ) {
+		return false;
+	}
+	set_post_thumbnail( $post_id, $og_id );
+	return true;
 }
 
 /**

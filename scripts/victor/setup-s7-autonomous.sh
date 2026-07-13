@@ -23,7 +23,14 @@ echo "2. E3 longforms (analysis ≥1500 pal)"
 bash "$SCRIPT_DIR/setup-sprint-e3-all-portals.sh" 2>&1 | tail -30
 
 echo ""
-echo "3. Backfill thumbnails"
+echo "3b. Editorial thumbnails"
+for PORTAL_ID in "${PORTALS[@]}"; do
+  portal_resolve "$PORTAL_ID"
+  portal_wp eval-file "$REPO/scripts/victor/backfill-editorial-thumbnails.php" 2>&1 | tail -1 || true
+done
+
+echo ""
+echo "3. Backfill purge (RSS sem imagem original)"
 for PORTAL_ID in "${PORTALS[@]}"; do
   portal_resolve "$PORTAL_ID"
   portal_wp eval-file "$REPO/scripts/victor/backfill-fallback-thumbnails.php" 2>&1 | tail -2 || true

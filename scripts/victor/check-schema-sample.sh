@@ -19,19 +19,19 @@ check_html() {
   local path="$3"
   local body
   body=$(curl -sk --max-time 20 -H "Host: ${host}" "https://${IP}${path}" 2>/dev/null || true)
-  if echo "$body" | grep -q 'application/ld+json'; then
+  if echo "$body" | grep -qi 'application/ld+json'; then
     ok "$label JSON-LD"
   else
     fail "$label sem JSON-LD"
   fi
   if [[ "$path" != "/" ]]; then
-    if echo "$body" | grep -qE 'NewsArticle|"@type":"Article"'; then
+    if echo "$body" | grep -qiE 'NewsArticle|"@type"[[:space:]]*:[[:space:]]*"Article"'; then
       ok "$label NewsArticle"
     else
       fail "$label sem NewsArticle"
     fi
   else
-    if echo "$body" | grep -qE 'WebSite|Organization|NewsMediaOrganization'; then
+    if echo "$body" | grep -qiE 'WebSite|Organization|NewsMediaOrganization'; then
       ok "$label Organization/WebSite"
     else
       fail "$label home schema"

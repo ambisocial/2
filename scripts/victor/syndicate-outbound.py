@@ -34,6 +34,10 @@ SITEMAPS = [
 ]
 
 
+def is_finance_hub() -> bool:
+    return WP.resolve() == Path('/var/www/estrato.cc').resolve() or DOMAIN.rstrip('/') == 'https://estrato.cc'
+
+
 def apply_portal_env(wp_path: str = '', domain: str = '') -> None:
     """Atualiza paths do portal (env ou CLI) antes de cada execução."""
     global WP, DOMAIN, INDEXNOW_KEY, MSN_FEED_PATH, SITEMAPS
@@ -477,7 +481,9 @@ def main() -> int:
         articles = wp_recent_articles(args.recent)
         for idx, article in enumerate(articles):
             syndicate(article, ping_maps=(idx == 0))
-        if args.ping_sitemaps or args.recent > 0:
+        if args.ping_sitemaps:
+            ping_sitemaps()
+        elif is_finance_hub():
             generate_msn_feed()
         return 0
 

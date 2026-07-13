@@ -51,8 +51,13 @@ $defaults = array(
 	'instagram_url' => 'https://www.instagram.com/estrato.cc/',
 );
 foreach ( $defaults as $key => $default ) {
-	if ( '' === trim( (string) ( $social[ $key ] ?? '' ) ) ) {
+	$val = trim( (string) ( $social[ $key ] ?? '' ) );
+	if ( '' === $val ) {
 		$social[ $key ] = $default;
+		continue;
+	}
+	if ( 'twitter_site' === $key && '@' !== $val[0] ) {
+		$social[ $key ] = '@' . ltrim( $val, '@' );
 	}
 }
 update_option( 'wpseo_social', $social, false );

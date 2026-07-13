@@ -17,6 +17,8 @@ IP="${ESTRATO_VPS_IP:-187.127.12.186}"
 PASS_N=0
 WARN_N=0
 FAIL_N=0
+GATE_RC=0
+STATE_FILE=""
 
 ok()   { echo "  ✅ $1" | tee -a "$REPORT"; PASS_N=$((PASS_N+1)); }
 warn() { echo "  ⚠️  $1" | tee -a "$REPORT"; WARN_N=$((WARN_N+1)); }
@@ -120,7 +122,15 @@ else
   echo "RESULT: NOT_READY — corrigir gate antes de escalar tráfego"
 fi
 echo "Log: $REPORT"
+echo "GATE_RC=$GATE_RC" > "${REPORT}.state"
+echo "FAIL_N=$FAIL_N" >> "${REPORT}.state"
+echo "WARN_N=$WARN_N" >> "${REPORT}.state"
+echo "PASS_N=$PASS_N" >> "${REPORT}.state"
 } | tee -a "$REPORT"
+
+# shellcheck source=/dev/null
+[[ -f "${REPORT}.state" ]] && source "${REPORT}.state"
+rm -f "${REPORT}.state"
 
 if [[ "$STRICT" == "--strict" && ( "$FAIL_N" -gt 0 || "$GATE_RC" -ne 0 ) ]]; then
   exit 1

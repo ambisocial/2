@@ -271,6 +271,16 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 				if ( function_exists( 'estrato_pipeline_apply_category' ) ) {
 					estrato_pipeline_apply_category( $post_id, $title, $body );
 				}
+				if ( function_exists( 'estrato_content_on_publish' ) ) {
+					estrato_content_on_publish( $post_id );
+				}
+				$post_after = get_post( $post_id );
+				if ( $post_after && 'publish' !== $post_after->post_status ) {
+					$stats['skipped']++;
+					--$stats['imported'];
+					estrato_rss_mark_guid_imported( $guid );
+					continue;
+				}
 				estrato_rss_mark_guid_imported( $guid );
 				$imported[ $guid ] = true;
 				$stats['imported']++;

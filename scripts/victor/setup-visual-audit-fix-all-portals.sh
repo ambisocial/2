@@ -33,8 +33,8 @@ echo "== V1: sincronizando plugin estrato-portal-bootstrap =="
 BOOTSTRAP_SRC="$REPO_ROOT/estrato-portal-bootstrap"
 for portal in "${PORTALS[@]}"; do
   portal_resolve "$portal"
-  echo "-- $portal ($PORTAL_URL) --"
-  sudo rsync -a --delete "$BOOTSTRAP_SRC/" "$PORTAL_PATH/wp-content/plugins/estrato-portal-bootstrap/"
+  echo "-- $portal (https://$PORTAL_DOMAIN) --"
+  sudo rsync -a --delete "$BOOTSTRAP_SRC/" "$PORTAL_WEB_ROOT/wp-content/plugins/estrato-portal-bootstrap/"
   portal_wp cache flush >/dev/null 2>&1 || true
   portal_wp plugin activate estrato-portal-bootstrap >/dev/null 2>&1 || true
 done
@@ -44,7 +44,11 @@ echo "== V2: purga posts off-matriz (satélites) =="
 for portal in estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture; do
   portal_resolve "$portal"
   echo "-- $portal --"
-  portal_wp eval-file "$SCRIPT_DIR/purge-off-matrix-posts.php" $DRY_RUN 2>&1 | tail -50
+  if [[ -n "$DRY_RUN" ]]; then
+    portal_wp eval-file "$SCRIPT_DIR/purge-off-matrix-posts.php" -- --dry-run 2>&1 | tail -80
+  else
+    portal_wp eval-file "$SCRIPT_DIR/purge-off-matrix-posts.php" 2>&1 | tail -80
+  fi
   echo ""
 done
 
@@ -52,16 +56,17 @@ echo ""
 echo "== Verificação post-deploy: métricas de regressão =="
 for portal in "${PORTALS[@]}"; do
   portal_resolve "$portal"
-  echo "-- $portal --"
-  portal_wp eval 'echo "off_matrix=" . estrato_regression_off_matrix_posts() . "\n";' 2>/dev/null || echo "  (função ainda não carregada)"
+  echo -n "-- $portal → "
+  portal_wp eval 'echo function_exists("estrato_regression_off_matrix_posts") ? "off_matrix=" . estrato_regression_off_matrix_posts() : "(fn ausente)";' 2>/dev/null
+  echo ""
 done
 
 echo ""
 echo "== Amostra og:image na home de cada portal (esperado: sem \"meta%20\") =="
 for portal in "${PORTALS[@]}"; do
   portal_resolve "$portal"
-  echo -n "  $PORTAL_URL/ → "
-  curl -sSL "$PORTAL_URL/" 2>/dev/null | grep -oE 'og:image"[^>]+' | head -1 | cut -c1-140 || true
+  echo -n "  https://$PORTAL_DOMAIN/ → "
+  curl -sSL "https://$PORTAL_DOMAIN/" 2>/dev/null | grep -oE 'og:image"[^>]+' | head -1 | cut -c1-160 || true
   echo ""
 done
 
@@ -69,8 +74,8 @@ echo ""
 echo "== Amostra kicker na home (esperado: sem &AMP; ou dupla codificação) =="
 for portal in "${PORTALS[@]}"; do
   portal_resolve "$portal"
-  count=$(curl -sSL "$PORTAL_URL/" 2>/dev/null | grep -oc '&amp;AMP;\|&AMP;' || echo 0)
-  echo "  $PORTAL_URL/ → duplicações: $count"
+  count=$(curl -sSL "https://$PORTAL_DOMAIN/" 2>/dev/null | grep -oc '&amp;AMP;\|&AMP;' || true)
+  echo "  https://$PORTAL_DOMAIN/ → duplicações: ${count:-0}"
 done
 
 echo ""

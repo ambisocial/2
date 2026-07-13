@@ -644,17 +644,42 @@ function estrato_bridge_extract_image_from_html( $html ) {
 }
 
 /**
- * ID do attachment OG padrão (Yoast) — usado como fallback legado.
+ * True quando o ID aponta para um attachment de imagem existente.
+ *
+ * @param int $attachment_id Attachment ID.
+ * @return bool
+ */
+function estrato_bridge_attachment_exists( $attachment_id ) {
+	$attachment_id = (int) $attachment_id;
+	if ( $attachment_id <= 0 ) {
+		return false;
+	}
+	$post = get_post( $attachment_id );
+	return $post && 'attachment' === $post->post_type && 0 === strpos( (string) $post->post_mime_type, 'image/' );
+}
+
+/**
+ * ID do attachment OG padrão — prefer `estrato_og_default_attachment_id`,
+ * depois Yoast `og_default_image_id`, depois logo. Descarta IDs órfãos.
  *
  * @return int
  */
 function estrato_bridge_get_og_default_attachment_id() {
+	$candidates = array(
+		(int) get_option( 'estrato_og_default_attachment_id', 0 ),
+	);
 	$social = get_option( 'wpseo_social', array() );
-	$og_id  = ! empty( $social['og_default_image_id'] ) ? (int) $social['og_default_image_id'] : 0;
-	if ( ! $og_id ) {
-		$og_id = (int) get_theme_mod( 'custom_logo' );
+	if ( is_array( $social ) && ! empty( $social['og_default_image_id'] ) ) {
+		$candidates[] = (int) $social['og_default_image_id'];
 	}
-	return $og_id;
+	$candidates[] = (int) get_theme_mod( 'custom_logo' );
+
+	foreach ( $candidates as $og_id ) {
+		if ( estrato_bridge_attachment_exists( $og_id ) ) {
+			return $og_id;
+		}
+	}
+	return 0;
 }
 
 /**
@@ -759,22 +784,26 @@ function estrato_bridge_set_fallback_thumbnail( $post_id ) {
 }
 
 /**
- * Thumbnail para conteúdo editorial (longforms, hubs) via imagem OG padrão do Yoast.
+ * Thumbnail para conteúdo editorial (longforms, hubs) via imagem OG padrão.
  *
  * @param int $post_id
  * @return bool
  */
 function estrato_bridge_set_editorial_thumbnail( $post_id ) {
 	$post_id = (int) $post_id;
-	if ( $post_id <= 0 || has_post_thumbnail( $post_id ) ) {
-		return (bool) has_post_thumbnail( $post_id );
+	if ( $post_id <= 0 ) {
+		return false;
+	}
+	if ( has_post_thumbnail( $post_id ) ) {
+		$current = (int) get_post_thumbnail_id( $post_id );
+		return estrato_bridge_attachment_exists( $current );
 	}
 	$og_id = estrato_bridge_get_og_default_attachment_id();
 	if ( ! $og_id ) {
 		return false;
 	}
-	set_post_thumbnail( $post_id, $og_id );
-	return true;
+	$set = set_post_thumbnail( $post_id, $og_id );
+	return (bool) $set && has_post_thumbnail( $post_id );
 }
 
 /**

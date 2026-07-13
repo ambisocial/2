@@ -23,11 +23,12 @@ PORTALS=(
   estrato-culture
 )
 
-DRY_RUN=""
+DRY_RUN=0
 if [[ "${1:-}" == "--dry-run" ]]; then
-  DRY_RUN="--dry-run"
+  DRY_RUN=1
   echo "== DRY-RUN =="
 fi
+export ESTRATO_PURGE_DRY_RUN="$DRY_RUN"
 
 echo "== V1: sincronizando plugin estrato-portal-bootstrap =="
 BOOTSTRAP_SRC="$REPO_ROOT/estrato-portal-bootstrap"
@@ -44,11 +45,7 @@ echo "== V2: purga posts off-matriz (satélites) =="
 for portal in estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture; do
   portal_resolve "$portal"
   echo "-- $portal --"
-  if [[ -n "$DRY_RUN" ]]; then
-    portal_wp eval-file "$SCRIPT_DIR/purge-off-matrix-posts.php" -- --dry-run 2>&1 | tail -80
-  else
-    portal_wp eval-file "$SCRIPT_DIR/purge-off-matrix-posts.php" 2>&1 | tail -80
-  fi
+  sudo -u www-data env "ESTRATO_PURGE_DRY_RUN=$DRY_RUN" wp --path="$PORTAL_WEB_ROOT" eval-file "$SCRIPT_DIR/purge-off-matrix-posts.php" 2>&1 | tail -80
   echo ""
 done
 

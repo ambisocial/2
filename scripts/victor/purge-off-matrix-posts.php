@@ -14,8 +14,7 @@
  * Estratégia: mover para `trash` (não deletar) para permitir undo em 30 dias.
  */
 
-$dry_run = in_array( '--dry-run', $args ?? array(), true )
-	|| ( defined( 'WP_CLI' ) && WP_CLI::get_config( 'debug' ) )
+$dry_run = ( ! empty( getenv( 'ESTRATO_PURGE_DRY_RUN' ) ) && '0' !== getenv( 'ESTRATO_PURGE_DRY_RUN' ) )
 	|| ( ! empty( $GLOBALS['argv'] ) && in_array( '--dry-run', $GLOBALS['argv'], true ) );
 
 $matrix_raw = get_option( 'estrato_rss_import_matrix' );

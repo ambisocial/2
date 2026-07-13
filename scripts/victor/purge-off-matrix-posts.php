@@ -1,15 +1,21 @@
 <?php
 /**
- * Purga posts publicados cuja fonte RSS (`_estrato_rss_source_url`) está fora
- * da `estrato_rss_import_matrix` do portal atual.
+ * Purga posts publicados cuja fonte externa (`_estrato_source_url` ou
+ * `_estrato_rss_source_url`) está fora da `estrato_rss_import_matrix` do
+ * portal atual.
  *
  * Uso:
  *   wp --path=/var/www/estrato/wp eval-file scripts/victor/purge-off-matrix-posts.php --url=https://culture.estrato.cc
- *   wp ... eval-file scripts/victor/purge-off-matrix-posts.php --url=... -- --dry-run
+ *   ESTRATO_PURGE_DRY_RUN=1 wp ... eval-file scripts/victor/purge-off-matrix-posts.php --url=...
  *
  * Bug de origem: auditoria visual 2026-07-13 (B2). Um snapshot antigo do RSS
  * pipeline importou preset `brasil-financeiro` em cada satélite, criando 37
  * posts órfãos que ocupam ~70-82% do conteúdo publicado em cada portal.
+ *
+ * Fix 2026-07-13 pós V3-V8: também considera `_estrato_source_url` — chave
+ * gravada pelo publisher-bridge (payloads externos). Sem isso, 18 posts do
+ * `seudinheiro.com` + 12 do `olhardigital.com.br` + 6 do `agenciabrasil` etc.
+ * escapavam do purge em estrato.cc.
  *
  * Estratégia: mover para `trash` (não deletar) para permitir undo em 30 dias.
  */
@@ -71,8 +77,18 @@ $q = new WP_Query(
 
 $off_matrix    = array();
 $total_checked = 0;
+$src_keys      = array( '_estrato_source_url', '_estrato_rss_source_url' );
 foreach ( $q->posts as $post_id ) {
-	$src = get_post_meta( $post_id, '_estrato_rss_source_url', true );
+	$src = '';
+	$key_used = '';
+	foreach ( $src_keys as $key ) {
+		$val = (string) get_post_meta( $post_id, $key, true );
+		if ( '' !== $val ) {
+			$src = $val;
+			$key_used = $key;
+			break;
+		}
+	}
 	if ( ! $src ) {
 		continue;
 	}
@@ -86,6 +102,7 @@ foreach ( $q->posts as $post_id ) {
 			'id'    => $post_id,
 			'host'  => $host,
 			'title' => get_the_title( $post_id ),
+			'key'   => $key_used,
 		);
 	}
 }

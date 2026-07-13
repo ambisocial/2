@@ -79,7 +79,13 @@ function estrato_eeat_build_persona( $parent_slug, $sub_slug, $sub_name, $sub_de
 	$parent_label = $parent_names[ $parent_slug ] ?? ucfirst( str_replace( '-', ' ', $parent_slug ) );
 	$role         = 'column' === $term_type ? 'Colunista' : 'Repórter';
 	$display      = $pick['first'] . ' ' . $pick['last'];
-	$job          = $role . ' de ' . $sub_name . ' · ' . $parent_label;
+	// Fix pós auditoria visual 2026-07-13: quando o "sub" é a própria editoria
+	// (autor raiz), sub_name == parent_label — evitar "de Finanças Pessoais · Finanças Pessoais".
+	if ( strcasecmp( trim( (string) $sub_name ), trim( (string) $parent_label ) ) === 0 ) {
+		$job = $role . ' de ' . $parent_label;
+	} else {
+		$job = $role . ' de ' . $sub_name . ' · ' . $parent_label;
+	}
 
 	$bio = $sub_desc
 		? $sub_desc . ' No Estrato, cobre ' . $sub_name . ' com foco em contexto e dados para o leitor brasileiro.'

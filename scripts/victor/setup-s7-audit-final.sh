@@ -4,6 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${ESTRATO_REPO:-/var/www/estrato/repo}"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/lib/portal-env.sh"
+
+PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture)
 
 LOG="${REPO}/logs/s7-audit-final-$(date +%Y%m%d-%H%M%S).log"
 mkdir -p "$(dirname "$LOG")"
@@ -16,7 +20,16 @@ bash "$SCRIPT_DIR/setup-selfhosted-fonts.sh"
 
 echo ""
 echo "2. Perf + plugins 1.23"
-bash "$SCRIPT_DIR/setup-s7-perf-all-portals.sh" 2>&1 | tail -20
+bash "$SCRIPT_DIR/setup-s7-perf-all-portals.sh" 2>&1 | tail -20 || echo "WARN: perf deploy"
+
+echo ""
+echo "2b. Thumbnails editoriais + gate fix"
+for PORTAL_ID in "${PORTALS[@]}"; do
+  portal_resolve "$PORTAL_ID"
+  portal_wp eval-file "$REPO/scripts/victor/backfill-editorial-thumbnails.php" 2>/dev/null || true
+  portal_wp eval-file "$REPO/scripts/victor/fix-gate-satellites.php" 2>/dev/null || true
+done
+bash "$SCRIPT_DIR/check-portal-regression-all.sh" --strict | tail -8 || echo "WARN: gate"
 
 echo ""
 echo "3. Newsletter secrets (se existir)"

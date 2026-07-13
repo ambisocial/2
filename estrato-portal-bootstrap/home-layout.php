@@ -307,7 +307,7 @@ function estrato_home_pressgrid_sections( $sections ) {
 	}
 	return array(
 		array(
-			'id'          => 'estrato_home_v2',
+			'id'          => 'custom_html',
 			'label'       => 'Home Estrato',
 			'enabled'     => true,
 			'layout'      => 'custom_html',

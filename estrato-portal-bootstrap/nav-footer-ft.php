@@ -429,9 +429,9 @@ function estrato_ft_footer_styles() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
+	ob_start();
 	?>
-	<style id="estrato-ft-footer-css">
-	.site-footer .footer-widgets,.site-footer .widget-area,.pg-site-footer .pg-footer-widgets,.pg-footer-widgets,.pg-footer-top,.pg-site-footer .pg-footer-bottom,footer.site-footer .container > .row:first-child,#footer-widgets{display:none!important}
+.site-footer .footer-widgets,.site-footer .widget-area,.pg-site-footer .pg-footer-widgets,.pg-footer-widgets,.pg-footer-top,.pg-site-footer .pg-footer-bottom,footer.site-footer .container > .row:first-child,#footer-widgets{display:none!important}
 	.site-footer,.pg-footer,.pg-site-footer{padding:0!important;background:transparent!important;border:0!important;margin:0!important}
 	.estrato-ft-footer{background:#262a33;color:#ced4da;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin-top:2rem}
 	.estrato-ft-footer__inner{max-width:1200px;margin:0 auto;padding:0 1rem 1.5rem}
@@ -483,10 +483,15 @@ function estrato_ft_footer_styles() {
 	@media(min-width:1024px){
 		.estrato-ft-group__grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 	}
-	</style>
 	<?php
+	$css = trim( ob_get_clean() );
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-ft-footer-css', $css, 'main' );
+	} else {
+		echo '<style id="estrato-ft-footer-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
-add_action( 'wp_head', 'estrato_ft_footer_styles', 35 );
+add_action( 'wp_head', 'estrato_ft_footer_styles', 20 );
 
 /**
  * Acordeão: um painel aberto por vez no mobile (comportamento FT).

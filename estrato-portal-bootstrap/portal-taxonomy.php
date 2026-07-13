@@ -119,8 +119,7 @@ function estrato_portal_section_branding_styles() {
 	$brand     = esc_html( $branding['brand_name'] ?? '' );
 	$tagline   = esc_html( $branding['tagline'] ?? '' );
 
-	echo '<style id="estrato-section-branding">'
-		. ':root{--estrato-primary:' . $primary . ';--estrato-accent:' . $accent . ';--estrato-secondary:' . $secondary . '}'
+	$css = ':root{--estrato-primary:' . $primary . ';--estrato-accent:' . $accent . ';--estrato-secondary:' . $secondary . '}'
 		. '.estrato-section-active .estrato-g1-header__principal,.estrato-section-active .estrato-g1-header__editoria'
 		. '{background-color:var(--estrato-primary)!important;color:#fff!important}'
 		. '.estrato-section-active .estrato-g1-header__logo-img{filter:brightness(0) invert(1)}'
@@ -129,8 +128,12 @@ function estrato_portal_section_branding_styles() {
 		. '.estrato-section-active .main-nav a:hover,.estrato-section-active a{color:inherit}'
 		. '.estrato-section-active .breaking-news,.estrato-section-active .ticker-label{background:var(--estrato-accent)!important;color:var(--estrato-primary)!important}'
 		. '.estrato-section-active .category-title,.estrato-section-active .archive-title{color:var(--estrato-primary)}'
-		. '.estrato-section-active .estrato-section-kicker{display:block;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--estrato-accent);margin-bottom:.35rem}'
-		. '</style>';
+		. '.estrato-section-active .estrato-section-kicker{display:block;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--estrato-accent);margin-bottom:.35rem}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-section-branding', $css, 'main' );
+	} else {
+		echo '<style id="estrato-section-branding">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 
 	if ( $brand && ( is_category() || is_singular( 'post' ) ) ) {
 		echo '<script>document.addEventListener("DOMContentLoaded",function(){'
@@ -141,7 +144,7 @@ function estrato_portal_section_branding_styles() {
 			. 't.insertBefore(k,t.firstChild);}});</script>';
 	}
 }
-add_action( 'wp_head', 'estrato_portal_section_branding_styles', 30 );
+add_action( 'wp_head', 'estrato_portal_section_branding_styles', 20 );
 
 /**
  * Faixa de colunas na home.

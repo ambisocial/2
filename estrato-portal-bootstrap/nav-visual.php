@@ -503,10 +503,15 @@ function estrato_nav_visual_styles() {
 	if ( ! is_front_page() && ! is_page() ) {
 		return;
 	}
-	echo '<style>.estrato-home-editorias{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin:2rem 0}'
+	$css = '.estrato-home-editorias{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin:2rem 0}'
 		. '.estrato-cat-grid-title{font-size:1.1rem;margin:0 0 .5rem}'
 		. '.estrato-cat-grid-list{margin:0;padding-left:1.1rem}'
 		. '.estrato-cotacoes table{width:100%;border-collapse:collapse}'
-		. '.estrato-cotacoes td,.estrato-cotacoes th{border:1px solid #ddd;padding:.5rem}</style>';
+		. '.estrato-cotacoes td,.estrato-cotacoes th{border:1px solid #ddd;padding:.5rem}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-nav-visual', $css, 'main' );
+	} else {
+		echo '<style id="estrato-nav-visual">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
-add_action( 'wp_head', 'estrato_nav_visual_styles', 25 );
+add_action( 'wp_head', 'estrato_nav_visual_styles', 20 );

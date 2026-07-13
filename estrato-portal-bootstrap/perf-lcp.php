@@ -69,16 +69,17 @@ function estrato_perf_critical_single_css() {
 	if ( ! is_singular( 'post' ) ) {
 		return;
 	}
-	?>
-	<style id="estrato-critical-single">
-	.pg-single-header,.pg-single-meta{display:none!important}
-	.pg-featured-image img{width:100%;height:auto;border-radius:4px}
-	.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4,24px);padding:0 1rem}
-	.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted,#5E5E5E);margin:.75rem 0 1rem}
-	.estrato-display.estrato-h1{font-size:clamp(26px,4vw,48px);line-height:1.1}
-	.entry-content,.post-content,.pg-entry-content{max-width:680px;margin:0 auto}
-	</style>
-	<?php
+	$css = '.pg-single-header,.pg-single-meta{display:none!important}'
+		. '.pg-featured-image img{width:100%;height:auto;border-radius:4px}'
+		. '.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4,24px);padding:0 1rem}'
+		. '.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted,#5E5E5E);margin:.75rem 0 1rem}'
+		. '.estrato-display.estrato-h1{font-size:clamp(26px,4vw,48px);line-height:1.1}'
+		. '.entry-content,.post-content,.pg-entry-content{max-width:680px;margin:0 auto}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-critical-single', $css, 'critical' );
+	} else {
+		echo '<style id="estrato-critical-single">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
 add_action( 'wp_head', 'estrato_perf_critical_single_css', 2 );
 
@@ -135,16 +136,17 @@ function estrato_perf_critical_home_css() {
 	if ( ! function_exists( 'estrato_home_is_active' ) || ! estrato_home_is_active() ) {
 		return;
 	}
-	?>
-	<style id="estrato-critical-home">
-	.estrato-home-v2{max-width:1200px;margin:0 auto;padding:var(--estrato-space-4,24px) 1rem}
-	.estrato-home-hero{display:grid;gap:var(--estrato-space-4,24px);margin-bottom:var(--estrato-space-5,40px)}
-	@media(min-width:900px){.estrato-home-hero{grid-template-columns:1.4fr 1fr}}
-	.estrato-home-card__link{color:inherit;text-decoration:none;display:block}
-	.estrato-home-card__media img{width:100%;height:auto;border-radius:4px}
-	.estrato-home-card--hero .estrato-home-card__title{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:.35rem 0}
-	</style>
-	<?php
+	$css = '.estrato-home-v2{max-width:1200px;margin:0 auto;padding:var(--estrato-space-4,24px) 1rem}'
+		. '.estrato-home-hero{display:grid;gap:var(--estrato-space-4,24px);margin-bottom:var(--estrato-space-5,40px)}'
+		. '@media(min-width:900px){.estrato-home-hero{grid-template-columns:1.4fr 1fr}}'
+		. '.estrato-home-card__link{color:inherit;text-decoration:none;display:block}'
+		. '.estrato-home-card__media img{width:100%;height:auto;border-radius:4px}'
+		. '.estrato-home-card--hero .estrato-home-card__title{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:.35rem 0}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-critical-home', $css, 'critical' );
+	} else {
+		echo '<style id="estrato-critical-home">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
 add_action( 'wp_head', 'estrato_perf_critical_home_css', 2 );
 

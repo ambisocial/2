@@ -72,38 +72,36 @@ function estrato_ds_print_styles() {
 	foreach ( $colors as $slug => $hex ) {
 		$vars .= '--cat-' . esc_attr( str_replace( '-', '_', $slug ) ) . ':' . esc_attr( $hex ) . ';';
 	}
-	?>
-	<style id="estrato-design-system">
-	:root{
-		--estrato-bg:#FBFAF7;--estrato-ink:#191919;--estrato-muted:#5E5E5E;--estrato-line:#E4E1DA;
-		--estrato-up:#0B6E4F;--estrato-down:#C0392B;
-		--estrato-space-1:4px;--estrato-space-2:8px;--estrato-space-3:16px;--estrato-space-4:24px;--estrato-space-5:40px;--estrato-space-6:64px;
-		--estrato-radius:4px;
-		--estrato-font-display:"Newsreader",Georgia,"Times New Roman",serif;
-		--estrato-font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-		--estrato-font-mono:"IBM Plex Mono",ui-monospace,monospace;
-		<?php echo $vars; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+	$css = ':root{'
+		. '--estrato-bg:#FBFAF7;--estrato-ink:#191919;--estrato-muted:#5E5E5E;--estrato-line:#E4E1DA;'
+		. '--estrato-up:#0B6E4F;--estrato-down:#C0392B;'
+		. '--estrato-space-1:4px;--estrato-space-2:8px;--estrato-space-3:16px;--estrato-space-4:24px;--estrato-space-5:40px;--estrato-space-6:64px;'
+		. '--estrato-radius:4px;'
+		. '--estrato-font-display:"Newsreader",Georgia,"Times New Roman",serif;'
+		. '--estrato-font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'
+		. '--estrato-font-mono:"IBM Plex Mono",ui-monospace,monospace;'
+		. $vars
+		. '}'
+		. 'body{background:var(--estrato-bg);color:var(--estrato-ink);font-family:var(--estrato-font-body);font-size:18px;line-height:1.6}'
+		. '.estrato-cat-bar{height:4px;width:100%}'
+		. '.estrato-kicker{color:var(--estrato-cat-color,#191919);font-family:var(--estrato-font-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}'
+		. '.estrato-price-up{color:var(--estrato-up)}'
+		. '.estrato-price-down{color:var(--estrato-down)}'
+		. '.estrato-display{font-family:var(--estrato-font-display);font-weight:600;letter-spacing:-.02em}'
+		. '.estrato-h1{font-size:clamp(26px,4vw,48px);line-height:1.1}'
+		. '.estrato-h2{font-size:34px;line-height:1.15}'
+		. '.estrato-h3{font-size:26px}'
+		. '.estrato-h4{font-size:20px}'
+		. '.estrato-body-lg{font-size:18px;line-height:1.6}'
+		. '.estrato-body-sm{font-size:14px}'
+		. '.estrato-caption{font-size:12px;color:var(--estrato-muted)}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-design-system', $css, 'critical' );
+	} else {
+		echo '<style id="estrato-design-system">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
-	body{background:var(--estrato-bg);color:var(--estrato-ink);font-family:var(--estrato-font-body);font-size:18px;line-height:1.6}
-	.estrato-cat-bar{height:4px;width:100%}
-	.estrato-kicker{
-		color:var(--estrato-cat-color,#191919);font-family:var(--estrato-font-mono);
-		font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase
-	}
-	.estrato-price-up{color:var(--estrato-up)}
-	.estrato-price-down{color:var(--estrato-down)}
-	.estrato-display{font-family:var(--estrato-font-display);font-weight:600;letter-spacing:-.02em}
-	.estrato-h1{font-size:clamp(26px,4vw,48px);line-height:1.1}
-	.estrato-h2{font-size:34px;line-height:1.15}
-	.estrato-h3{font-size:26px}
-	.estrato-h4{font-size:20px}
-	.estrato-body-lg{font-size:18px;line-height:1.6}
-	.estrato-body-sm{font-size:14px}
-	.estrato-caption{font-size:12px;color:var(--estrato-muted)}
-	</style>
-	<?php
 }
-add_action( 'wp_head', 'estrato_ds_print_styles', 12 );
+add_action( 'wp_head', 'estrato_ds_print_styles', 2 );
 
 /**
  * Google Fonts.

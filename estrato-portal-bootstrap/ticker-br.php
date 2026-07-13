@@ -213,16 +213,14 @@ function estrato_ticker_styles() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
-	?>
-	<style id="estrato-ticker-br-css">
-	.estrato-ticker-br{background:#fff;border-bottom:1px solid var(--estrato-line,#e4e1da);font-family:var(--estrato-font-mono,monospace);font-size:12px}
-	.estrato-ticker-br__inner{
-		display:flex;flex-wrap:nowrap;gap:.5rem;align-items:center;overflow-x:auto;
-		max-width:1200px;margin:0 auto;padding:.45rem 1rem;color:inherit;text-decoration:none;white-space:nowrap
+	$css = '.estrato-ticker-br{background:#fff;border-bottom:1px solid var(--estrato-line,#e4e1da);font-family:var(--estrato-font-mono,monospace);font-size:12px}'
+		. '.estrato-ticker-br__inner{display:flex;flex-wrap:nowrap;gap:.5rem;align-items:center;overflow-x:auto;max-width:1200px;margin:0 auto;padding:.45rem 1rem;color:inherit;text-decoration:none;white-space:nowrap}'
+		. '.estrato-ticker-sep{opacity:.4}'
+		. '.estrato-ticker-item strong{letter-spacing:.04em;margin-right:.25rem}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-ticker-br-css', $css, 'main' );
+	} else {
+		echo '<style id="estrato-ticker-br-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
-	.estrato-ticker-sep{opacity:.4}
-	.estrato-ticker-item strong{letter-spacing:.04em;margin-right:.25rem}
-	</style>
-	<?php
 }
-add_action( 'wp_head', 'estrato_ticker_styles', 24 );
+add_action( 'wp_head', 'estrato_ticker_styles', 20 );

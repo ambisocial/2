@@ -163,20 +163,21 @@ function estrato_archive_styles() {
 	if ( is_admin() || is_feed() || ( ! is_category() && ! is_singular( 'post' ) ) ) {
 		return;
 	}
-	?>
-	<style id="estrato-archive-css">
-	.estrato-breadcrumb{font-size:13px;color:var(--estrato-muted);margin:0 0 1rem}
-	.estrato-breadcrumb ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}
-	.estrato-breadcrumb li+li::before{content:"›";margin-right:.35rem;color:var(--estrato-line)}
-	.estrato-breadcrumb a{color:inherit;text-decoration:none}
-	.estrato-breadcrumb a:hover{text-decoration:underline}
-	.estrato-archive-header{max-width:1200px;margin:0 auto 1.5rem;padding:0 1rem;border-top:4px solid var(--estrato-cat-color)}
-	.estrato-archive-title{margin:.5rem 0}
-	.estrato-archive-desc{color:var(--estrato-muted);max-width:72ch;line-height:1.5}
-	.estrato-archive-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
-	.estrato-archive-chip{display:inline-block;padding:.35rem .85rem;border:1px solid var(--estrato-line);border-radius:999px;font-size:13px;text-decoration:none;color:inherit}
-	.estrato-archive-chip--active,.estrato-archive-chip:hover{background:var(--estrato-cat-color);color:#fff;border-color:var(--estrato-cat-color)}
-	</style>
-	<?php
+	$css = '.estrato-breadcrumb{font-size:13px;color:var(--estrato-muted);margin:0 0 1rem}'
+		. '.estrato-breadcrumb ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}'
+		. '.estrato-breadcrumb li+li::before{content:"›";margin-right:.35rem;color:var(--estrato-line)}'
+		. '.estrato-breadcrumb a{color:inherit;text-decoration:none}'
+		. '.estrato-breadcrumb a:hover{text-decoration:underline}'
+		. '.estrato-archive-header{max-width:1200px;margin:0 auto 1.5rem;padding:0 1rem;border-top:4px solid var(--estrato-cat-color)}'
+		. '.estrato-archive-title{margin:.5rem 0}'
+		. '.estrato-archive-desc{color:var(--estrato-muted);max-width:72ch;line-height:1.5}'
+		. '.estrato-archive-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}'
+		. '.estrato-archive-chip{display:inline-block;padding:.35rem .85rem;border:1px solid var(--estrato-line);border-radius:999px;font-size:13px;text-decoration:none;color:inherit}'
+		. '.estrato-archive-chip--active,.estrato-archive-chip:hover{background:var(--estrato-cat-color);color:#fff;border-color:var(--estrato-cat-color)}';
+	if ( function_exists( 'estrato_perf_style_add' ) ) {
+		estrato_perf_style_add( 'estrato-archive-css', $css, 'main' );
+	} else {
+		echo '<style id="estrato-archive-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
-add_action( 'wp_head', 'estrato_archive_styles', 28 );
+add_action( 'wp_head', 'estrato_archive_styles', 20 );

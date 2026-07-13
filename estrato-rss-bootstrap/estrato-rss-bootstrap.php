@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.8.3
+ * Version: 1.9.0
  * Author: Cursor Agent
  */
 
@@ -28,6 +28,7 @@ add_action( 'plugins_loaded', 'estrato_rss_maybe_upgrade' );
 require_once __DIR__ . '/taxonomy-sync.php';
 require_once __DIR__ . '/rss-curation.php';
 require_once __DIR__ . '/rss-keywords.php';
+require_once __DIR__ . '/rss-guard-matrix.php';
 
 /**
  * Default plugin settings.
@@ -839,6 +840,12 @@ function estrato_rss_run_import( $first_run = false ) {
 		foreach ( $data['feeds'] as $feed_info ) {
 			if ( $stats['imported'] >= $max_run ) {
 				break;
+			}
+
+			if ( function_exists( 'estrato_rss_guard_allow_insert' )
+				&& ! estrato_rss_guard_allow_insert( $feed_info['url'] ) ) {
+				$stats['skipped']++;
+				continue;
 			}
 
 			$feed = fetch_feed( $feed_info['url'] );

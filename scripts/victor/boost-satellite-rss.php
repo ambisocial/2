@@ -131,6 +131,11 @@ foreach ( $trash as $post ) {
 		++$report['trash_skipped'];
 		continue;
 	}
+	// Não restaurar pré-2024 (AR-SITEMAP-004).
+	if ( strtotime( $post->post_date_gmt ? $post->post_date_gmt : $post->post_date ) < strtotime( '2024-01-01 00:00:00 UTC' ) ) {
+		++$report['trash_skipped'];
+		continue;
+	}
 	// Pular duplicata de título já publicada.
 	$dup = post_exists( $post->post_title, '', '', 'post' );
 	if ( $dup && (int) $dup !== (int) $post->ID && 'publish' === get_post_status( $dup ) ) {
@@ -161,6 +166,15 @@ if ( function_exists( 'estrato_rss_get_settings' ) ) {
 
 if ( function_exists( 'estrato_rss_run_import' ) ) {
 	$report['import'] = estrato_rss_run_import( true );
+}
+
+// Restaura modo pipeline_primary (AR-RSS-002) após o boost pontual.
+if ( function_exists( 'estrato_rss_apply_content_mode' ) ) {
+	$report['rss_mode'] = estrato_rss_apply_content_mode( 'pipeline_primary' );
+} elseif ( function_exists( 'estrato_rss_get_settings' ) ) {
+	$settings = estrato_rss_pipeline_primary_settings();
+	update_option( 'estrato_rss_settings', $settings, false );
+	$report['rss_mode'] = $settings;
 }
 
 // 4) Backfill thumbs residuais.

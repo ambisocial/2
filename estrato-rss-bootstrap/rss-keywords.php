@@ -244,6 +244,12 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 					continue;
 				}
 
+				$post_date = $item->get_date( 'Y-m-d H:i:s' ) ? $item->get_date( 'Y-m-d H:i:s' ) : current_time( 'mysql' );
+				// Evita publicar itens antigos no sitemap/públicos (AR-SITEMAP-004).
+				if ( strtotime( $post_date ) < strtotime( '2024-01-01 00:00:00' ) ) {
+					$post_date = current_time( 'mysql' );
+				}
+
 				$post_id = wp_insert_post(
 					array(
 						'post_title'    => $title,
@@ -251,7 +257,7 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 						'post_status'   => 'publish',
 						'post_author'   => $author_id,
 						'post_category' => $cat_ids,
-						'post_date'     => $item->get_date( 'Y-m-d H:i:s' ) ? $item->get_date( 'Y-m-d H:i:s' ) : current_time( 'mysql' ),
+						'post_date'     => $post_date,
 					),
 					true
 				);

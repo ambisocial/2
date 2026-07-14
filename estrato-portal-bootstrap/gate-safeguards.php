@@ -77,6 +77,14 @@ function estrato_gate_require_original_thumbnail( $post_id ) {
 	if ( 'analysis' === get_post_meta( $post_id, '_estrato_content_mode', true ) && has_post_thumbnail( $post_id ) ) {
 		return;
 	}
+	// Satélites: RSS niche feeds frequentemente sem enclosure — aceitar qualquer thumb
+	// quando há fonte RSS e o portal não é finance.
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+	if ( 'estrato-finance' !== $portal
+		&& get_post_meta( $post_id, '_estrato_rss_source_url', true )
+		&& has_post_thumbnail( $post_id ) ) {
+		return;
+	}
 	if ( ! function_exists( 'estrato_bridge_post_has_original_thumbnail' ) ) {
 		return;
 	}

@@ -17,7 +17,9 @@ PORTALS=(
   estrato-mind
   estrato-lifestyle
   estrato-science
-  estrato-sustain
+  estrato-agro
+  estrato-esg
+  estrato-viagem
   estrato-culture
 )
 

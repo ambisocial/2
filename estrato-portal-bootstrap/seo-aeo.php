@@ -278,8 +278,12 @@ function estrato_aeo_portal_editorias() {
 		'estrato-mind'      => 'estrato_rss_load_mind_taxonomy',
 		'estrato-lifestyle' => 'estrato_rss_load_lifestyle_taxonomy',
 		'estrato-science'   => 'estrato_rss_load_science_taxonomy',
-		'estrato-sustain'   => 'estrato_rss_load_sustain_taxonomy',
+		'estrato-agro'      => 'estrato_rss_load_agro_taxonomy',
+		'estrato-esg'       => 'estrato_rss_load_esg_taxonomy',
+		'estrato-viagem'    => 'estrato_rss_load_viagem_taxonomy',
 		'estrato-culture'   => 'estrato_rss_load_culture_taxonomy',
+		// Legado.
+		'estrato-sustain'   => 'estrato_rss_load_agro_taxonomy',
 	);
 	$loader  = $loaders[ $portal ] ?? null;
 	if ( ! $loader || ! function_exists( $loader ) ) {

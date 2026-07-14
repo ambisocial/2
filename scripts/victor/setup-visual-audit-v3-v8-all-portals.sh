@@ -20,7 +20,9 @@ PORTALS=(
   estrato-mind
   estrato-lifestyle
   estrato-science
-  estrato-sustain
+  estrato-agro
+  estrato-esg
+  estrato-viagem
   estrato-culture
 )
 
@@ -85,7 +87,9 @@ declare -A ROOTS=(
   [estrato-mind]='aprendizado-cognicao'
   [estrato-lifestyle]='sabores-paixao'
   [estrato-science]='ia-seguranca'
-  [estrato-sustain]='agro-sustentavel'
+  [estrato-agro]='producao-safras'
+  [estrato-esg]='clima-ambiente'
+  [estrato-viagem]='destinos'
   [estrato-culture]='narrativas-som'
 )
 for portal in "${PORTALS[@]}"; do

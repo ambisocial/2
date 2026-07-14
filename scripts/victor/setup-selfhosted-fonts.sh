@@ -40,7 +40,9 @@ ls -lh "$FONT_DIR"/*.woff2 2>/dev/null | awk '{print $9, $5}'
 if [[ -f "${REPO}/scripts/victor/lib/portal-env.sh" ]]; then
   # shellcheck source=/dev/null
   source "${REPO}/scripts/victor/lib/portal-env.sh"
-  PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture)
+  PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
+  estrato-esg
+  estrato-viagem estrato-culture)
   for PORTAL_ID in "${PORTALS[@]}"; do
     portal_resolve "$PORTAL_ID" 2>/dev/null || continue
     portal_sync_plugins 2>/dev/null || true

@@ -10,7 +10,7 @@ source "$SCRIPT_DIR/lib/portal-env.sh"
 LOG="${REPO}/logs/sprint-a3-$(date +%Y%m%d-%H%M%S).log"
 mkdir -p "$(dirname "$LOG")"
 
-for PORTAL_ID in estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture; do
+for PORTAL_ID in estrato-mind estrato-lifestyle estrato-science estrato-agro estrato-esg estrato-viagem estrato-culture; do
   portal_resolve "$PORTAL_ID"
   export ESTRATO_PORTAL="$PORTAL_ID"
   echo "=== A3 $PORTAL_ID @ $PORTAL_WEB_ROOT ===" | tee -a "$LOG"

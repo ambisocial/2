@@ -17,8 +17,10 @@ PORTALS=(
   "mente.estrato.cc|estrato-mind|brasil-mind|Estrato Mente|Conhecimento, mente e desenvolvimento pessoal"
   "lifestyle.estrato.cc|estrato-lifestyle|brasil-lifestyle|Estrato Lifestyle|Estilos de vida, hobbies e consumo apaixonado"
   "science.estrato.cc|estrato-science|brasil-science|Estrato Science|Ciência, tecnologia e futuro"
-  "sustain.estrato.cc|estrato-sustain|brasil-sustain|Estrato Sustain|Sustentabilidade e economia alternativa"
-  "culture.estrato.cc|estrato-culture|brasil-culture|Estrato Culture|Entretenimento, cultura pop e narrativas de nicho"
+  "agro.estrato.cc|estrato-agro|brasil-agro|Estrato Agro|Produção, mercado e agroecologia"
+  "esg.estrato.cc|estrato-esg|brasil-esg|Estrato ESG|Clima, transição energética e impacto"
+  "viagem.estrato.cc|estrato-viagem|brasil-viagem|Estrato Viagem|Destinos, rotas e nomadismo"
+  "culture.estrato.cc|estrato-culture|brasil-culture|Estrato Culture|Entretenimento, cultura pop e celebridades"
 )
 
 log() { echo "[$(date -Iseconds)] $*"; }

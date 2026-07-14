@@ -93,8 +93,11 @@ function estrato_regression_portal_editoria_slugs() {
 		'brasil-mind'       => array( 'aprendizado-cognicao', 'filosofia-autoconhecimento', 'financas-comportamentais' ),
 		'brasil-lifestyle'  => array( 'sabores-paixao', 'movimento-ar-livre', 'hobbies-colecao' ),
 		'brasil-science'    => array( 'neuro-biologia', 'bio-fabricacao', 'ia-seguranca' ),
-		'brasil-sustain'    => array( 'agro-sustentavel', 'economia-alternativa', 'vida-nomade' ),
-		'brasil-culture'    => array( 'jogos-imaginacao', 'narrativas-som' ),
+		'brasil-agro'       => array( 'producao-safras', 'mercado-agro', 'agroecologia' ),
+		'brasil-esg'        => array( 'clima-ambiente', 'transicao-energia', 'impacto-negocios' ),
+		'brasil-viagem'     => array( 'destinos', 'rotas-dicas', 'nomadismo' ),
+		'brasil-culture'    => array( 'jogos-imaginacao', 'narrativas-som', 'celebridades' ),
+		'brasil-sustain'    => array( 'producao-safras', 'mercado-agro', 'agroecologia' ),
 	);
 	if ( isset( $map[ $preset ] ) ) {
 		return $map[ $preset ];

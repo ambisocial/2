@@ -190,7 +190,10 @@ return array(
 				'include' => array(),
 				'exclude' => array( 'ibovespa', 'selic', 'bitcoin', 'criptomoeda' ),
 			),
-			'feeds'       => array(),
+			'feeds'       => array(
+				array( 'title' => 'Prática Estóica', 'url' => 'https://praticaestoica.substack.com/feed', 'tier' => 1 ),
+				array( 'title' => 'Expresso Existencial', 'url' => 'https://expressoexistencial.substack.com/feed', 'tier' => 2 ),
+			),
 			'subcategories' => array(
 				'estoicismo'              => array(
 					'name'        => 'Estoicismo prático',

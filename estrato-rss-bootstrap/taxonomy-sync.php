@@ -19,7 +19,18 @@ define( 'ESTRATO_RSS_IMPORT_MATRIX_OPTION', 'estrato_rss_import_matrix' );
  * @return array<int, string>
  */
 function estrato_rss_taxonomy_presets() {
-	return array( 'brasil-financeiro', 'brasil-mind', 'brasil-lifestyle', 'brasil-science', 'brasil-sustain', 'brasil-culture' );
+	return array(
+		'brasil-financeiro',
+		'brasil-mind',
+		'brasil-lifestyle',
+		'brasil-science',
+		'brasil-agro',
+		'brasil-esg',
+		'brasil-viagem',
+		'brasil-culture',
+		// Legado (redirect/compat).
+		'brasil-sustain',
+	);
 }
 
 /**
@@ -32,8 +43,12 @@ function estrato_rss_preset_to_taxonomy_basename( $preset ) {
 		'brasil-mind'       => 'estrato-mind-taxonomy',
 		'brasil-lifestyle'  => 'estrato-lifestyle-taxonomy',
 		'brasil-science'    => 'estrato-science-taxonomy',
-		'brasil-sustain'    => 'estrato-sustain-taxonomy',
+		'brasil-agro'       => 'estrato-agro-taxonomy',
+		'brasil-esg'        => 'estrato-esg-taxonomy',
+		'brasil-viagem'     => 'estrato-viagem-taxonomy',
 		'brasil-culture'    => 'estrato-culture-taxonomy',
+		// Legado Sustain → Agro.
+		'brasil-sustain'    => 'estrato-agro-taxonomy',
 	);
 	$preset = sanitize_key( $preset );
 	return $map[ $preset ] ?? 'estrato-finance-taxonomy';
@@ -118,8 +133,30 @@ function estrato_rss_load_science_taxonomy() {
 /**
  * @return array<string, mixed>
  */
+function estrato_rss_load_agro_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-agro' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_esg_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-esg' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_viagem_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-viagem' );
+}
+
+/**
+ * @return array<string, mixed>
+ * @deprecated Use estrato_rss_load_agro_taxonomy / esg / viagem.
+ */
 function estrato_rss_load_sustain_taxonomy() {
-	return estrato_rss_load_taxonomy_by_preset( 'brasil-sustain' );
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-agro' );
 }
 
 /**
@@ -208,11 +245,39 @@ function estrato_rss_get_science_menu_order() {
 /**
  * @return array<int, string>
  */
-function estrato_rss_get_sustain_menu_order() {
+function estrato_rss_get_agro_menu_order() {
 	return estrato_rss_get_taxonomy_menu_order(
-		estrato_rss_load_sustain_taxonomy(),
-		array( 'agro-sustentavel', 'economia-alternativa', 'vida-nomade' )
+		estrato_rss_load_agro_taxonomy(),
+		array( 'producao-safras', 'mercado-agro', 'agroecologia' )
 	);
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_esg_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order(
+		estrato_rss_load_esg_taxonomy(),
+		array( 'clima-ambiente', 'transicao-energia', 'impacto-negocios' )
+	);
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_viagem_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order(
+		estrato_rss_load_viagem_taxonomy(),
+		array( 'destinos', 'rotas-dicas', 'nomadismo' )
+	);
+}
+
+/**
+ * @return array<int, string>
+ * @deprecated
+ */
+function estrato_rss_get_sustain_menu_order() {
+	return estrato_rss_get_agro_menu_order();
 }
 
 /**
@@ -221,7 +286,7 @@ function estrato_rss_get_sustain_menu_order() {
 function estrato_rss_get_culture_menu_order() {
 	return estrato_rss_get_taxonomy_menu_order(
 		estrato_rss_load_culture_taxonomy(),
-		array( 'jogos-imaginacao', 'narrativas-som' )
+		array( 'jogos-imaginacao', 'narrativas-som', 'celebridades' )
 	);
 }
 

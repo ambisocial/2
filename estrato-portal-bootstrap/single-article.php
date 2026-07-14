@@ -381,8 +381,9 @@ function estrato_single_styles() {
 		. '.estrato-single-next{text-align:right}'
 		. '.estrato-single-prevnext__label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--estrato-muted)}'
 		. '.estrato-single-prevnext__title{font-size:14px;font-weight:600;line-height:1.35;color:var(--estrato-ink)}'
-		. '.estrato-share-bar{position:fixed;left:max(1rem,calc(50% - 420px));top:40%;display:flex;flex-direction:column;gap:.5rem;font-size:12px;font-weight:600;z-index:50}'
-		. '@media(max-width:1100px){.estrato-share-bar{position:sticky;bottom:0;left:0;flex-direction:row;justify-content:center;background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;z-index:100}}'
+		/* Base = mobile: barra de share sticky inferior. */
+		. '.estrato-share-bar{position:sticky;bottom:0;left:0;display:flex;flex-direction:row;justify-content:center;gap:.5rem;background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;padding-bottom:calc(.5rem + env(safe-area-inset-bottom,0px));font-size:12px;font-weight:600;z-index:100}'
+		. '@media(min-width:1100px){.estrato-share-bar{position:fixed;left:max(1rem,calc(50% - 420px));top:40%;bottom:auto;flex-direction:column;justify-content:flex-start;background:transparent;border-top:0;padding:0;z-index:50}}'
 		// PressGrid back-to-top: escapa do overflow do .single-content e não sobe sobre o related grid.
 		. '.pg-scroll-top,.pg-back-to-top,#back-to-top{z-index:60!important;bottom:calc(1rem + env(safe-area-inset-bottom,0px))!important;margin-bottom:calc(env(safe-area-inset-bottom,0px) + 3.5rem)!important}'
 		// PressGrid navigation post-navigation com Previous/Next crus: fica em CSS oculto até termos a versão PT-BR abaixo.

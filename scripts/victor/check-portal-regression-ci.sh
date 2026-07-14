@@ -191,6 +191,14 @@ if [[ -f portals/firesfera-feeds.json ]]; then
   ok "firesfera-feeds.json manifest presente"
 fi
 
+# Mobile-first: zero @media (max-width) / matchMedia max-width no CSS/JS Estrato.
+mf_hits=$(rg -n --glob '*.php' --glob '*.js' --glob '*.css' '@media\s*\([^)]*max-width|matchMedia\([^\)]*max-width' estrato-portal-bootstrap 2>/dev/null || true)
+if [[ -z "$mf_hits" ]]; then
+  ok "AR-MOBILE-001 CSS/JS Estrato sem @media/matchMedia max-width (mobile-first)"
+else
+  fail "AR-MOBILE-001 desktop-first restante:"$'\n'"$mf_hits"
+fi
+
 # Removido bloco antigo de dup único finance
 true
 

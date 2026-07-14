@@ -344,7 +344,7 @@ function estrato_nav_mega_menu_styles() {
 		. '.estrato-columns-ribbon ul{flex-wrap:wrap;overflow:visible}'
 		. '.estrato-mega-nav>li.estrato-mega-parent{position:static}'
 		. '.estrato-mega-nav>li.estrato-mega-parent>.sub-menu{background:#fff;border:1px solid #e2e8f0;border-radius:0 0 6px 6px;box-shadow:0 12px 32px rgba(15,23,42,.12);left:0;min-width:220px;padding:1rem 1.25rem;position:absolute;right:0;top:100%;z-index:9999;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.35rem 1.5rem}'
-		. '.estrato-mega-nav>li.estrato-mega-parent:hover>.sub-menu,.estrato-mega-nav>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:grid}'
+		. '.estrato-mega-nav>li.estrato-mega-parent:hover>.sub-menu,.estrato-mega-nav>li.estrato-mega-parent:focus-within>.sub-menu,.estrato-mega-nav>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:grid}'
 		. '.estrato-mega-nav .sub-menu a{min-height:0;padding:.35rem 0}'
 		. '}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
@@ -356,30 +356,10 @@ function estrato_nav_mega_menu_styles() {
 add_action( 'wp_head', 'estrato_nav_mega_menu_styles', 20 );
 
 /**
- * Toggle mobile para submenus.
+ * Toggle mobile legado removido — chevron + teclado ficam em nav-header-g1.php.
  */
 function estrato_nav_mega_menu_scripts() {
-	if ( is_admin() || is_feed() ) {
-		return;
-	}
-	?>
-	<script id="estrato-mega-menu-js">
-	(function(){
-		var nav=document.querySelector('.estrato-mega-nav');
-		if(!nav||window.matchMedia('(min-width:960px)').matches)return;
-		nav.addEventListener('click',function(e){
-			var link=e.target.closest('a');
-			if(!link)return;
-			var li=link.parentElement;
-			if(!li||!li.classList.contains('estrato-mega-parent'))return;
-			if(li.querySelector('.sub-menu')){
-				e.preventDefault();
-				li.classList.toggle('estrato-mega-open');
-			}
-		});
-	})();
-	</script>
-	<?php
+	/* no-op: handlers consolidados no header G1 */
 }
 add_action( 'wp_footer', 'estrato_nav_mega_menu_scripts', 30 );
 

@@ -69,6 +69,12 @@ echo "── pre2024 + pipeline_primary ──" | tee -a "$LOG"
 bash "$REPO/scripts/victor/fix-pre2024-and-rss-mode.sh" 2>&1 | tee -a "$LOG" || true
 
 echo "" | tee -a "$LOG"
+echo "── php-fpm reload (opcache) ──" | tee -a "$LOG"
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl reload php8.3-fpm 2>&1 | tee -a "$LOG" || systemctl reload php-fpm 2>&1 | tee -a "$LOG" || true
+fi
+
+echo "" | tee -a "$LOG"
 echo "── publish counts ──" | tee -a "$LOG"
 for PORTAL_ID in "${PORTALS[@]}"; do
   portal_resolve "$PORTAL_ID"

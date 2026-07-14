@@ -340,6 +340,7 @@ function estrato_nav_mega_menu_styles() {
 		. '.estrato-mega-headlines{grid-column:1/-1;border-top:1px solid #e2e8f0;margin-top:.75rem;padding-top:.75rem;display:grid;gap:.35rem}'
 		. '.estrato-mega-headline{font-size:.8125rem;font-weight:600;color:#334155;text-decoration:none}'
 		. '.estrato-mega-headline:hover{color:#0b6e4f}'
+		. '.estrato-mega-headlines{display:none!important}'
 		. '@media(min-width:960px){'
 		. '.estrato-columns-ribbon ul{flex-wrap:wrap;overflow:visible}'
 		. '.estrato-mega-nav>li.estrato-mega-parent{position:static}'
@@ -364,7 +365,7 @@ function estrato_nav_mega_menu_scripts() {
 add_action( 'wp_footer', 'estrato_nav_mega_menu_scripts', 30 );
 
 /**
- * 2 manchetes recentes por editoria no mega menu (Sprint 5).
+ * Manchetes no mega menu desativadas — menu só com editorias/subeditorias.
  *
  * @param string   $item_output
  * @param WP_Post  $item
@@ -373,33 +374,8 @@ add_action( 'wp_footer', 'estrato_nav_mega_menu_scripts', 30 );
  * @return string
  */
 function estrato_nav_mega_menu_headlines( $item_output, $item, $depth, $args ) {
-	if ( 0 !== (int) $depth || 'taxonomy' !== $item->type || 'category' !== $item->object ) {
-		return $item_output;
-	}
-	$term = get_term( (int) $item->object_id, 'category' );
-	if ( ! $term || is_wp_error( $term ) || $term->parent ) {
-		return $item_output;
-	}
-	$posts = get_posts(
-		array(
-			'post_type'      => 'post',
-			'post_status'    => 'publish',
-			'posts_per_page' => 2,
-			'cat'            => (int) $term->term_id,
-			'orderby'        => 'date',
-			'order'          => 'DESC',
-		)
-	);
-	if ( ! $posts ) {
-		return $item_output;
-	}
-	$extra = '<div class="estrato-mega-headlines">';
-	foreach ( $posts as $post ) {
-		$extra .= '<a class="estrato-mega-headline" href="' . esc_url( get_permalink( $post ) ) . '">'
-			. esc_html( wp_trim_words( get_the_title( $post ), 10, '…' ) ) . '</a>';
-	}
-	$extra .= '</div>';
-	return $item_output . $extra;
+	unset( $item, $depth, $args );
+	return $item_output;
 }
-add_filter( 'walker_nav_menu_start_el', 'estrato_nav_mega_menu_headlines', 20, 4 );
+// Mantém a função (compat) mas não registra o filter — evita prévias de notícia no nav.
 

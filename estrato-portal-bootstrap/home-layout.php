@@ -283,6 +283,14 @@ function estrato_home_render_card( $post, $variant = 'list', $opts = array() ) {
  * @return array{html:string,used:array<int,int>}
  */
 function estrato_home_render_breaking( $exclude_ids = array() ) {
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+	/* Breaking "Mercados" só faz sentido no portal financeiro. */
+	if ( 'estrato-finance' !== $portal ) {
+		return array(
+			'html' => '',
+			'used' => $exclude_ids,
+		);
+	}
 	$config = function_exists( 'estrato_portal_get_config' ) ? estrato_portal_get_config() : array();
 	$label  = (string) ( $config['branding']['breaking_label'] ?? 'Mercados' );
 	$mod_id = (int) get_theme_mod( 'pressgrid_breaking_news_category', 0 );
@@ -360,6 +368,11 @@ function estrato_home_fetch_agora( $used_ids, $limit = 8 ) {
 				),
 			)
 		);
+		$agora = estrato_home_take_unique( $pool, $used_ids, $limit );
+	}
+	/* Portais de baixo volume: completar com os mais recentes sem janela. */
+	if ( count( $agora['items'] ) < 5 ) {
+		$pool  = estrato_home_fetch_posts( array( 'posts_per_page' => 16 ) );
 		$agora = estrato_home_take_unique( $pool, $used_ids, $limit );
 	}
 	return $agora;

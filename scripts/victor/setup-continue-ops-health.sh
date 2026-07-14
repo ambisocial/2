@@ -38,6 +38,8 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   if [[ "$PORTAL_ID" != "estrato-finance" ]]; then
     echo "--- RSS health + import ---" | tee -a "$LOG"
     portal_wp eval-file "$REPO/scripts/victor/setup-portal-rss-health.php" 2>&1 | tee -a "$LOG" || true
+    echo "--- boost satellite RSS volume ---" | tee -a "$LOG"
+    portal_wp eval-file "$REPO/scripts/victor/boost-satellite-rss.php" 2>&1 | tee -a "$LOG" || true
     echo "--- refill satellite content ---" | tee -a "$LOG"
     portal_wp eval-file "$REPO/scripts/victor/refill-satellite-content.php" 2>&1 | tee -a "$LOG" || true
     echo "--- fix gate satellites ---" | tee -a "$LOG"

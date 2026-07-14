@@ -41,7 +41,7 @@ echo ""
 echo "## 2. Conteúdo por portal"
 PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
   estrato-esg
-  estrato-viagem estrato-culture)
+  estrato-viagem estrato-culture estrato-politica estrato-esporte estrato-saude estrato-educacao estrato-tech estrato-carros)
 for PORTAL_ID in "${PORTALS[@]}"; do
   portal_resolve "$PORTAL_ID"
   pub=$(portal_wp post list --post_status=publish --format=count 2>/dev/null || echo 0)

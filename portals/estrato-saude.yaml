@@ -1,0 +1,55 @@
+# Portal Estrato Saúde — P1
+id: estrato-saude
+domain: saude.estrato.cc
+title: Estrato Saúde
+tagline: Ciência médica, prevenção e bem-estar
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-saude
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-saude-taxonomy.php
+
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-saude-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - medicina
+  - prevencao
+  - bem-estar
+
+branding:
+  primary_color: "#0E7490"
+  accent_color: "#22D3EE"
+  secondary_color: "#155E75"
+  logo_file: estrato-logo.png
+  breaking_category: medicina
+  breaking_label: "Saúde"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/saude.estrato.cc

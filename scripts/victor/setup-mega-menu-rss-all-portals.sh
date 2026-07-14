@@ -19,6 +19,12 @@ PORTALS=(
   estrato-esg
   estrato-viagem
   estrato-culture
+  estrato-politica
+  estrato-esporte
+  estrato-saude
+  estrato-educacao
+  estrato-tech
+  estrato-carros
 )
 
 log() { echo "[$(date -Iseconds)] $*" | tee -a "$LOG"; }

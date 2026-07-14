@@ -20,6 +20,12 @@ SATELLITES=(
   estrato-esg
   estrato-viagem
   estrato-culture
+  estrato-politica
+  estrato-esporte
+  estrato-saude
+  estrato-educacao
+  estrato-tech
+  estrato-carros
 )
 
 log "=== Limpeza satélites + dedup ==="

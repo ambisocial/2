@@ -28,6 +28,12 @@ function estrato_rss_taxonomy_presets() {
 		'brasil-esg',
 		'brasil-viagem',
 		'brasil-culture',
+		'brasil-politica',
+		'brasil-esporte',
+		'brasil-saude',
+		'brasil-educacao',
+		'brasil-tech',
+		'brasil-carros',
 		// Legado (redirect/compat).
 		'brasil-sustain',
 	);
@@ -47,6 +53,12 @@ function estrato_rss_preset_to_taxonomy_basename( $preset ) {
 		'brasil-esg'        => 'estrato-esg-taxonomy',
 		'brasil-viagem'     => 'estrato-viagem-taxonomy',
 		'brasil-culture'    => 'estrato-culture-taxonomy',
+		'brasil-politica'   => 'estrato-politica-taxonomy',
+		'brasil-esporte'    => 'estrato-esporte-taxonomy',
+		'brasil-saude'      => 'estrato-saude-taxonomy',
+		'brasil-educacao'   => 'estrato-educacao-taxonomy',
+		'brasil-tech'       => 'estrato-tech-taxonomy',
+		'brasil-carros'     => 'estrato-carros-taxonomy',
 		// Legado Sustain → Agro.
 		'brasil-sustain'    => 'estrato-agro-taxonomy',
 	);
@@ -162,6 +174,49 @@ function estrato_rss_load_sustain_taxonomy() {
 /**
  * @return array<string, mixed>
  */
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_politica_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-politica' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_esporte_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-esporte' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_saude_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-saude' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_educacao_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-educacao' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_tech_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-tech' );
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function estrato_rss_load_carros_taxonomy() {
+	return estrato_rss_load_taxonomy_by_preset( 'brasil-carros' );
+}
+
 function estrato_rss_load_culture_taxonomy() {
 	return estrato_rss_load_taxonomy_by_preset( 'brasil-culture' );
 }
@@ -283,6 +338,49 @@ function estrato_rss_get_sustain_menu_order() {
 /**
  * @return array<int, string>
  */
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_politica_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order( estrato_rss_load_politica_taxonomy(), array( 'poder', 'brasil', 'eleicoes' ) );
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_esporte_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order( estrato_rss_load_esporte_taxonomy(), array( 'futebol', 'olimpiadas', 'mais-esportes' ) );
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_saude_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order( estrato_rss_load_saude_taxonomy(), array( 'medicina', 'prevencao', 'bem-estar' ) );
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_educacao_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order( estrato_rss_load_educacao_taxonomy(), array( 'educacao-base', 'carreira', 'empreendedorismo' ) );
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_tech_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order( estrato_rss_load_tech_taxonomy(), array( 'tecnologia', 'inovacao', 'gadgets' ) );
+}
+
+/**
+ * @return array<int, string>
+ */
+function estrato_rss_get_carros_menu_order() {
+	return estrato_rss_get_taxonomy_menu_order( estrato_rss_load_carros_taxonomy(), array( 'automoveis', 'eletricos', 'mobilidade' ) );
+}
+
 function estrato_rss_get_culture_menu_order() {
 	return estrato_rss_get_taxonomy_menu_order(
 		estrato_rss_load_culture_taxonomy(),

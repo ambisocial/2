@@ -9,7 +9,7 @@ source "$SCRIPT_DIR/lib/portal-env.sh"
 
 PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
   estrato-esg
-  estrato-viagem estrato-culture)
+  estrato-viagem estrato-culture estrato-politica estrato-esporte estrato-saude estrato-educacao estrato-tech estrato-carros)
 
 LOG="${REPO}/logs/s7-audit-final-$(date +%Y%m%d-%H%M%S).log"
 mkdir -p "$(dirname "$LOG")"

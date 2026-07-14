@@ -42,7 +42,7 @@ if [[ -f "${REPO}/scripts/victor/lib/portal-env.sh" ]]; then
   source "${REPO}/scripts/victor/lib/portal-env.sh"
   PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
   estrato-esg
-  estrato-viagem estrato-culture)
+  estrato-viagem estrato-culture estrato-politica estrato-esporte estrato-saude estrato-educacao estrato-tech estrato-carros)
   for PORTAL_ID in "${PORTALS[@]}"; do
     portal_resolve "$PORTAL_ID" 2>/dev/null || continue
     portal_sync_plugins 2>/dev/null || true

@@ -18,7 +18,7 @@ else
   fail "estrato-anti-regression.yaml ausente"
 fi
 
-for ar in mind lifestyle science agro esg viagem culture sustain; do
+for ar in mind lifestyle science agro esg viagem culture politica esporte saude educacao tech carros sustain; do
   f="portals/estrato-anti-regression-${ar}.yaml"
   if [[ -f "$f" ]]; then
     ok "$(basename "$f") presente"
@@ -76,7 +76,11 @@ else
 fi
 
 for f in portals/estrato-agro-taxonomy.php portals/estrato-esg-taxonomy.php portals/estrato-viagem-taxonomy.php \
-          portals/estrato-agro.yaml portals/estrato-esg.yaml portals/estrato-viagem.yaml; do
+          portals/estrato-agro.yaml portals/estrato-esg.yaml portals/estrato-viagem.yaml \
+          portals/estrato-politica-taxonomy.php portals/estrato-esporte-taxonomy.php portals/estrato-saude-taxonomy.php \
+          portals/estrato-educacao-taxonomy.php portals/estrato-tech-taxonomy.php portals/estrato-carros-taxonomy.php \
+          portals/estrato-politica.yaml portals/estrato-esporte.yaml portals/estrato-saude.yaml \
+          portals/estrato-educacao.yaml portals/estrato-tech.yaml portals/estrato-carros.yaml; do
   if [[ -f "$f" ]]; then
     ok "$(basename "$f") presente"
   else
@@ -164,7 +168,7 @@ sys.exit(1 if d else 0)" 2>/dev/null
   fi
 }
 
-for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php portals/estrato-agro-taxonomy.php portals/estrato-esg-taxonomy.php portals/estrato-viagem-taxonomy.php portals/estrato-culture-taxonomy.php; do
+for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php portals/estrato-agro-taxonomy.php portals/estrato-esg-taxonomy.php portals/estrato-viagem-taxonomy.php portals/estrato-culture-taxonomy.php portals/estrato-politica-taxonomy.php portals/estrato-esporte-taxonomy.php portals/estrato-saude-taxonomy.php portals/estrato-educacao-taxonomy.php portals/estrato-tech-taxonomy.php portals/estrato-carros-taxonomy.php; do
   if [[ -f "$tax" ]]; then
     if command -v php >/dev/null 2>&1; then
       php -l "$tax" >/dev/null 2>&1 && ok "php -l $(basename "$tax")" || fail "php -l $tax"

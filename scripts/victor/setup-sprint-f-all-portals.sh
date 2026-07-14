@@ -19,6 +19,12 @@ PORTALS=(
   estrato-esg
   estrato-viagem
   estrato-culture
+  estrato-politica
+  estrato-esporte
+  estrato-saude
+  estrato-educacao
+  estrato-tech
+  estrato-carros
 )
 
 for PORTAL_ID in "${PORTALS[@]}"; do

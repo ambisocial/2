@@ -97,6 +97,12 @@ function estrato_regression_portal_editoria_slugs() {
 		'brasil-esg'        => array( 'clima-ambiente', 'transicao-energia', 'impacto-negocios' ),
 		'brasil-viagem'     => array( 'destinos', 'rotas-dicas', 'nomadismo' ),
 		'brasil-culture'    => array( 'jogos-imaginacao', 'narrativas-som', 'celebridades' ),
+		'brasil-politica'   => array( 'poder', 'brasil', 'eleicoes' ),
+		'brasil-esporte'    => array( 'futebol', 'olimpiadas', 'mais-esportes' ),
+		'brasil-saude'      => array( 'medicina', 'prevencao', 'bem-estar' ),
+		'brasil-educacao'   => array( 'educacao-base', 'carreira', 'empreendedorismo' ),
+		'brasil-tech'       => array( 'tecnologia', 'inovacao', 'gadgets' ),
+		'brasil-carros'     => array( 'automoveis', 'eletricos', 'mobilidade' ),
 		'brasil-sustain'    => array( 'producao-safras', 'mercado-agro', 'agroecologia' ),
 	);
 	if ( isset( $map[ $preset ] ) ) {

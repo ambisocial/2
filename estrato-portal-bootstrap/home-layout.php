@@ -396,13 +396,13 @@ function estrato_home_render_layout() {
 	$agora = estrato_home_fetch_agora( $used, 8 );
 	$used  = $agora['used'];
 
-	$feed_pool = estrato_home_fetch_posts( array( 'posts_per_page' => max( 40, $feed_need + 10 ) ) );
-	$feed      = estrato_home_take_unique( $feed_pool, $used, $feed_need );
-	$used      = $feed['used'];
-
-	/* Há mais se a pool bruta ainda tinha candidatos além do take. */
-	$more_candidates = estrato_home_take_unique( $feed_pool, $used, 1 );
-	$has_more        = ! empty( $more_candidates['items'] );
+	$feed_pool = estrato_home_fetch_posts( array( 'posts_per_page' => max( 48, $feed_need + 8 ) ) );
+	$feed_all  = estrato_home_take_unique( $feed_pool, $used, $feed_need + 1 );
+	$has_more  = count( $feed_all['items'] ) > $feed_need;
+	$feed_items = $has_more ? array_slice( $feed_all['items'], 0, $feed_need ) : $feed_all['items'];
+	foreach ( $feed_items as $fp ) {
+		$used[] = $fp->ID;
+	}
 
 	$html = '<div class="estrato-home-v2">';
 
@@ -438,7 +438,7 @@ function estrato_home_render_layout() {
 	$html .= '<section class="estrato-home-feed" aria-label="Feed de notícias" id="estrato-home-feed">';
 	$html .= '<h2 class="estrato-kicker">Em destaque</h2>';
 	$html .= '<div class="estrato-home-feed__list">';
-	foreach ( $feed['items'] as $i => $post ) {
+	foreach ( $feed_items as $i => $post ) {
 		$html .= estrato_home_render_card(
 			$post,
 			'feed',

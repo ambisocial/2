@@ -343,17 +343,19 @@ if echo "$hdr" | grep -qi nosniff; then ok "AR-PERF-002 X-Content-Type-Options";
 
 # ─── H. MOBILE-FIRST ──────────────────────────────────────────────
 echo "## H. mobile-first"
-if echo "$HOME_HTML" | grep -qiE '<meta[^>]+name=["'\'']viewport["'\''][^>]+width=device-width'; then
+if grep -qiE '<meta[^>]+name=["'\'']?viewport["'\'']?[^>]*width=device-width' "$HOME_HTML" \
+  || grep -qiE '<meta[^>]+content=["'\''][^"'\'']*width=device-width' "$HOME_HTML"; then
   ok "AR-MOBILE-002 viewport device-width"
 else
   block "AR-MOBILE-002 viewport ausente ou incorreto"
 fi
-mf_live=$(echo "$HOME_HTML" | grep -oE '@media[^{]*max-width[^{]*\{' || true)
+mf_live=$(grep -oE '@media[^{]*max-width[^{]*\{' "$HOME_HTML" || true)
 if [[ -z "$mf_live" ]]; then
   ok "AR-MOBILE-003 home sem @media max-width (mobile-first)"
 else
   warn "AR-MOBILE-003 home ainda tem @media max-width (possível CSS de tema)"
 fi
+rm -f "$HOME_HTML"
 
 # ─── RESUMO ─────────────────────────────────────────────────────
 echo

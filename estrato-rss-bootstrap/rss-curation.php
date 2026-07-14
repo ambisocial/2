@@ -23,6 +23,7 @@ function estrato_rss_normalize_feed_url( $url ) {
 
 /**
  * Remove URLs duplicadas entre categorias (primeira ocorrência na menu_order vence).
+ * Inclui feeds de subcategorias tier ≤ 1 (antes só root — satélites ficavam com 2–3 feeds).
  *
  * @param array<string, mixed> $taxonomy
  * @return array{config:array<string,array>,duplicates:int,removed:int}
@@ -42,6 +43,21 @@ function estrato_rss_dedupe_feed_matrix( $taxonomy ) {
 		$cat    = $cats[ $slug ];
 		$feeds  = array();
 		$raw    = $cat['feeds'] ?? array();
+		// Subcategorias: anexar feeds tier ≤ 1 ao root da editoria.
+		if ( ! empty( $cat['subcategories'] ) && is_array( $cat['subcategories'] ) ) {
+			foreach ( $cat['subcategories'] as $child ) {
+				if ( ! is_array( $child ) || empty( $child['feeds'] ) || ! is_array( $child['feeds'] ) ) {
+					continue;
+				}
+				foreach ( $child['feeds'] as $sub_feed ) {
+					$tier = isset( $sub_feed['tier'] ) ? (int) $sub_feed['tier'] : 2;
+					if ( $tier > 1 ) {
+						continue;
+					}
+					$raw[] = $sub_feed;
+				}
+			}
+		}
 		foreach ( $raw as $feed ) {
 			if ( empty( $feed['url'] ) ) {
 				continue;

@@ -407,9 +407,9 @@ function estrato_g1_header_styles() {
 	a.estrato-g1-header__editoria-label:hover{text-decoration:underline}
 	/* Trilho horizontal — sempre visível no mobile */
 	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e5e5e5}
-	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x proximity}
 	.estrato-g1-rail{display:flex;flex-wrap:nowrap;gap:0;list-style:none;margin:0;padding:0;min-height:44px;align-items:stretch}
-	.estrato-g1-rail>li{flex:0 0 auto}
+	.estrato-g1-rail>li{flex:0 0 auto;scroll-snap-align:start}
 	.estrato-g1-rail>li>a{
 		display:flex;align-items:center;padding:.6rem .85rem;color:#1e1e1e;font-size:.8125rem;font-weight:600;
 		text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent

@@ -95,7 +95,6 @@ return array(
 			'feeds'       => array(
 				array( 'title' => 'Valor Agronegócios', 'url' => 'https://pox.globo.com/rss/valor/agronegocios', 'tier' => 1 ),
 				array( 'title' => 'InfoMoney Agronegócio', 'url' => 'https://www.infomoney.com.br/tudo-sobre/agronegocio/feed/', 'tier' => 2 ),
-				array( 'title' => 'G1 Agronegócios', 'url' => 'https://g1.globo.com/rss/g1/economia/agronegocios/', 'tier' => 2 ),
 			),
 			'subcategories' => array(
 				'commodities'  => array(

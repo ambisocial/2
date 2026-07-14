@@ -44,9 +44,7 @@ done
 
 echo ""
 echo "== V2: purga posts off-matriz (satélites) =="
-for portal in estrato-mind estrato-lifestyle estrato-science estrato-agro
-  estrato-esg
-  estrato-viagem estrato-culture; do
+for portal in estrato-mind estrato-lifestyle estrato-science estrato-agro estrato-esg estrato-viagem estrato-culture; do
   portal_resolve "$portal"
   echo "-- $portal --"
   sudo -u www-data env "ESTRATO_PURGE_DRY_RUN=$DRY_RUN" wp --path="$PORTAL_WEB_ROOT" eval-file "$SCRIPT_DIR/purge-off-matrix-posts.php" 2>&1 | tail -80

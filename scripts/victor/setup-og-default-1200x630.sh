@@ -33,9 +33,9 @@ declare -A COLOR_BG=(
   [estrato-mind]='#1B2E4B'
   [estrato-lifestyle]='#5D2E46'
   [estrato-science]='#0F3B39'
-  [estrato-agro
-  estrato-esg
-  estrato-viagem]='#2D4A26'
+  [estrato-agro]='#386641'
+  [estrato-esg]='#0B3D2E'
+  [estrato-viagem]='#023E8A'
   [estrato-culture]='#3D1E5F'
 )
 
@@ -44,9 +44,9 @@ declare -A LABEL=(
   [estrato-mind]='Estrato Mente'
   [estrato-lifestyle]='Estrato Lifestyle'
   [estrato-science]='Estrato Science'
-  [estrato-agro
-  estrato-esg
-  estrato-viagem]='Estrato Sustain'
+  [estrato-agro]='Estrato Agro'
+  [estrato-esg]='Estrato ESG'
+  [estrato-viagem]='Estrato Viagem'
   [estrato-culture]='Estrato Culture'
 )
 

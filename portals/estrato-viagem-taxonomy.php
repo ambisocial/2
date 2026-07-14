@@ -95,7 +95,6 @@ return array(
 			'feeds'       => array(
 				array( 'title' => 'Viaje na Viagem', 'url' => 'https://www.viajenaviagem.com/feed/', 'tier' => 1 ),
 				array( 'title' => 'Blog 123 Milhas', 'url' => 'https://blog.123milhas.com/feed/', 'tier' => 2 ),
-				array( 'title' => 'Melhores Destinos', 'url' => 'https://www.melhoresdestinos.com.br/feed', 'tier' => 1 ),
 			),
 			'subcategories' => array(
 				'passagens-milhas' => array(

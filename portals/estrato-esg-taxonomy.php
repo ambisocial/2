@@ -143,9 +143,9 @@ return array(
 				'header_variant'  => 'editoria',
 			),
 			'feeds'       => array(
-				array( 'title' => 'Página22', 'url' => 'https://www.pagina22.com.br/feed/', 'tier' => 1 ),
 				array( 'title' => 'DigiLabour', 'url' => 'https://digilabour.com.br/feed/', 'tier' => 1 ),
 				array( 'title' => 'EITA', 'url' => 'https://eita.coop.br/feed/', 'tier' => 2 ),
+				array( 'title' => 'Quintessa', 'url' => 'https://blog.quintessa.org.br/feed/', 'tier' => 2 ),
 			),
 			'subcategories' => array(
 				'financas-verdes' => array(

@@ -103,8 +103,9 @@ function estrato_ds_print_styles() {
 		. '.estrato-caption{font-size:.75rem;color:var(--estrato-muted)}'
 		/* Sidebar PressGrid: sem scroll interno — só o scroll da página. */
 		. '.pg-sidebar,.pg-sidebar[role="complementary"]{max-height:none!important;height:auto!important;overflow:visible!important;overflow-y:visible!important;scrollbar-width:auto}'
-		/* Mobile: sidebar abaixo/oculta; sem publicidade vazia ocupando viewport. */
-		. '@media(max-width:1099px){.pg-sidebar,.pg-sidebar[role="complementary"],.widget_text:has(.ads),.widget.widget_media_image{order:99}}'
+		/* Mobile-first: sidebar ao final; em desktop (≥1100px) o tema controla a ordem. */
+		. '.pg-sidebar,.pg-sidebar[role="complementary"],.widget_text:has(.ads),.widget.widget_media_image{order:99}'
+		. '@media(min-width:1100px){.pg-sidebar,.pg-sidebar[role="complementary"],.widget_text:has(.ads),.widget.widget_media_image{order:initial}}'
 		. '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}'
 		. 'a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid #9AFF33;outline-offset:2px}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {

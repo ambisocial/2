@@ -1,0 +1,55 @@
+# Portal Estrato Esporte — P1
+id: estrato-esporte
+domain: esporte.estrato.cc
+title: Estrato Esporte
+tagline: Futebol e arena esportiva
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-esporte
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-esporte-taxonomy.php
+
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-esporte-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - futebol
+  - olimpiadas
+  - mais-esportes
+
+branding:
+  primary_color: "#14532D"
+  accent_color: "#22C55E"
+  secondary_color: "#166534"
+  logo_file: estrato-logo.png
+  breaking_category: futebol
+  breaking_label: "Futebol"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/esporte.estrato.cc

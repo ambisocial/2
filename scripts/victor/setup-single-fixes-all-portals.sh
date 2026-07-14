@@ -20,7 +20,7 @@ DRY="${ESTRATO_DRY_RUN:-0}"
 REPO="${REPO:-/var/www/estrato/repo}"
 PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
   estrato-esg
-  estrato-viagem estrato-culture)
+  estrato-viagem estrato-culture estrato-politica estrato-esporte estrato-saude estrato-educacao estrato-tech estrato-carros)
 
 # shellcheck disable=SC1091
 source "$REPO/scripts/victor/lib/portal-env.sh"

@@ -1,0 +1,55 @@
+# Portal Estrato Tech — P1
+id: estrato-tech
+domain: tech.estrato.cc
+title: Estrato Tech
+tagline: Tecnologia, produtos e inovação
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-tech
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-tech-taxonomy.php
+
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-tech-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - tecnologia
+  - inovacao
+  - gadgets
+
+branding:
+  primary_color: "#0F172A"
+  accent_color: "#38BDF8"
+  secondary_color: "#1E293B"
+  logo_file: estrato-logo.png
+  breaking_category: tecnologia
+  breaking_label: "Tech"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/tech.estrato.cc

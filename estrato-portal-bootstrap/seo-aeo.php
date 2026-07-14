@@ -282,6 +282,12 @@ function estrato_aeo_portal_editorias() {
 		'estrato-esg'       => 'estrato_rss_load_esg_taxonomy',
 		'estrato-viagem'    => 'estrato_rss_load_viagem_taxonomy',
 		'estrato-culture'   => 'estrato_rss_load_culture_taxonomy',
+		'estrato-politica'  => 'estrato_rss_load_politica_taxonomy',
+		'estrato-esporte'   => 'estrato_rss_load_esporte_taxonomy',
+		'estrato-saude'     => 'estrato_rss_load_saude_taxonomy',
+		'estrato-educacao'  => 'estrato_rss_load_educacao_taxonomy',
+		'estrato-tech'      => 'estrato_rss_load_tech_taxonomy',
+		'estrato-carros'    => 'estrato_rss_load_carros_taxonomy',
 		// Legado.
 		'estrato-sustain'   => 'estrato_rss_load_agro_taxonomy',
 	);

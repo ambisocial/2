@@ -17,6 +17,12 @@ PORTALS=(
   estrato-esg
   estrato-viagem
   estrato-culture
+  estrato-politica
+  estrato-esporte
+  estrato-saude
+  estrato-educacao
+  estrato-tech
+  estrato-carros
 )
 
 LOG_DIR="${ESTRATO_REPORT_DIR:-$REPO/logs}"

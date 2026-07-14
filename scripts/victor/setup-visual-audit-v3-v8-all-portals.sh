@@ -24,6 +24,12 @@ PORTALS=(
   estrato-esg
   estrato-viagem
   estrato-culture
+  estrato-politica
+  estrato-esporte
+  estrato-saude
+  estrato-educacao
+  estrato-tech
+  estrato-carros
 )
 
 DRY_RUN=0

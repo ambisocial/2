@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.10.0
+ * Version: 1.11.0
  * Author: Cursor Agent
  */
 
@@ -207,6 +207,12 @@ function estrato_rss_get_presets() {
 	$brasil_esg        = estrato_rss_taxonomy_to_preset( estrato_rss_load_esg_taxonomy() );
 	$brasil_viagem     = estrato_rss_taxonomy_to_preset( estrato_rss_load_viagem_taxonomy() );
 	$brasil_culture    = estrato_rss_taxonomy_to_preset( estrato_rss_load_culture_taxonomy() );
+	$brasil_politica   = estrato_rss_taxonomy_to_preset( estrato_rss_load_politica_taxonomy() );
+	$brasil_esporte    = estrato_rss_taxonomy_to_preset( estrato_rss_load_esporte_taxonomy() );
+	$brasil_saude      = estrato_rss_taxonomy_to_preset( estrato_rss_load_saude_taxonomy() );
+	$brasil_educacao   = estrato_rss_taxonomy_to_preset( estrato_rss_load_educacao_taxonomy() );
+	$brasil_tech       = estrato_rss_taxonomy_to_preset( estrato_rss_load_tech_taxonomy() );
+	$brasil_carros     = estrato_rss_taxonomy_to_preset( estrato_rss_load_carros_taxonomy() );
 	// Compat legado.
 	$brasil_sustain    = $brasil_agro;
 	if ( empty( $brasil_financeiro ) ) {
@@ -290,6 +296,12 @@ function estrato_rss_get_presets() {
 		'brasil-esg'        => $brasil_esg,
 		'brasil-viagem'     => $brasil_viagem,
 		'brasil-culture'    => $brasil_culture,
+		'brasil-politica'   => $brasil_politica,
+		'brasil-esporte'    => $brasil_esporte,
+		'brasil-saude'      => $brasil_saude,
+		'brasil-educacao'   => $brasil_educacao,
+		'brasil-tech'       => $brasil_tech,
+		'brasil-carros'     => $brasil_carros,
 		'brasil-sustain'    => $brasil_sustain,
 	);
 }
@@ -372,6 +384,24 @@ function estrato_rss_get_menu_order() {
 	}
 	if ( 'brasil-viagem' === $preset ) {
 		return estrato_rss_get_viagem_menu_order();
+	}
+	if ( 'brasil-politica' === $preset ) {
+		return estrato_rss_get_politica_menu_order();
+	}
+	if ( 'brasil-esporte' === $preset ) {
+		return estrato_rss_get_esporte_menu_order();
+	}
+	if ( 'brasil-saude' === $preset ) {
+		return estrato_rss_get_saude_menu_order();
+	}
+	if ( 'brasil-educacao' === $preset ) {
+		return estrato_rss_get_educacao_menu_order();
+	}
+	if ( 'brasil-tech' === $preset ) {
+		return estrato_rss_get_tech_menu_order();
+	}
+	if ( 'brasil-carros' === $preset ) {
+		return estrato_rss_get_carros_menu_order();
 	}
 	if ( 'brasil-culture' === $preset ) {
 		return estrato_rss_get_culture_menu_order();

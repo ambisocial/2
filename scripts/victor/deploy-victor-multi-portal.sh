@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO_URL="${ESTRATO_REPO_URL:-https://github.com/ambisocial/2.git}"
-REPO_BRANCH="${ESTRATO_REPO_BRANCH:-cursor/taxonomy-rss-keywords-2c04}"
+REPO_BRANCH="${ESTRATO_REPO_BRANCH:-Preditivit}"
 REPO="${ESTRATO_REPO:-/var/www/estrato/repo}"
 VPS_IP="${ESTRATO_VPS_IP:-187.127.12.186}"
 ZONE="${ESTRATO_ZONE:-estrato.cc}"
@@ -21,6 +21,12 @@ PORTALS=(
   "esg.estrato.cc|estrato-esg|brasil-esg|Estrato ESG|Clima, transição energética e impacto"
   "viagem.estrato.cc|estrato-viagem|brasil-viagem|Estrato Viagem|Destinos, rotas e nomadismo"
   "culture.estrato.cc|estrato-culture|brasil-culture|Estrato Culture|Entretenimento, cultura pop e celebridades"
+  "politica.estrato.cc|estrato-politica|brasil-politica|Estrato Política|Brasília, Congresso e poder"
+  "esporte.estrato.cc|estrato-esporte|brasil-esporte|Estrato Esporte|Futebol e arena esportiva"
+  "saude.estrato.cc|estrato-saude|brasil-saude|Estrato Saúde|Medicina e bem-estar"
+  "educacao.estrato.cc|estrato-educacao|brasil-educacao|Estrato Educação|Educação e carreira"
+  "tech.estrato.cc|estrato-tech|brasil-tech|Estrato Tech|Tecnologia e inovação"
+  "carros.estrato.cc|estrato-carros|brasil-carros|Estrato Carros|Automóveis e mobilidade"
 )
 
 log() { echo "[$(date -Iseconds)] $*"; }

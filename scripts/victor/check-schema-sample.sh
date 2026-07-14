@@ -65,7 +65,7 @@ check_html() {
   rm -f "$tmp"
 }
 
-PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture)
+PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture estrato-politica estrato-esporte estrato-saude estrato-educacao estrato-tech estrato-carros)
 for PORTAL_ID in "${PORTALS[@]}"; do
   portal_resolve "$PORTAL_ID"
   check_html "$PORTAL_DOMAIN home" "$PORTAL_DOMAIN" "/" "$PORTAL_WEB_ROOT"

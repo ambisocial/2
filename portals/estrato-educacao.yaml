@@ -1,0 +1,55 @@
+# Portal Estrato Educação — P1
+id: estrato-educacao
+domain: educacao.estrato.cc
+title: Estrato Educação
+tagline: Educação, Enem e carreira
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-educacao
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-educacao-taxonomy.php
+
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-educacao-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - educacao-base
+  - carreira
+  - empreendedorismo
+
+branding:
+  primary_color: "#5B21B6"
+  accent_color: "#A78BFA"
+  secondary_color: "#4C1D95"
+  logo_file: estrato-logo.png
+  breaking_category: educacao-base
+  breaking_label: "Educação"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/educacao.estrato.cc

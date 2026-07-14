@@ -14,7 +14,7 @@ FAIL_N=0
 
 PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
   estrato-esg
-  estrato-viagem estrato-culture)
+  estrato-viagem estrato-culture estrato-politica estrato-esporte estrato-saude estrato-educacao estrato-tech estrato-carros)
 
 echo "=== Lighthouse S7.3 (mobile PSI) ===" | tee "$LOG"
 echo "Meta: LCP ≤ ${ESTRATO_LCP_MAX_MS:-2500}ms · CLS ≤ ${ESTRATO_CLS_MAX:-0.1}" | tee -a "$LOG"

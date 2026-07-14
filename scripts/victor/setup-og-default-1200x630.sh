@@ -21,6 +21,12 @@ PORTALS=(
   estrato-esg
   estrato-viagem
   estrato-culture
+  estrato-politica
+  estrato-esporte
+  estrato-saude
+  estrato-educacao
+  estrato-tech
+  estrato-carros
 )
 
 TMP=/tmp/estrato-og-default
@@ -37,6 +43,12 @@ declare -A COLOR_BG=(
   [estrato-esg]='#0B3D2E'
   [estrato-viagem]='#023E8A'
   [estrato-culture]='#3D1E5F'
+  [estrato-politica]='#1A365D'
+  [estrato-esporte]='#14532D'
+  [estrato-saude]='#0E7490'
+  [estrato-educacao]='#5B21B6'
+  [estrato-tech]='#0F172A'
+  [estrato-carros]='#7C2D12'
 )
 
 declare -A LABEL=(
@@ -48,6 +60,12 @@ declare -A LABEL=(
   [estrato-esg]='Estrato ESG'
   [estrato-viagem]='Estrato Viagem'
   [estrato-culture]='Estrato Culture'
+  [estrato-politica]='Estrato Política'
+  [estrato-esporte]='Estrato Esporte'
+  [estrato-saude]='Estrato Saúde'
+  [estrato-educacao]='Estrato Educação'
+  [estrato-tech]='Estrato Tech'
+  [estrato-carros]='Estrato Carros'
 )
 
 for portal in "${PORTALS[@]}"; do

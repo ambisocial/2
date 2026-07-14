@@ -621,7 +621,7 @@ function estrato_g1_strip_pressgrid_nav_callback( $html ) {
 	if ( ! is_string( $html ) || '' === $html ) {
 		return $html;
 	}
-	foreach ( array( 'pg-topbar', 'pg-masthead', 'pg-nav-wrap' ) as $class ) {
+	foreach ( array( 'pg-topbar', 'pg-masthead', 'pg-nav-wrap', 'pg-forex-bar' ) as $class ) {
 		$prev = '';
 		while ( $prev !== $html ) {
 			$prev = $html;

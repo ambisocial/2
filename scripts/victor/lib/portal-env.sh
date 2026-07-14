@@ -29,7 +29,15 @@ portal_resolve() {
 }
 
 portal_wp() {
-  sudo -u www-data env "ESTRATO_PORTAL=${ESTRATO_PORTAL:-}" wp --path="${PORTAL_WEB_ROOT:?}" "$@"
+  sudo -u www-data env \
+    "ESTRATO_PORTAL=${ESTRATO_PORTAL:-}" \
+    "ESTRATO_REPO=${ESTRATO_REPO:-}" \
+    "ESTRATO_HARD_GUID_PRUNE=${ESTRATO_HARD_GUID_PRUNE:-}" \
+    "ESTRATO_PURGE_DRY_RUN=${ESTRATO_PURGE_DRY_RUN:-}" \
+    "ESTRATO_HYGIENE_DRY_RUN=${ESTRATO_HYGIENE_DRY_RUN:-}" \
+    "ESTRATO_DRAFT_MAX_DAYS=${ESTRATO_DRAFT_MAX_DAYS:-}" \
+    "ESTRATO_TRASH_MAX_DAYS=${ESTRATO_TRASH_MAX_DAYS:-}" \
+    wp --path="${PORTAL_WEB_ROOT:?}" "$@"
 }
 
 portal_log() {

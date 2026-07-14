@@ -77,6 +77,14 @@ function estrato_gate_require_original_thumbnail( $post_id ) {
 	if ( 'analysis' === get_post_meta( $post_id, '_estrato_content_mode', true ) && has_post_thumbnail( $post_id ) ) {
 		return;
 	}
+	// Satélites: RSS niche feeds frequentemente sem enclosure — aceitar qualquer thumb
+	// quando há fonte RSS e o portal não é finance.
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+	if ( 'estrato-finance' !== $portal
+		&& get_post_meta( $post_id, '_estrato_rss_source_url', true )
+		&& has_post_thumbnail( $post_id ) ) {
+		return;
+	}
 	if ( ! function_exists( 'estrato_bridge_post_has_original_thumbnail' ) ) {
 		return;
 	}
@@ -166,8 +174,28 @@ function estrato_gate_require_source_in_matrix( $post_id ) {
 		$src = get_post_meta( $post_id, '_estrato_source_url', true );
 	}
 	if ( ! $src ) {
+		// Pipeline quebrado (ex.: syndication fatal antes do meta) → não fica público.
+		remove_action( 'save_post_post', 'estrato_gate_require_source_in_matrix', 105 );
+		wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_status' => 'draft',
+			)
+		);
+		add_action( 'save_post_post', 'estrato_gate_require_source_in_matrix', 105 );
+		update_post_meta( $post_id, '_estrato_skip_reason', 'missing_source_url' );
 		return;
 	}
+
+	$rss_src = (string) get_post_meta( $post_id, '_estrato_rss_source_url', true );
+	// Pipeline rewrite (`_estrato_source_url` só) é livre de matriz no finance.
+	// Off-matrix só bloqueia import RSS (meta RSS) ou satélites.
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+	$is_rss = ( '' !== $rss_src );
+	if ( ! $is_rss && 'estrato-finance' === $portal ) {
+		return;
+	}
+
 	$src_host = strtolower( (string) wp_parse_url( $src, PHP_URL_HOST ) );
 	if ( ! $src_host ) {
 		return;
@@ -176,7 +204,9 @@ function estrato_gate_require_source_in_matrix( $post_id ) {
 	if ( empty( $allowed_hosts ) ) {
 		return;
 	}
-	if ( isset( $allowed_hosts[ $src_host ] ) ) {
+	// Aceitar www. e bare host.
+	$bare = preg_replace( '/^www\./', '', $src_host );
+	if ( isset( $allowed_hosts[ $src_host ] ) || isset( $allowed_hosts[ 'www.' . $bare ] ) || isset( $allowed_hosts[ $bare ] ) ) {
 		return;
 	}
 	remove_action( 'save_post_post', 'estrato_gate_require_source_in_matrix', 105 );
@@ -191,6 +221,64 @@ function estrato_gate_require_source_in_matrix( $post_id ) {
 	update_post_meta( $post_id, '_estrato_skip_source_host', $src_host );
 }
 add_action( 'save_post_post', 'estrato_gate_require_source_in_matrix', 105 );
+
+/**
+ * Bloqueia categorias legado (AR-TAX-002): politica / tecnologia / brasil.
+ *
+ * @param int $post_id Post ID.
+ */
+function estrato_gate_block_legacy_categories( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	if ( wp_is_post_revision( $post_id ) ) {
+		return;
+	}
+	$post = get_post( $post_id );
+	if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) {
+		return;
+	}
+	$legacy = array( 'politica', 'tecnologia', 'brasil', 'sem-categoria' );
+	$slugs  = wp_get_post_terms( $post_id, 'category', array( 'fields' => 'slugs' ) );
+	if ( is_wp_error( $slugs ) || ! $slugs ) {
+		return;
+	}
+	$hit = array_values( array_intersect( $legacy, $slugs ) );
+	if ( ! $hit ) {
+		return;
+	}
+	$fallback_slug = function_exists( 'estrato_gate_default_category_slug' )
+		? estrato_gate_default_category_slug( '' )
+		: 'economia';
+	$fallback      = get_term_by( 'slug', $fallback_slug, 'category' );
+	$keep          = array();
+	foreach ( $slugs as $slug ) {
+		if ( in_array( $slug, $legacy, true ) ) {
+			continue;
+		}
+		$term = get_term_by( 'slug', $slug, 'category' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$keep[] = (int) $term->term_id;
+		}
+	}
+	if ( ! $keep && $fallback && ! is_wp_error( $fallback ) ) {
+		$keep[] = (int) $fallback->term_id;
+	}
+	if ( $keep ) {
+		wp_set_post_categories( $post_id, $keep, false );
+	}
+	// Conteúdo tipicamente off-editoria nestas cats: demota até revisão humana.
+	remove_action( 'save_post_post', 'estrato_gate_block_legacy_categories', 110 );
+	wp_update_post(
+		array(
+			'ID'          => $post_id,
+			'post_status' => 'draft',
+		)
+	);
+	add_action( 'save_post_post', 'estrato_gate_block_legacy_categories', 110 );
+	update_post_meta( $post_id, '_estrato_skip_reason', 'legacy_category:' . implode( ',', $hit ) );
+}
+add_action( 'save_post_post', 'estrato_gate_block_legacy_categories', 110 );
 
 /**
  * @return array<string, bool>

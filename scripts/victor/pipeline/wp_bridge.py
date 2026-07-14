@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Publica artigos no WordPress via estrato-publisher-bridge."""
+import json
+import os
+import urllib.error
+import urllib.request
+
+# portal slug -> (publish_url, secret env var)
+WP_PORTALS = {
+    'estrato': {
+        'url': os.getenv('WP_ESTRATO_URL', 'https://estrato.cc/wp-json/estrato/v1/publish'),
+        'secret_env': 'WP_ESTRATO_SECRET',
+    },
+}
+
+
+STOCK_IMAGE_HOSTS = (
+    'images.unsplash.com',
+    'plus.unsplash.com',
+    'images.pexels.com',
+    'image.pollinations.ai',
+    'pollinations.ai',
+)
+
+# Cats legado/fora da taxonomia finance → editorias válidas.
+CATEGORY_REMAP = {
+    'politica': 'mundo',
+    'governo': 'mundo',
+    'congresso': 'mundo',
+    'justica': 'mundo',
+    'forcas-armadas': 'mundo',
+    'geopolitica': 'mundo',
+    'tecnologia': 'negocios',
+    'agro': 'agronegocio',
+    'cripto': 'criptomoedas',
+    'esg': 'negocios',
+    'energia': 'mercados',
+    'naval': 'mercados',
+    'mineracao': 'mercados',
+    'construcao': 'mercados',
+    'saude': 'financas-pessoais',
+    'carreira': 'financas-pessoais',
+    'lifestyle': 'financas-pessoais',
+    'cultura': 'mundo',
+    'entretenimento': 'mundo',
+    'sustentabilidade': 'agronegocio',
+}
+
+# Nunca publicar estes tipos no estrato.cc (contaminação AR-TAX-002).
+SKIP_CATEGORIES = {
+    'politica',
+    'governo',
+    'congresso',
+    'justica',
+    'forcas-armadas',
+    'entretenimento',
+}
+
+CATEGORY_AUTHOR_SLUGS = {
+    'economia': 'ana-economia',
+    'mercados': 'marcos-mercados',
+    'negocios': 'lucia-negocios',
+    'financas-pessoais': 'pedro-financas',
+    'criptomoedas': 'rafa-cripto',
+    'agronegocio': 'julia-agro',
+    'mundo': 'henrique-mundo',
+}
+
+
+def _author_slug_for_category(category: str) -> str:
+    slug = (category or 'negocios').strip().lower()
+    return CATEGORY_AUTHOR_SLUGS.get(slug, 'lucia-negocios')
+
+
+def _is_stock_image(url: str) -> bool:
+    if not url:
+        return True
+    u = url.lower()
+    return any(h in u for h in STOCK_IMAGE_HOSTS)
+
+
+def publish_to_wordpress(portal_slug, article):
+    """Envia artigo publicado no Supabase para o WordPress do portal."""
+    cfg = WP_PORTALS.get(portal_slug)
+    if not cfg:
+        return True, 'skip'
+
+    secret = os.getenv(cfg['secret_env'], '')
+    if not secret:
+        return False, f'missing {cfg["secret_env"]}'
+
+    raw_cat = (article.get('categoria') or 'negocios').strip().lower()
+    if raw_cat in SKIP_CATEGORIES:
+        return False, f'skip_category:{raw_cat}'
+
+    source_url = (article.get('fonte_url') or article.get('source_url') or '').strip()
+    if not source_url:
+        return False, 'missing_source_url'
+
+    category = CATEGORY_REMAP.get(raw_cat, raw_cat)
+    if category not in CATEGORY_AUTHOR_SLUGS:
+        category = 'negocios'
+
+    payload = {
+        'title': article.get('titulo') or '',
+        'content': article.get('conteudo') or '',
+        'excerpt': article.get('resumo') or '',
+        'category': category,
+        'author_slug': _author_slug_for_category(category),
+        'source_url': source_url,
+        'external_id': str(article.get('id') or article.get('slug') or ''),
+        'status': 'publish',
+    }
+    if article.get('imagem_url') and not _is_stock_image(article['imagem_url']):
+        payload['image_url'] = article['imagem_url']
+
+    data = json.dumps(payload).encode()
+    req = urllib.request.Request(
+        cfg['url'],
+        data=data,
+        headers={
+            'Content-Type': 'application/json',
+            'X-Estrato-Secret': secret,
+            'User-Agent': 'EstratoPipeline/1.0',
+        },
+        method='POST',
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = json.loads(resp.read().decode())
+            return True, body.get('url') or 'ok'
+    except urllib.error.HTTPError as e:
+        err = e.read().decode()[:300]
+        return False, f'HTTP {e.code}: {err}'
+    except Exception as e:
+        return False, str(e)

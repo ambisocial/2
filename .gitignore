@@ -20,3 +20,5 @@ Gemfile.lock
 # Temporary downloads and macOS metadata
 download.zip
 .DS_Store
+
+.ssh-keys/

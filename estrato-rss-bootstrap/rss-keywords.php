@@ -235,11 +235,19 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 				);
 
 				$image_url = estrato_rss_resolve_item_image_url( $item, $body, $link );
-				if ( ! $image_url ) {
+				$portal    = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+				$sat_ok    = ( 'estrato-finance' !== $portal );
+				if ( ! $image_url && ! $sat_ok ) {
 					$stats['skipped']++;
 					$stats['skipped_no_image']++;
 					estrato_rss_mark_guid_imported( $guid );
 					continue;
+				}
+
+				$post_date = $item->get_date( 'Y-m-d H:i:s' ) ? $item->get_date( 'Y-m-d H:i:s' ) : current_time( 'mysql' );
+				// Evita publicar itens antigos no sitemap/públicos (AR-SITEMAP-004).
+				if ( strtotime( $post_date ) < strtotime( '2024-01-01 00:00:00' ) ) {
+					$post_date = current_time( 'mysql' );
 				}
 
 				$post_id = wp_insert_post(
@@ -249,7 +257,7 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 						'post_status'   => 'publish',
 						'post_author'   => $author_id,
 						'post_category' => $cat_ids,
-						'post_date'     => $item->get_date( 'Y-m-d H:i:s' ) ? $item->get_date( 'Y-m-d H:i:s' ) : current_time( 'mysql' ),
+						'post_date'     => $post_date,
 					),
 					true
 				);
@@ -262,8 +270,14 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 				update_post_meta( $post_id, '_estrato_rss_source_url', $feed_info['url'] );
 				update_post_meta( $post_id, '_estrato_source_url', $link );
 				$attached = false;
-				if ( function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
+				if ( $image_url && function_exists( 'estrato_bridge_set_featured_image_from_url' ) ) {
 					$attached = (bool) estrato_bridge_set_featured_image_from_url( $post_id, $image_url, true );
+				}
+				if ( ! $attached && $sat_ok && function_exists( 'estrato_bridge_set_editorial_thumbnail' ) ) {
+					$attached = (bool) estrato_bridge_set_editorial_thumbnail( (int) $post_id );
+					if ( $attached ) {
+						update_post_meta( $post_id, '_estrato_rss_fallback_thumb', '1' );
+					}
 				}
 				if ( ! $attached ) {
 					wp_delete_post( $post_id, true );
@@ -272,7 +286,9 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 					estrato_rss_mark_guid_imported( $guid );
 					continue;
 				}
-				update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
+				if ( $image_url ) {
+					update_post_meta( $post_id, '_estrato_original_image_url', esc_url_raw( $image_url ) );
+				}
 				if ( function_exists( 'estrato_pipeline_apply_category' ) ) {
 					estrato_pipeline_apply_category( $post_id, $title, $body );
 				}
@@ -287,7 +303,6 @@ function estrato_rss_run_import_matrix( $first_run, $matrix, $taxonomy ) {
 				$post_after = get_post( $post_id );
 				if ( ! $ok || ( $post_after && 'publish' !== $post_after->post_status ) ) {
 					$stats['skipped']++;
-					--$stats['imported'];
 					estrato_rss_mark_guid_imported( $guid );
 					continue;
 				}

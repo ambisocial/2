@@ -113,6 +113,14 @@ for portal in "${PORTALS[@]}"; do
     continue
   fi
   portal_wp option update estrato_og_default_attachment_id "$attachment_id" >/dev/null
+  # Manter Yoast alinhado — bridge/editorial thumbs leem wpseo_social.og_default_image_id
+  og_url=$(portal_wp post get "$attachment_id" --field=guid 2>/dev/null || true)
+  if [[ -n "$og_url" ]]; then
+    portal_wp option patch update wpseo_social og_default_image_id "$attachment_id" >/dev/null 2>&1 || true
+    portal_wp option patch update wpseo_social og_default_image "$og_url" >/dev/null 2>&1 || true
+    portal_wp option patch update wpseo_social og_frontpage_image_id "$attachment_id" >/dev/null 2>&1 || true
+    portal_wp option patch update wpseo_social og_frontpage_image "$og_url" >/dev/null 2>&1 || true
+  fi
   echo "  $portal: attachment_id=$attachment_id (era $old_aid)"
   if [[ "$old_aid" =~ ^[0-9]+$ && "$old_aid" -gt 0 && "$old_aid" != "$attachment_id" ]]; then
     portal_wp post delete "$old_aid" --force >/dev/null 2>&1 || true

@@ -8,6 +8,13 @@ REPO="${ESTRATO_REPO:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/lib/portal-env.sh"
 
+LOCK_FILE="${ESTRATO_PENDING_LOCK:-/tmp/estrato-setup-pending-all.lock}"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo "ABORT: outra instância de setup-pending-all.sh já está a correr ($LOCK_FILE)" >&2
+  exit 75
+fi
+
 LOG_DIR="${ESTRATO_REPORT_DIR:-$REPO/logs}"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/pending-all-$(date +%Y%m%d-%H%M%S).log"
@@ -40,8 +47,9 @@ for PORTAL_ID in "${PORTALS[@]}"; do
   portal_wp eval-file "$REPO/scripts/victor/cleanup-pipeline-bleed.php" 2>&1 | tee -a "$LOG" || true
   portal_wp eval-file "$REPO/scripts/victor/repair-og-default-and-thumbs.php" 2>&1 | tee -a "$LOG" || true
 
-  echo "--- drafts hygiene ---" | tee -a "$LOG"
+  echo "--- drafts hygiene + thin published ---" | tee -a "$LOG"
   portal_wp eval-file "$REPO/scripts/victor/drafts-hygiene.php" 2>&1 | tee -a "$LOG" || true
+  portal_wp eval-file "$REPO/scripts/victor/draft-thin-published.php" 2>&1 | tee -a "$LOG" || true
 
   if [[ "$PORTAL_ID" != "estrato-finance" ]]; then
     export ESTRATO_HARD_GUID_PRUNE=1
@@ -49,6 +57,9 @@ for PORTAL_ID in "${PORTALS[@]}"; do
     portal_wp eval-file "$REPO/scripts/victor/setup-portal-rss-health.php" 2>&1 | tee -a "$LOG" || true
     portal_wp eval-file "$REPO/scripts/victor/boost-satellite-rss.php" 2>&1 | tee -a "$LOG" || true
     portal_wp eval-file "$REPO/scripts/victor/fix-gate-satellites.php" 2>&1 | tee -a "$LOG" || true
+    # Reaplicar thumbs/thin após restore do boost (evita fail strict AR-CONTENT/EEAT).
+    portal_wp eval-file "$REPO/scripts/victor/repair-og-default-and-thumbs.php" 2>&1 | tee -a "$LOG" || true
+    portal_wp eval-file "$REPO/scripts/victor/draft-thin-published.php" 2>&1 | tee -a "$LOG" || true
     unset ESTRATO_HARD_GUID_PRUNE
   fi
 done

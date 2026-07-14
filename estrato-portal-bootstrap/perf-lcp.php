@@ -203,6 +203,22 @@ function estrato_perf_disable_bloat() {
 add_action( 'init', 'estrato_perf_disable_bloat' );
 
 /**
+ * Desliga enqueue do core que reinjeta <style> fora do consolidador Estrato.
+ * WP 6.7+ reenfileira global-styles no footer; auto-sizes registra em wp_head:0.
+ */
+function estrato_perf_unhook_core_inline_styles() {
+	if ( is_admin() ) {
+		return;
+	}
+	remove_action( 'wp_enqueue_scripts', 'wp_enqueue_global_styles' );
+	remove_action( 'wp_footer', 'wp_enqueue_global_styles', 1 );
+	remove_action( 'wp_head', 'wp_enqueue_img_auto_sizes_contain_css_fix', 0 );
+	remove_action( 'wp_head', 'wp_print_auto_sizes_contain_css_fix', 1 );
+}
+add_action( 'after_setup_theme', 'estrato_perf_unhook_core_inline_styles', 20 );
+add_action( 'init', 'estrato_perf_unhook_core_inline_styles', 20 );
+
+/**
  * Dequeue CSS de blocos no front (PressGrid não usa) + extras inline do core/tema.
  */
 function estrato_perf_dequeue_block_css() {
@@ -214,15 +230,19 @@ function estrato_perf_dequeue_block_css() {
 	wp_dequeue_style( 'classic-theme-styles' );
 	wp_dequeue_style( 'global-styles' );
 	wp_deregister_style( 'global-styles' );
-	// Inline CSS do core (WP 6.7 auto-sizes) — fora da meta ≤3 do consolidador Estrato.
 	wp_dequeue_style( 'core-block-supports' );
 	wp_dequeue_style( 'wp-img-auto-sizes-contain' );
+	wp_deregister_style( 'wp-img-auto-sizes-contain' );
+	wp_dequeue_style( 'wp-block-styles-placeholder' );
+	wp_dequeue_style( 'wp-global-styles-placeholder' );
 }
 add_action( 'wp_enqueue_scripts', 'estrato_perf_dequeue_block_css', 100 );
 add_action( 'wp_enqueue_scripts', 'estrato_perf_dequeue_block_css', 999 );
+// Última chance antes do print (wp_head ~8) — auto-sizes pode ter sido requeued.
+add_action( 'wp_print_styles', 'estrato_perf_dequeue_block_css', 1 );
 
 /**
- * Evita o <style id="wp-img-auto-sizes-contain-inline-css">.
+ * Evita o atributo sizes=auto (e o CSS contain associado).
  *
  * @return bool
  */
@@ -233,6 +253,7 @@ add_filter( 'wp_img_tag_add_auto_sizes', 'estrato_perf_disable_auto_sizes' );
 
 /**
  * Remove inline CSS do PressGrid (customizer) — tokens/overrides já estão no design-system.
+ * Tem de correr ANTES de WP_Styles::do_items (prio 10 em wp_print_styles).
  *
  * @return void
  */
@@ -250,7 +271,8 @@ function estrato_perf_strip_pressgrid_inline() {
 		}
 	}
 }
-add_action( 'wp_print_styles', 'estrato_perf_strip_pressgrid_inline', 999 );
+add_action( 'wp_print_styles', 'estrato_perf_strip_pressgrid_inline', 1 );
+add_action( 'wp_print_styles', 'estrato_perf_strip_pressgrid_inline', 9 );
 
 /**
  * Logo com dimensões explícitas (evita CLS).

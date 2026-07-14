@@ -317,40 +317,67 @@ function estrato_nav_network_catalog() {
 		array(
 			'id'      => 'estrato-finance',
 			'name'    => 'Estrato',
+			'short'   => 'E',
+			'color'   => '#C4170C',
 			'url'     => 'https://estrato.cc/',
 			'tagline' => 'Economia, mercados e finanças',
 		),
 		array(
 			'id'      => 'estrato-mind',
 			'name'    => 'Estrato Mente',
+			'short'   => 'M',
+			'color'   => '#1B1B2F',
 			'url'     => 'https://mente.estrato.cc/',
 			'tagline' => 'Conhecimento e desenvolvimento pessoal',
 		),
 		array(
 			'id'      => 'estrato-lifestyle',
 			'name'    => 'Estrato Lifestyle',
+			'short'   => 'L',
+			'color'   => '#2C1810',
 			'url'     => 'https://lifestyle.estrato.cc/',
 			'tagline' => 'Estilos de vida e hobbies',
 		),
 		array(
 			'id'      => 'estrato-science',
 			'name'    => 'Estrato Science',
+			'short'   => 'S',
+			'color'   => '#0B132B',
 			'url'     => 'https://science.estrato.cc/',
 			'tagline' => 'Ciência, tecnologia e futuro',
 		),
 		array(
 			'id'      => 'estrato-sustain',
 			'name'    => 'Estrato Sustain',
+			'short'   => 'Su',
+			'color'   => '#1B4332',
 			'url'     => 'https://sustain.estrato.cc/',
 			'tagline' => 'Sustentabilidade e economia alternativa',
 		),
 		array(
 			'id'      => 'estrato-culture',
 			'name'    => 'Estrato Culture',
+			'short'   => 'C',
+			'color'   => '#2D1B69',
 			'url'     => 'https://culture.estrato.cc/',
 			'tagline' => 'Cultura pop e narrativas de nicho',
 		),
 	);
+}
+
+/**
+ * Marca visual (logo monogram) para um nó da rede.
+ *
+ * @param array{id:string,name:string,short?:string,color?:string} $node
+ * @return string
+ */
+function estrato_nav_network_mark_html( $node ) {
+	$name  = (string) ( $node['name'] ?? '' );
+	$short = ! empty( $node['short'] ) ? (string) $node['short'] : ( function_exists( 'mb_substr' ) ? mb_substr( $name, 0, 1 ) : substr( $name, 0, 1 ) );
+	$color = ! empty( $node['color'] ) ? (string) $node['color'] : '#C4170C';
+	return '<span class="estrato-network-mark" style="--estrato-mark:' . esc_attr( $color ) . '" aria-hidden="true">'
+		. esc_html( $short )
+		. '</span>';
 }
 
 /**
@@ -395,19 +422,38 @@ function estrato_nav_network_footer_html() {
 }
 
 /**
- * HTML do hub da rede na home (finance — S26).
+ * HTML canônico do hub da rede (home + footer — F3).
  *
+ * @param array{heading?:bool,intro?:bool} $args
  * @return string
  */
-function estrato_nav_network_hub_html() {
+function estrato_nav_network_hub_html( $args = array() ) {
+	$args    = wp_parse_args(
+		$args,
+		array(
+			'heading' => false,
+			'intro'   => true,
+		)
+	);
 	$current = estrato_nav_current_portal_id();
-	$html    = '<div class="estrato-network-hub"><p>Explore os portais especializados da rede Estrato:</p><ul class="estrato-network-hub-grid">';
+	$html    = '<div class="estrato-network-hub">';
+	if ( $args['heading'] ) {
+		$html .= '<h3 class="estrato-network-hub__title">Mais da Rede Estrato</h3>';
+	}
+	if ( $args['intro'] ) {
+		$html .= '<p class="estrato-network-hub__intro">Explore os portais especializados da rede Estrato:</p>';
+	}
+	$html .= '<ul class="estrato-network-hub-grid">';
 	foreach ( estrato_nav_network_catalog() as $node ) {
 		if ( $node['id'] === $current ) {
 			continue;
 		}
-		$html .= '<li><a href="' . esc_url( $node['url'] ) . '"><strong>' . esc_html( $node['name'] )
-			. '</strong></a><br><span class="estrato-network-tagline">' . esc_html( $node['tagline'] ) . '</span></li>';
+		$mark  = estrato_nav_network_mark_html( $node );
+		$html .= '<li><a class="estrato-network-hub__link" href="' . esc_url( $node['url'] ) . '">'
+			. $mark
+			. '<span class="estrato-network-hub__text"><strong>' . esc_html( $node['name'] ) . '</strong>'
+			. '<span class="estrato-network-tagline">' . esc_html( $node['tagline'] ) . '</span></span>'
+			. '</a></li>';
 	}
 	$html .= '</ul></div>';
 	return $html;
@@ -520,13 +566,23 @@ function estrato_nav_render_crosslinks_block( $hub_slug ) {
 }
 
 /**
- * CSS leve para grids Estrato.
+ * CSS leve para grids Estrato + marcas da rede.
  */
 function estrato_nav_visual_styles() {
-	if ( ! is_front_page() && ! is_page() ) {
+	if ( is_admin() || is_feed() ) {
 		return;
 	}
-	$css = '.estrato-home-editorias{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin:2rem 0}'
+	$css = '.estrato-network-mark{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;flex:0 0 auto;border-radius:6px;background:var(--estrato-mark,#C4170C);color:#fff;font-size:.75rem;font-weight:800;letter-spacing:.02em}'
+		. '.estrato-network-hub__title{font-family:var(--estrato-font-display,Georgia,serif);font-size:1.125rem;margin:0 0 .75rem}'
+		. '.estrato-network-hub__intro{margin:0 0 .75rem;color:var(--estrato-muted,#5E5E5E);font-size:.875rem}'
+		. '.estrato-network-hub-grid{display:grid;gap:.75rem;list-style:none;margin:0;padding:0;grid-template-columns:1fr}'
+		. '@media(min-width:640px){.estrato-network-hub-grid{grid-template-columns:1fr 1fr}}'
+		. '@media(min-width:960px){.estrato-network-hub-grid{grid-template-columns:repeat(3,1fr)}}'
+		. '.estrato-network-hub__link{display:flex;align-items:flex-start;gap:.75rem;color:inherit;text-decoration:none;min-height:44px}'
+		. '.estrato-network-hub__link:hover strong{text-decoration:underline}'
+		. '.estrato-network-hub__text{display:flex;flex-direction:column;gap:.15rem}'
+		. '.estrato-network-tagline{color:var(--estrato-muted,#5E5E5E);font-size:.8125rem}'
+		. '.estrato-home-editorias{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin:2rem 0}'
 		. '.estrato-cat-grid-title{font-size:1.1rem;margin:0 0 .5rem}'
 		. '.estrato-cat-grid-list{margin:0;padding-left:1.1rem}'
 		. '.estrato-cotacoes table{width:100%;border-collapse:collapse}'

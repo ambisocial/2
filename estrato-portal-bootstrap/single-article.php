@@ -382,9 +382,7 @@ function estrato_single_styles() {
 		return;
 	}
 	$css = '.estrato-single-breadcrumb-wrap{max-width:680px;margin:0 auto;padding:0 1rem}'
-		. '.estrato-single-breadcrumb-wrap ol{display:flex;flex-wrap:nowrap;gap:.35rem;overflow:hidden;list-style:none;margin:0;padding:.5rem 0;font-size:.75rem}'
-		. '.estrato-single-breadcrumb-wrap ol li{flex:0 1 auto;min-width:0;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
-		. '.estrato-single-breadcrumb-wrap ol li:last-child{flex:1 1 auto;max-width:60ch}'
+		. '.estrato-single-breadcrumb-wrap .estrato-breadcrumb{margin:.35rem 0 .75rem}'
 		. '.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4);padding:0 1rem}'
 		. '.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted);margin:.75rem 0 1rem}'
 		. '.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted);align-items:center}'

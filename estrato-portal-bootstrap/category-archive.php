@@ -93,6 +93,30 @@ function estrato_archive_breadcrumb_trail( $term_id = 0 ) {
 }
 
 /**
+ * Trail compacto mobile: Pai > Atual (sem Início / intermediários).
+ *
+ * @param array<int, array{label:string,url:string}> $trail
+ * @return array<int, array{label:string,url:string}>
+ */
+function estrato_archive_breadcrumb_trail_compact( $trail ) {
+	$trail = array_values( (array) $trail );
+	$n     = count( $trail );
+	if ( $n <= 2 ) {
+		return $trail;
+	}
+	/* Descarta "Início" se presente. */
+	if ( ! empty( $trail[0]['url'] ) && untrailingslashit( $trail[0]['url'] ) === untrailingslashit( home_url( '/' ) ) ) {
+		array_shift( $trail );
+		$n = count( $trail );
+	}
+	if ( $n <= 2 ) {
+		return $trail;
+	}
+	/* Mantém o pai imediato + o atual. */
+	return array( $trail[ $n - 2 ], $trail[ $n - 1 ] );
+}
+
+/**
  * @param array<int, array{label:string,url:string}> $trail
  * @return string
  */
@@ -100,11 +124,25 @@ function estrato_archive_render_breadcrumb( $trail ) {
 	if ( count( $trail ) < 2 ) {
 		return '';
 	}
-	$html = '<nav class="estrato-breadcrumb" aria-label="Breadcrumb"><ol>';
-	$last = count( $trail ) - 1;
+	$compact = estrato_archive_breadcrumb_trail_compact( $trail );
+	$html    = '<nav class="estrato-breadcrumb" aria-label="Breadcrumb">';
+	$html   .= '<ol class="estrato-breadcrumb__full">';
+	$last    = count( $trail ) - 1;
 	foreach ( $trail as $i => $crumb ) {
 		$html .= '<li>';
 		if ( $i === $last || '' === $crumb['url'] ) {
+			$html .= '<span aria-current="page">' . esc_html( $crumb['label'] ) . '</span>';
+		} else {
+			$html .= '<a href="' . esc_url( $crumb['url'] ) . '">' . esc_html( $crumb['label'] ) . '</a>';
+		}
+		$html .= '</li>';
+	}
+	$html .= '</ol>';
+	$html .= '<ol class="estrato-breadcrumb__compact">';
+	$clast = count( $compact ) - 1;
+	foreach ( $compact as $i => $crumb ) {
+		$html .= '<li>';
+		if ( $i === $clast || '' === $crumb['url'] ) {
 			$html .= '<span aria-current="page">' . esc_html( $crumb['label'] ) . '</span>';
 		} else {
 			$html .= '<a href="' . esc_url( $crumb['url'] ) . '">' . esc_html( $crumb['label'] ) . '</a>';
@@ -164,10 +202,15 @@ function estrato_archive_styles() {
 		return;
 	}
 	$css = '.estrato-breadcrumb{font-size:13px;color:var(--estrato-muted);margin:0 0 1rem}'
-		. '.estrato-breadcrumb ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}'
+		. '.estrato-breadcrumb ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:nowrap;gap:.35rem;overflow:hidden}'
+		. '.estrato-breadcrumb li{min-width:0;max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
 		. '.estrato-breadcrumb li+li::before{content:"›";margin-right:.35rem;color:var(--estrato-line)}'
 		. '.estrato-breadcrumb a{color:inherit;text-decoration:none}'
 		. '.estrato-breadcrumb a:hover{text-decoration:underline}'
+		/* Mobile: só Pai > Atual */
+		. '.estrato-breadcrumb__full{display:none}'
+		. '.estrato-breadcrumb__compact{display:flex}'
+		. '@media(min-width:768px){.estrato-breadcrumb__full{display:flex;flex-wrap:wrap}.estrato-breadcrumb__compact{display:none}.estrato-breadcrumb li{max-width:none}}'
 		. '.estrato-archive-header{max-width:1200px;margin:0 auto 1.5rem;padding:0 1rem;border-top:4px solid var(--estrato-cat-color)}'
 		. '.estrato-archive-title{margin:.5rem 0}'
 		. '.estrato-archive-desc{color:var(--estrato-muted);max-width:72ch;line-height:1.5}'

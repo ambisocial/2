@@ -92,14 +92,15 @@ add_action( 'wp_body_open', 'estrato_g1_main_landmark', 6 );
 /**
  * Cor e rótulo do header principal (home = vermelho G1; seção = branding da editoria).
  *
- * @return array{bg:string,fg:string,label:string,section:bool}
+ * @return array{bg:string,fg:string,label:string,section:bool,term_url:string}
  */
 function estrato_g1_header_context() {
 	$defaults = array(
-		'bg'      => '#C4170C',
-		'fg'      => '#ffffff',
-		'label'   => '',
-		'section' => false,
+		'bg'       => '#C4170C',
+		'fg'       => '#ffffff',
+		'label'    => '',
+		'section'  => false,
+		'term_url' => '',
 	);
 
 	if ( function_exists( 'estrato_portal_get_archive_term_id' )
@@ -108,10 +109,14 @@ function estrato_g1_header_context() {
 		if ( $term_id ) {
 			$branding = estrato_portal_resolve_branding_for_term( $term_id );
 			if ( ! empty( $branding['primary_color'] ) ) {
-				$defaults['bg']      = (string) $branding['primary_color'];
-				$defaults['fg']      = '#ffffff';
-				$defaults['label']   = (string) ( $branding['brand_name'] ?? '' );
-				$defaults['section'] = true;
+				$defaults['bg']       = (string) $branding['primary_color'];
+				$defaults['fg']       = '#ffffff';
+				$defaults['label']    = (string) ( $branding['brand_name'] ?? '' );
+				$defaults['section']  = true;
+				$defaults['term_url'] = get_term_link( (int) $term_id, 'category' );
+				if ( is_wp_error( $defaults['term_url'] ) ) {
+					$defaults['term_url'] = '';
+				}
 				if ( empty( $defaults['label'] ) ) {
 					$term = get_term( $term_id, 'category' );
 					if ( $term && ! is_wp_error( $term ) ) {
@@ -178,12 +183,13 @@ function estrato_g1_render_header() {
 						<?php foreach ( estrato_nav_network_catalog() as $node ) : ?>
 							<?php
 							$is_current = ( $node['id'] === $current );
+							$mark       = function_exists( 'estrato_nav_network_mark_html' ) ? estrato_nav_network_mark_html( $node ) : '';
 							?>
 							<li class="<?php echo $is_current ? 'is-current' : ''; ?>">
 								<?php if ( $is_current ) : ?>
-									<span aria-current="page"><?php echo esc_html( $node['name'] ); ?></span>
+									<span class="estrato-g1-header__rede-item" aria-current="page"><?php echo $mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><span class="estrato-g1-header__rede-name"><?php echo esc_html( $node['name'] ); ?></span></span>
 								<?php else : ?>
-									<a href="<?php echo esc_url( $node['url'] ); ?>"><?php echo esc_html( $node['name'] ); ?></a>
+									<a class="estrato-g1-header__rede-item" href="<?php echo esc_url( $node['url'] ); ?>"><?php echo $mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><span class="estrato-g1-header__rede-name"><?php echo esc_html( $node['name'] ); ?></span></a>
 								<?php endif; ?>
 							</li>
 						<?php endforeach; ?>
@@ -258,7 +264,11 @@ function estrato_g1_render_header() {
 		<?php if ( $ctx['label'] ) : ?>
 			<div class="estrato-g1-header__editoria">
 				<div class="estrato-g1-header__inner">
-					<span class="estrato-g1-header__editoria-label"><?php echo esc_html( $ctx['label'] ); ?></span>
+					<?php if ( ! empty( $ctx['term_url'] ) ) : ?>
+						<a class="estrato-g1-header__editoria-label" href="<?php echo esc_url( $ctx['term_url'] ); ?>"><?php echo esc_html( $ctx['label'] ); ?></a>
+					<?php else : ?>
+						<span class="estrato-g1-header__editoria-label"><?php echo esc_html( $ctx['label'] ); ?></span>
+					<?php endif; ?>
 				</div>
 			</div>
 		<?php endif; ?>
@@ -269,13 +279,29 @@ function estrato_g1_render_header() {
 			<div class="estrato-g1-header__inner">
 				<form class="estrato-g1-header__search-form" role="search" method="get" action="<?php echo esc_url( $search ); ?>">
 					<label class="screen-reader-text" for="estrato-g1-search-input">Buscar no Estrato</label>
-					<input id="estrato-g1-search-input" type="search" name="s" placeholder="Buscar no Estrato" autocomplete="off" />
+					<input id="estrato-g1-search-input" type="search" name="s" placeholder="Buscar no Estrato" autocomplete="off" aria-autocomplete="list" aria-controls="estrato-g1-search-suggest" />
 					<button type="submit">Buscar</button>
 				</form>
+				<div id="estrato-g1-search-suggest" class="estrato-g1-header__suggest" hidden></div>
 			</div>
 		</div>
 	</header>
 	<?php
+	$suggest = array();
+	$recent  = get_posts(
+		array(
+			'numberposts' => 6,
+			'post_status' => 'publish',
+			'orderby'     => 'date',
+		)
+	);
+	foreach ( $recent as $p ) {
+		$suggest[] = array(
+			'title' => get_the_title( $p ),
+			'url'   => get_permalink( $p ),
+		);
+	}
+	echo '<script type="application/json" id="estrato-g1-search-data">' . wp_json_encode( $suggest ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 add_action( 'wp_body_open', 'estrato_g1_render_header', 5 );
 
@@ -344,11 +370,13 @@ function estrato_g1_header_styles() {
 	}
 	.estrato-g1-header__rede-list:not([hidden]){display:flex}
 	.estrato-g1-header__rede-list li{border-bottom:1px solid rgba(255,255,255,.08)}
-	.estrato-g1-header__rede-list a,.estrato-g1-header__rede-list span{
-		display:flex;align-items:center;min-height:44px;color:#ccc;text-decoration:none;padding:.25rem 0
+	.estrato-g1-header__rede-item{
+		display:flex;align-items:center;gap:.65rem;min-height:44px;color:#ccc;text-decoration:none;padding:.25rem 0
 	}
-	.estrato-g1-header__rede-list a:hover{color:#fff;text-decoration:underline}
-	.estrato-g1-header__rede-list .is-current span{color:#fff;font-weight:700}
+	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:hover{color:#fff}
+	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:hover .estrato-g1-header__rede-name{text-decoration:underline}
+	.estrato-g1-header__rede-list .is-current .estrato-g1-header__rede-item{color:#fff;font-weight:700}
+	.estrato-g1-header__rede-name{font-size:.8125rem}
 	/* Sticky magro: logo + rail */
 	.estrato-g1-header__sticky{position:sticky;top:0;z-index:10055;box-shadow:0 1px 0 rgba(0,0,0,.06)}
 	.estrato-g1-header__principal{background:var(--estrato-g1-bar-bg);color:var(--estrato-g1-bar-fg)}
@@ -375,7 +403,8 @@ function estrato_g1_header_styles() {
 	.estrato-g1-header__actions{display:flex;justify-content:flex-end}
 	.estrato-g1-header__editoria{background:var(--estrato-g1-bar-bg);color:var(--estrato-g1-bar-fg);border-top:1px solid rgba(255,255,255,.15)}
 	.estrato-g1-header__editoria .estrato-g1-header__inner{padding:.4rem 1rem}
-	.estrato-g1-header__editoria-label{font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+	.estrato-g1-header__editoria-label{font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:inherit;text-decoration:none}
+	a.estrato-g1-header__editoria-label:hover{text-decoration:underline}
 	/* Trilho horizontal — sempre visível no mobile */
 	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e5e5e5}
 	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
@@ -386,7 +415,10 @@ function estrato_g1_header_styles() {
 		text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent
 	}
 	.estrato-g1-rail>li>a:hover,.estrato-g1-rail>li.current-menu-item>a,.estrato-g1-rail>li.current-menu-ancestor>a{
-		color:#C4170C;border-bottom-color:#C4170C
+		color:var(--estrato-g1-bar-bg,#C4170C);border-bottom-color:var(--estrato-g1-bar-bg,#C4170C)
+	}
+	.estrato-g1-rail>li.current-menu-item>a,.estrato-g1-rail>li.current-menu-ancestor>a{
+		box-shadow:inset 0 -3px 0 var(--estrato-g1-bar-bg,#C4170C)
 	}
 	/* Drawer fullscreen */
 	.estrato-g1-header__overlay{
@@ -431,8 +463,12 @@ function estrato_g1_header_styles() {
 	.estrato-g1-menu .estrato-mega-column>a{font-weight:700;border-left:3px solid #9aff33;padding-left:.5rem}
 	.estrato-g1-header__search-panel{background:#f5f5f5;border-bottom:1px solid #e5e5e5;padding:.75rem 0}
 	.estrato-g1-header__search-form{display:flex;gap:.5rem}
-	.estrato-g1-header__search-form input{flex:1;border:1px solid #ccc;border-radius:4px;padding:.55rem .75rem;font-size:1rem}
-	.estrato-g1-header__search-form button{background:#C4170C;color:#fff;border:0;border-radius:4px;padding:.55rem 1rem;font-weight:600;cursor:pointer;min-height:44px}
+	.estrato-g1-header__search-form input{flex:1;border:1px solid #ccc;border-radius:4px;padding:.55rem .75rem;font-size:1rem;font-family:inherit}
+	.estrato-g1-header__search-form button{background:#C4170C;color:#fff;border:0;border-radius:4px;padding:.55rem 1rem;font-weight:600;cursor:pointer;min-height:44px;font-family:inherit}
+	.estrato-g1-header__suggest{margin-top:.5rem;background:#fff;border:1px solid #e5e5e5;border-radius:4px;overflow:hidden}
+	.estrato-g1-header__suggest-label{display:block;padding:.4rem .75rem;font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#666;background:#fafafa}
+	.estrato-g1-header__suggest a{display:block;padding:.65rem .75rem;color:#1e1e1e;text-decoration:none;font-size:.875rem;border-top:1px solid #f0f0f0;min-height:44px}
+	.estrato-g1-header__suggest a:hover,.estrato-g1-header__suggest a:focus{background:#f7f7f7;outline:none}
 	body.estrato-nav-lock{overflow:hidden;touch-action:none}
 	@media(prefers-reduced-motion:reduce){
 		.estrato-mega-toggle__icon{transition:none}
@@ -443,10 +479,11 @@ function estrato_g1_header_styles() {
 		.estrato-g1-header__rede-list,
 		.estrato-g1-header__rede-list[hidden]{
 			display:flex!important;position:static;background:transparent;box-shadow:none;
-			flex-direction:row;gap:.85rem;padding:0;white-space:nowrap;overflow-x:auto
+			flex-direction:row;gap:.85rem;padding:0;white-space:nowrap;overflow-x:auto;align-items:center
 		}
 		.estrato-g1-header__rede-list li{border:0}
-		.estrato-g1-header__rede-list a,.estrato-g1-header__rede-list span{min-height:0;padding:.35rem 0}
+		.estrato-g1-header__rede-item{min-height:0;padding:.35rem 0;gap:.4rem}
+		.estrato-g1-header__rede-list .estrato-network-mark{width:1.35rem;height:1.35rem;font-size:.625rem;border-radius:4px}
 		.estrato-g1-header__menu-btn,.estrato-g1-header__drawer-head,.estrato-g1-header__overlay,.estrato-g1-header__rail{display:none!important}
 		.estrato-mega-toggle{display:none}
 		.estrato-g1-header__principal-row{grid-template-columns:1fr auto 1fr}
@@ -612,8 +649,93 @@ function estrato_g1_header_scripts() {
 					setRedeOpen(false);
 					var i=document.getElementById('estrato-g1-search-input');
 					if(i)i.focus();
+					renderSuggest(i&&i.value||'');
+				}else{
+					var sug=document.getElementById('estrato-g1-search-suggest');
+					if(sug)sug.hidden=true;
 				}
 			});
+		}
+
+		/* Busca: histórico local + sugestões recentes */
+		var searchInput=document.getElementById('estrato-g1-search-input');
+		var suggestBox=document.getElementById('estrato-g1-search-suggest');
+		var suggestData=[];
+		try{
+			var raw=document.getElementById('estrato-g1-search-data');
+			if(raw)suggestData=JSON.parse(raw.textContent||'[]')||[];
+		}catch(e){suggestData=[];}
+		function histKey(){return 'estrato_search_hist_v1';}
+		function readHist(){
+			try{return JSON.parse(localStorage.getItem(histKey())||'[]')||[];}catch(e){return [];}
+		}
+		function writeHist(q){
+			q=(q||'').trim();
+			if(q.length<2)return;
+			var h=readHist().filter(function(x){return x.toLowerCase()!==q.toLowerCase();});
+			h.unshift(q);
+			try{localStorage.setItem(histKey(), JSON.stringify(h.slice(0,6)));}catch(e){}
+		}
+		function renderSuggest(q){
+			if(!suggestBox)return;
+			q=(q||'').trim().toLowerCase();
+			var html='';
+			var hist=readHist().filter(function(x){return !q || x.toLowerCase().indexOf(q)!==-1;}).slice(0,4);
+			if(hist.length){
+				html+='<span class="estrato-g1-header__suggest-label">Histórico</span>';
+				hist.forEach(function(term){
+					html+='<a href="#" data-estrato-hist="'+term.replace(/"/g,'&quot;')+'">'+term.replace(/</g,'&lt;')+'</a>';
+				});
+			}
+			var posts=suggestData.filter(function(p){
+				return !q || (p.title||'').toLowerCase().indexOf(q)!==-1;
+			}).slice(0,5);
+			if(posts.length){
+				html+='<span class="estrato-g1-header__suggest-label">Recentes</span>';
+				posts.forEach(function(p){
+					html+='<a href="'+(p.url||'#')+'">'+(p.title||'').replace(/</g,'&lt;')+'</a>';
+				});
+			}
+			suggestBox.innerHTML=html;
+			suggestBox.hidden=!html;
+		}
+		if(searchInput){
+			searchInput.addEventListener('input',function(){renderSuggest(searchInput.value);});
+			searchInput.addEventListener('focus',function(){renderSuggest(searchInput.value);});
+		}
+		if(suggestBox){
+			suggestBox.addEventListener('click',function(e){
+				var a=e.target.closest('a[data-estrato-hist]');
+				if(!a)return;
+				e.preventDefault();
+				if(searchInput){
+					searchInput.value=a.getAttribute('data-estrato-hist')||'';
+					searchInput.focus();
+				}
+			});
+		}
+		var searchForm=root.querySelector('.estrato-g1-header__search-form');
+		if(searchForm){
+			searchForm.addEventListener('submit',function(){
+				if(searchInput)writeHist(searchInput.value);
+			});
+		}
+
+		/* Swipe right para fechar drawer */
+		var touchX=null, touchY=null;
+		if(nav){
+			nav.addEventListener('touchstart',function(e){
+				if(isDesktop()||nav.hidden||!e.changedTouches||!e.changedTouches[0])return;
+				touchX=e.changedTouches[0].clientX;
+				touchY=e.changedTouches[0].clientY;
+			},{passive:true});
+			nav.addEventListener('touchend',function(e){
+				if(touchX===null||isDesktop()||nav.hidden||!e.changedTouches||!e.changedTouches[0])return;
+				var dx=e.changedTouches[0].clientX-touchX;
+				var dy=Math.abs(e.changedTouches[0].clientY-touchY);
+				touchX=null;touchY=null;
+				if(dx>72 && dy<64) setMenuOpen(false);
+			},{passive:true});
 		}
 
 		/* Chevron: abre/fecha submenu sem bloquear o link da editoria */

@@ -422,12 +422,6 @@ function estrato_home_styles() {
 		. '@media(min-width:640px){.estrato-home-block__grid{grid-template-columns:1fr 1fr}}'
 		. '@media(min-width:900px){.estrato-home-block__grid{grid-template-columns:1.2fr 1fr 1fr}}'
 		. '.estrato-home-rede{margin-bottom:var(--estrato-space-5);padding:var(--estrato-space-3) 0;border-top:1px solid var(--estrato-line)}'
-		. '.estrato-network-hub-grid{display:grid;gap:var(--estrato-space-3);list-style:none;margin:var(--estrato-space-3) 0 0;padding:0;grid-template-columns:1fr}'
-		. '@media(min-width:640px){.estrato-network-hub-grid{grid-template-columns:1fr 1fr}}'
-		. '@media(min-width:960px){.estrato-network-hub-grid{grid-template-columns:repeat(3,1fr)}}'
-		. '.estrato-network-hub-grid a{color:inherit;text-decoration:none}'
-		. '.estrato-network-hub-grid a:hover strong{text-decoration:underline}'
-		. '.estrato-network-tagline{color:var(--estrato-muted);font-size:.8125rem}'
 		. '.estrato-home-guias{margin-bottom:var(--estrato-space-5)}'
 		. '.estrato-home-guias__list{display:flex;flex-wrap:wrap;gap:1rem;list-style:none;margin:0;padding:0}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {

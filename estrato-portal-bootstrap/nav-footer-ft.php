@@ -363,35 +363,56 @@ function estrato_ft_render_footer() {
 			<div class="estrato-ft-group">
 				<details class="estrato-ft-group__toggle">
 					<summary class="estrato-ft-group__head">
-						<span>Mais do Grupo Estrato</span>
+						<span>Mais da Rede Estrato</span>
 						<span class="estrato-ft-group__chev" aria-hidden="true">›</span>
 					</summary>
 					<div class="estrato-ft-group__panel">
-						<h3 class="estrato-ft-group__title">Mais do Grupo Estrato</h3>
-						<ul class="estrato-ft-group__grid">
-							<?php foreach ( $businesses as $biz ) : ?>
-								<?php if ( ! empty( $biz['current'] ) ) : ?>
-									<?php continue; ?>
-								<?php endif; ?>
-								<li>
-									<?php if ( ! empty( $biz['text_only'] ) ) : ?>
-										<span class="estrato-ft-group__item estrato-ft-group__item--text">
-											<span class="estrato-ft-group__name"><?php echo esc_html( $biz['name'] ); ?></span>
-											<?php if ( ! empty( $biz['tagline'] ) ) : ?>
-												<span class="estrato-ft-group__tag"><?php echo esc_html( $biz['tagline'] ); ?></span>
-											<?php endif; ?>
-										</span>
-									<?php else : ?>
-										<a href="<?php echo esc_url( $biz['url'] ); ?>">
-											<span class="estrato-ft-group__name"><?php echo esc_html( $biz['name'] ); ?></span>
-											<?php if ( ! empty( $biz['tagline'] ) ) : ?>
-												<span class="estrato-ft-group__tag"><?php echo esc_html( $biz['tagline'] ); ?></span>
-											<?php endif; ?>
-										</a>
-									<?php endif; ?>
-								</li>
-							<?php endforeach; ?>
-						</ul>
+						<?php if ( function_exists( 'estrato_nav_network_hub_html' ) ) : ?>
+							<?php echo estrato_nav_network_hub_html( array( 'heading' => true, 'intro' => false ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php endif; ?>
+						<?php
+						$extras = array_filter(
+							$businesses,
+							function ( $biz ) {
+								if ( ! empty( $biz['current'] ) ) {
+									return false;
+								}
+								/* Portais da rede já aparecem no hub canônico. */
+								if ( function_exists( 'estrato_nav_network_catalog' ) ) {
+									foreach ( estrato_nav_network_catalog() as $node ) {
+										if ( untrailingslashit( $node['url'] ) === untrailingslashit( (string) ( $biz['url'] ?? '' ) ) ) {
+											return false;
+										}
+									}
+								}
+								return true;
+							}
+						);
+						?>
+						<?php if ( $extras ) : ?>
+							<h3 class="estrato-ft-group__title">Mais do Grupo Estrato</h3>
+							<ul class="estrato-ft-group__grid">
+								<?php foreach ( $extras as $biz ) : ?>
+									<li>
+										<?php if ( ! empty( $biz['text_only'] ) ) : ?>
+											<span class="estrato-ft-group__item estrato-ft-group__item--text">
+												<span class="estrato-ft-group__name"><?php echo esc_html( $biz['name'] ); ?></span>
+												<?php if ( ! empty( $biz['tagline'] ) ) : ?>
+													<span class="estrato-ft-group__tag"><?php echo esc_html( $biz['tagline'] ); ?></span>
+												<?php endif; ?>
+											</span>
+										<?php else : ?>
+											<a href="<?php echo esc_url( $biz['url'] ); ?>">
+												<span class="estrato-ft-group__name"><?php echo esc_html( $biz['name'] ); ?></span>
+												<?php if ( ! empty( $biz['tagline'] ) ) : ?>
+													<span class="estrato-ft-group__tag"><?php echo esc_html( $biz['tagline'] ); ?></span>
+												<?php endif; ?>
+											</a>
+										<?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						<?php endif; ?>
 					</div>
 				</details>
 			</div>
@@ -433,7 +454,7 @@ function estrato_ft_footer_styles() {
 	?>
 .site-footer .footer-widgets,.site-footer .widget-area,.pg-site-footer .pg-footer-widgets,.pg-footer-widgets,.pg-footer-top,.pg-site-footer .pg-footer-bottom,footer.site-footer .container > .row:first-child,#footer-widgets{display:none!important}
 	.site-footer,.pg-footer,.pg-site-footer{padding:0!important;background:transparent!important;border:0!important;margin:0!important}
-	.estrato-ft-footer{background:#262a33;color:#ced4da;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin-top:2rem}
+	.estrato-ft-footer{background:#262a33;color:#ced4da;font-family:var(--estrato-font-body,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif);margin-top:2rem}
 	.estrato-ft-footer__inner{max-width:1200px;margin:0 auto;padding:0 1rem 1.5rem}
 	.estrato-ft-cols{display:none;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,.12)}
 	@media(min-width:768px){.estrato-ft-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.estrato-ft-accordion{display:none!important}}
@@ -461,7 +482,11 @@ function estrato_ft_footer_styles() {
 	.estrato-ft-group__head::-webkit-details-marker{display:none}
 	.estrato-ft-group__chev{font-size:1.25rem;line-height:1;color:#fff}
 	.estrato-ft-group__panel{background:#fff1e5;color:#33302e;padding:1.25rem 1rem 1.5rem;margin:0 -1rem}
-	.estrato-ft-group__title{font-family:Georgia,"Times New Roman",serif;font-size:1.125rem;font-weight:400;margin:0 0 1rem;color:#33302e}
+	.estrato-ft-group__panel .estrato-network-hub{margin-bottom:1.25rem}
+	.estrato-ft-group__panel .estrato-network-hub__title{color:#33302e;margin:0 0 .75rem}
+	.estrato-ft-group__panel .estrato-network-hub__link{color:#0d7680}
+	.estrato-ft-group__panel .estrato-network-tagline{color:#5c5650}
+	.estrato-ft-group__title{font-family:var(--estrato-font-display,Georgia,"Times New Roman",serif);font-size:1.125rem;font-weight:400;margin:0 0 1rem;color:#33302e}
 	.estrato-ft-group__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem 1.5rem;list-style:none;margin:0;padding:0}
 	.estrato-ft-group__grid a,.estrato-ft-group__grid .estrato-ft-group__item{display:block;text-decoration:underline;color:#0d7680;font-size:.875rem;line-height:1.45;padding:.2rem 0}
 	.estrato-ft-group__grid a:hover{color:#004d4d}

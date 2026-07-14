@@ -274,13 +274,10 @@ function estrato_ticker_styles() {
 		. '.estrato-ticker-sep{opacity:.4;color:#1e1e1e}'
 		. '.estrato-ticker-item{color:#1e1e1e}'
 		. '.estrato-ticker-item strong{letter-spacing:.04em;margin-right:.25rem;color:#111}'
-		/* Forex PressGrid: tema usa texto claro — força contraste no fundo bege. */
-		. '.pg-forex-bar{background:#fff1e5!important;border-top:1px solid #e8d5c4!important;border-bottom:1px solid #e8d5c4!important}'
-		. '.pg-forex-bar,.pg-forex-ticker,.pg-forex-item,.pg-forex-pair,.pg-forex-rate,.pg-forex-ticker-wrap{color:#1e1e1e!important}'
-		. '.pg-forex-pair{font-weight:700!important;color:#111!important}'
-		. '.pg-forex-rate{font-weight:600!important;color:#1e1e1e!important}'
-		. '.pg-forex-label,.pg-forex-label *,.pg-forex-base{background:#C4170C!important;color:#fff!important}'
-		. '.pg-forex-item.pg-forex-source a{color:#0b6e4f!important;text-decoration:underline}';
+		/* Uma sola barra: esconde forex/câmbio duplicado do PressGrid. */
+		. '.pg-forex-bar,.pg-forex-ticker-wrap,.pg-forex-ticker{display:none!important}'
+		. '.pg-breaking-bar{background:#fff1e5!important;border-top:1px solid #e8d5c4!important;border-bottom:1px solid #e8d5c4!important;color:#1e1e1e!important}'
+		. '.pg-breaking-label{background:#C4170C!important;color:#fff!important}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-ticker-br-css', $css, 'main' );
 	} else {

@@ -100,7 +100,9 @@ function estrato_ds_print_styles() {
 		. '.estrato-h4{font-size:clamp(16px,2.2vw,20px);line-height:1.25}'
 		. '.estrato-body-lg{font-size:1.125rem;line-height:1.6}'
 		. '.estrato-body-sm{font-size:.875rem}'
-		. '.estrato-caption{font-size:.75rem;color:var(--estrato-muted)}';
+		. '.estrato-caption{font-size:.75rem;color:var(--estrato-muted)}'
+		/* Sidebar PressGrid: sem scroll interno — só o scroll da página. */
+		. '.pg-sidebar,.pg-sidebar[role="complementary"]{max-height:none!important;height:auto!important;overflow:visible!important;overflow-y:visible!important;scrollbar-width:auto}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-design-system', $css, 'critical' );
 	} else {

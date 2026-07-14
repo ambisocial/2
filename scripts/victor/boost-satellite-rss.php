@@ -24,7 +24,10 @@ $report = array(
 	'import'            => null,
 	'publish_before'    => (int) wp_count_posts( 'post' )->publish,
 	'publish_after'     => 0,
+	'mode'              => ( ! empty( getenv( 'ESTRATO_HARD_GUID_PRUNE' ) ) && '0' !== getenv( 'ESTRATO_HARD_GUID_PRUNE' ) ) ? 'hard' : 'soft',
 );
+
+$hard_prune = ( 'hard' === $report['mode'] );
 
 $allowed_hosts = array();
 $matrix        = get_option( 'estrato_rss_import_matrix', array() );
@@ -50,10 +53,11 @@ if ( is_array( $matrix ) ) {
 
 // 1) Index GUID → post vivos.
 $live_guids = array();
+$live_status = $hard_prune ? array( 'publish' ) : array( 'publish', 'draft', 'future', 'pending' );
 $live_q     = new WP_Query(
 	array(
 		'post_type'      => 'post',
-		'post_status'    => array( 'publish', 'draft', 'future', 'pending' ),
+		'post_status'    => $live_status,
 		'posts_per_page' => -1,
 		'fields'         => 'ids',
 		'no_found_rows'  => true,
@@ -80,16 +84,20 @@ $report['guids_before'] = count( $guids );
 
 $kept = array();
 foreach ( $guids as $guid => $flag ) {
-	$host = strtolower( (string) wp_parse_url( (string) $guid, PHP_URL_HOST ) );
-	$bare = preg_replace( '/^www\./', '', $host );
-	// Mantém GUID se ainda tem post vivo OU se o host é off-matrix (anti recontaminação).
-	$on_matrix = $host && ( isset( $allowed_hosts[ $host ] ) || isset( $allowed_hosts[ $bare ] ) );
 	if ( isset( $live_guids[ $guid ] ) ) {
 		$kept[ $guid ] = $flag;
 		continue;
 	}
+	if ( $hard_prune ) {
+		// Modo hard: só GUIDs de posts publicados sobrevivem.
+		++$report['guids_pruned'];
+		continue;
+	}
+	$host = strtolower( (string) wp_parse_url( (string) $guid, PHP_URL_HOST ) );
+	$bare = preg_replace( '/^www\./', '', $host );
+	// Mantém GUID se o host é off-matrix (anti recontaminação).
+	$on_matrix = $host && ( isset( $allowed_hosts[ $host ] ) || isset( $allowed_hosts[ $bare ] ) );
 	if ( $host && ! $on_matrix ) {
-		// Off-matrix residual: manter bloqueado.
 		$kept[ $guid ] = $flag;
 		continue;
 	}

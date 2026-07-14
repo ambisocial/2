@@ -341,6 +341,20 @@ if [[ "$code" == "200" ]]; then ok "AR-PERF-001 HTTPS 200"; else block "AR-PERF-
 hdr=$(curl -sI --max-time 10 "${CURL_HOST[@]}" "$BASE/" | grep -i "x-content-type-options" || true)
 if echo "$hdr" | grep -qi nosniff; then ok "AR-PERF-002 X-Content-Type-Options"; else warn "AR-PERF-002 sem nosniff"; fi
 
+# ─── H. MOBILE-FIRST ──────────────────────────────────────────────
+echo "## H. mobile-first"
+if echo "$HOME_HTML" | grep -qiE '<meta[^>]+name=["'\'']viewport["'\''][^>]+width=device-width'; then
+  ok "AR-MOBILE-002 viewport device-width"
+else
+  block "AR-MOBILE-002 viewport ausente ou incorreto"
+fi
+mf_live=$(echo "$HOME_HTML" | grep -oE '@media[^{]*max-width[^{]*\{' || true)
+if [[ -z "$mf_live" ]]; then
+  ok "AR-MOBILE-003 home sem @media max-width (mobile-first)"
+else
+  warn "AR-MOBILE-003 home ainda tem @media max-width (possível CSS de tema)"
+fi
+
 # ─── RESUMO ─────────────────────────────────────────────────────
 echo
 echo "=== RESUMO ==="

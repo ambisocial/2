@@ -136,12 +136,13 @@ function estrato_perf_critical_home_css() {
 	if ( ! function_exists( 'estrato_home_is_active' ) || ! estrato_home_is_active() ) {
 		return;
 	}
-	$css = '.estrato-home-v2{max-width:1200px;margin:0 auto;padding:var(--estrato-space-4,24px) 1rem}'
+	$css = '.estrato-home-v2{max-width:1200px;margin:0 auto;padding:var(--estrato-space-3,16px) 1rem}'
+		. '@media(min-width:640px){.estrato-home-v2{padding:var(--estrato-space-4,24px) 1rem}}'
 		. '.estrato-home-hero{display:grid;gap:var(--estrato-space-4,24px);margin-bottom:var(--estrato-space-5,40px)}'
 		. '@media(min-width:900px){.estrato-home-hero{grid-template-columns:1.4fr 1fr}}'
 		. '.estrato-home-card__link{color:inherit;text-decoration:none;display:block}'
 		. '.estrato-home-card__media img{width:100%;height:auto;border-radius:4px}'
-		. '.estrato-home-card--hero .estrato-home-card__title{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:.35rem 0}';
+		. '.estrato-home-card--hero .estrato-home-card__title{font-size:clamp(26px,5vw,40px);line-height:1.1;margin:.35rem 0}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-critical-home', $css, 'critical' );
 	} else {

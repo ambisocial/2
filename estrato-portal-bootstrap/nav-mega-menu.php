@@ -285,36 +285,10 @@ function estrato_nav_mega_menu_item_classes( $classes, $item ) {
 add_filter( 'nav_menu_css_class', 'estrato_nav_mega_menu_item_classes', 20, 2 );
 
 /**
- * Faixa de colunas em destaque (PressGrid não renderiza location secondary).
+ * Faixa de colunas em destaque — removida (A10): trilho de editorias no header.
  */
 function estrato_nav_columns_ribbon() {
-	if ( is_admin() || is_feed() ) {
-		return;
-	}
-	if ( ! function_exists( 'estrato_taxonomy_get_column_terms' ) ) {
-		return;
-	}
-	$cols = estrato_taxonomy_get_column_terms();
-	$nav  = array_filter(
-		$cols,
-		function ( $col ) {
-			return ! empty( $col['branding']['show_in_nav'] );
-		}
-	);
-	if ( ! $nav ) {
-		return;
-	}
-	echo '<nav class="estrato-columns-ribbon" aria-label="Colunas em destaque"><ul>';
-	foreach ( $nav as $col ) {
-		$link = get_category_link( $col['term_id'] );
-		if ( is_wp_error( $link ) ) {
-			continue;
-		}
-		$accent = ! empty( $col['branding']['accent_color'] ) ? $col['branding']['accent_color'] : '#9AFF33';
-		echo '<li><a href="' . esc_url( $link ) . '" style="--estrato-col-accent:' . esc_attr( $accent ) . '">'
-			. esc_html( $col['name'] ) . '</a></li>';
-	}
-	echo '</ul></nav>';
+	/* no-op: ribbon morto removido do DOM; rail G1 cobre o papel. */
 }
 add_action( 'wp_body_open', 'estrato_nav_columns_ribbon', 8 );
 
@@ -325,24 +299,16 @@ function estrato_nav_mega_menu_styles() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
-	$css = '.estrato-columns-ribbon{background:#0d1b2a;border-bottom:1px solid rgba(255,255,255,.08);font-size:.8125rem}'
-		. '.estrato-columns-ribbon ul{display:flex;flex-wrap:nowrap;gap:.25rem 1rem;list-style:none;margin:0 auto;max-width:1200px;padding:.45rem 1rem;overflow-x:auto;-webkit-overflow-scrolling:touch}'
-		. '.estrato-columns-ribbon a{color:#e8eef5;font-weight:600;text-decoration:none;border-bottom:2px solid var(--estrato-col-accent,#9aff33);padding-bottom:1px;white-space:nowrap}'
-		. '.estrato-columns-ribbon a:hover{color:#fff}'
-		/* Base = mobile: submenu em fluxo. */
-		. '.estrato-mega-nav>li.estrato-mega-parent{position:relative}'
+	$css = /* Base = mobile: submenu em fluxo. */
+		'.estrato-mega-nav>li.estrato-mega-parent{position:relative}'
 		. '.estrato-mega-nav>li.estrato-mega-parent>.sub-menu{background:transparent;border:0;border-top:1px solid #e2e8f0;border-radius:0;box-shadow:none;display:none;left:auto;list-style:none;margin:0;min-width:0;padding:.75rem 0 .75rem 1rem;position:relative;right:auto;top:auto;z-index:1;grid-template-columns:1fr;gap:0}'
 		. '.estrato-mega-nav>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:grid}'
 		. '.estrato-mega-nav .sub-menu .menu-item{margin:0;padding:0}'
 		. '.estrato-mega-nav .sub-menu a{color:#1e293b;display:block;font-size:.875rem;font-weight:500;line-height:1.35;padding:.45rem 0;text-decoration:none;min-height:44px}'
 		. '.estrato-mega-nav .sub-menu a:hover{color:#0f766e}'
 		. '.estrato-mega-nav .estrato-mega-column>a{font-weight:700;color:#0d1b2a;border-left:3px solid #9aff33;padding-left:.5rem}'
-		. '.estrato-mega-headlines{grid-column:1/-1;border-top:1px solid #e2e8f0;margin-top:.75rem;padding-top:.75rem;display:grid;gap:.35rem}'
-		. '.estrato-mega-headline{font-size:.8125rem;font-weight:600;color:#334155;text-decoration:none}'
-		. '.estrato-mega-headline:hover{color:#0b6e4f}'
 		. '.estrato-mega-headlines{display:none!important}'
 		. '@media(min-width:960px){'
-		. '.estrato-columns-ribbon ul{flex-wrap:wrap;overflow:visible}'
 		. '.estrato-mega-nav>li.estrato-mega-parent{position:static}'
 		. '.estrato-mega-nav>li.estrato-mega-parent>.sub-menu{background:#fff;border:1px solid #e2e8f0;border-radius:0 0 6px 6px;box-shadow:0 12px 32px rgba(15,23,42,.12);left:0;min-width:220px;padding:1rem 1.25rem;position:absolute;right:0;top:100%;z-index:9999;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.35rem 1.5rem}'
 		. '.estrato-mega-nav>li.estrato-mega-parent:hover>.sub-menu,.estrato-mega-nav>li.estrato-mega-parent:focus-within>.sub-menu,.estrato-mega-nav>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:grid}'

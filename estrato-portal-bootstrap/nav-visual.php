@@ -400,9 +400,10 @@ function estrato_nav_network_footer_html() {
  * @return string
  */
 function estrato_nav_network_hub_html() {
-	$html = '<div class="estrato-network-hub"><p>Explore os portais especializados da rede Estrato:</p><ul class="estrato-network-hub-grid">';
+	$current = estrato_nav_current_portal_id();
+	$html    = '<div class="estrato-network-hub"><p>Explore os portais especializados da rede Estrato:</p><ul class="estrato-network-hub-grid">';
 	foreach ( estrato_nav_network_catalog() as $node ) {
-		if ( 'estrato-finance' === $node['id'] ) {
+		if ( $node['id'] === $current ) {
 			continue;
 		}
 		$html .= '<li><a href="' . esc_url( $node['url'] ) . '"><strong>' . esc_html( $node['name'] )

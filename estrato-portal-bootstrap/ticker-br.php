@@ -258,6 +258,10 @@ function estrato_ticker_inject() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+	if ( 'estrato-finance' !== $portal ) {
+		return;
+	}
 	echo estrato_ticker_render_bar(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 add_action( 'wp_body_open', 'estrato_ticker_inject', 3 );
@@ -269,15 +273,18 @@ function estrato_ticker_styles() {
 	if ( is_admin() || is_feed() ) {
 		return;
 	}
-	$css = '.estrato-ticker-br{background:#fff;border-bottom:1px solid var(--estrato-line,#e4e1da);font-family:var(--estrato-font-mono,monospace);font-size:12px;color:#1e1e1e}'
-		. '.estrato-ticker-br__inner{display:flex;flex-wrap:nowrap;gap:.5rem;align-items:center;overflow-x:auto;max-width:1200px;margin:0 auto;padding:.45rem 1rem;color:#1e1e1e;text-decoration:none;white-space:nowrap}'
-		. '.estrato-ticker-sep{opacity:.4;color:#1e1e1e}'
-		. '.estrato-ticker-item{color:#1e1e1e}'
-		. '.estrato-ticker-item strong{letter-spacing:.04em;margin-right:.25rem;color:#111}'
-		/* Uma sola barra: esconde forex/câmbio duplicado do PressGrid. */
-		. '.pg-forex-bar,.pg-forex-ticker-wrap,.pg-forex-ticker{display:none!important}'
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+	$css    = '.pg-forex-bar,.pg-forex-ticker-wrap,.pg-forex-ticker{display:none!important}'
 		. '.pg-breaking-bar{background:#fff1e5!important;border-top:1px solid #e8d5c4!important;border-bottom:1px solid #e8d5c4!important;color:#1e1e1e!important}'
 		. '.pg-breaking-label{background:#C4170C!important;color:#fff!important}';
+	if ( 'estrato-finance' === $portal ) {
+		$css .= '.estrato-ticker-br{background:#fff;border-bottom:1px solid var(--estrato-line,#e4e1da);font-family:var(--estrato-font-mono,monospace);font-size:12px;color:#1e1e1e}'
+			. '.estrato-ticker-br__inner{display:flex;flex-wrap:nowrap;gap:.5rem;align-items:center;overflow-x:auto;max-width:1200px;margin:0 auto;padding:.45rem 1rem;color:#1e1e1e;text-decoration:none;white-space:nowrap}'
+			. '.estrato-ticker-sep{opacity:.4;color:#1e1e1e}'
+			. '.estrato-ticker-item{color:#1e1e1e}'
+			. '.estrato-ticker-item strong{letter-spacing:.04em;margin-right:.25rem;color:#111}'
+			. '@media(prefers-reduced-motion:reduce){.estrato-ticker-br__inner{scroll-behavior:auto}}';
+	}
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-ticker-br-css', $css, 'main' );
 	} else {

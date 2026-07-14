@@ -168,9 +168,12 @@ function estrato_g1_render_header() {
 	?>
 	<header id="estrato-g1-header" class="estrato-g1-header<?php echo $ctx['section'] ? ' estrato-g1-header--section' : ' estrato-g1-header--home'; ?>" role="banner"<?php echo $style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 		<div class="estrato-g1-header__rede" aria-label="Rede Estrato">
-			<div class="estrato-g1-header__inner">
+			<div class="estrato-g1-header__inner estrato-g1-header__rede-row">
+				<button type="button" class="estrato-g1-header__rede-toggle" id="estrato-g1-rede-btn" aria-controls="estrato-g1-rede-sheet" aria-expanded="false">
+					Outras marcas
+				</button>
 				<span class="estrato-g1-header__rede-label">Rede Estrato</span>
-				<ul class="estrato-g1-header__rede-list">
+				<ul id="estrato-g1-rede-sheet" class="estrato-g1-header__rede-list" hidden>
 					<?php if ( function_exists( 'estrato_nav_network_catalog' ) ) : ?>
 						<?php foreach ( estrato_nav_network_catalog() as $node ) : ?>
 							<?php
@@ -189,38 +192,54 @@ function estrato_g1_render_header() {
 			</div>
 		</div>
 
-		<div class="estrato-g1-header__principal">
-			<div class="estrato-g1-header__inner estrato-g1-header__principal-row">
-				<button type="button" class="estrato-g1-header__menu-btn" id="estrato-g1-menu-btn" aria-controls="estrato-g1-nav" aria-expanded="false" aria-label="Abrir menu">
-					<span class="estrato-g1-header__menu-icon" aria-hidden="true"></span>
-				</button>
-				<div class="estrato-g1-header__logo-wrap">
-					<a class="estrato-g1-header__logo" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( $site_name ); ?>">
-						<?php if ( $logo_html ) : ?>
-							<?php echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-						<?php else : ?>
-							<span class="estrato-g1-header__logo-text"><?php echo esc_html( $site_name ); ?></span>
-						<?php endif; ?>
-					</a>
-				</div>
-				<div class="estrato-g1-header__actions">
-					<button type="button" class="estrato-g1-header__search-btn" id="estrato-g1-search-btn" aria-controls="estrato-g1-search" aria-expanded="false" aria-label="Buscar">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+		<div class="estrato-g1-header__sticky">
+			<div class="estrato-g1-header__principal">
+				<div class="estrato-g1-header__inner estrato-g1-header__principal-row">
+					<button type="button" class="estrato-g1-header__menu-btn" id="estrato-g1-menu-btn" aria-controls="estrato-g1-nav" aria-expanded="false" aria-label="Abrir menu">
+						<span class="estrato-g1-header__menu-icon" aria-hidden="true"></span>
 					</button>
+					<div class="estrato-g1-header__logo-wrap">
+						<a class="estrato-g1-header__logo" href="<?php echo esc_url( home_url( '/' ) ); ?>" title="<?php echo esc_attr( $site_name ); ?>">
+							<?php if ( $logo_html ) : ?>
+								<?php echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							<?php else : ?>
+								<span class="estrato-g1-header__logo-text"><?php echo esc_html( $site_name ); ?></span>
+							<?php endif; ?>
+						</a>
+					</div>
+					<div class="estrato-g1-header__actions">
+						<button type="button" class="estrato-g1-header__search-btn" id="estrato-g1-search-btn" aria-controls="estrato-g1-search" aria-expanded="false" aria-label="Buscar">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
 
-		<?php if ( $ctx['label'] ) : ?>
-			<div class="estrato-g1-header__editoria">
-				<div class="estrato-g1-header__inner">
-					<span class="estrato-g1-header__editoria-label"><?php echo esc_html( $ctx['label'] ); ?></span>
-				</div>
+		<nav class="estrato-g1-header__rail" aria-label="Editorias rápidas">
+			<div class="estrato-g1-header__inner estrato-g1-header__rail-inner">
+				<?php
+				wp_nav_menu(
+					array(
+						'theme_location' => 'primary',
+						'menu_class'     => 'estrato-g1-rail',
+						'container'      => false,
+						'fallback_cb'    => false,
+						'depth'          => 1,
+					)
+				);
+				?>
 			</div>
-		<?php endif; ?>
+		</nav>
 
-		<nav id="estrato-g1-nav" class="estrato-g1-header__nav" aria-label="Editorias">
-			<div class="estrato-g1-header__inner">
+		<nav id="estrato-g1-nav" class="estrato-g1-header__nav" aria-label="Editorias" hidden>
+			<div class="estrato-g1-header__drawer-head">
+				<span class="estrato-g1-header__drawer-title">Menu</span>
+				<button type="button" class="estrato-g1-header__drawer-close" id="estrato-g1-menu-close" aria-label="Fechar menu">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<div class="estrato-g1-header__inner estrato-g1-header__drawer-body">
 				<?php
 				wp_nav_menu(
 					array(
@@ -236,11 +255,21 @@ function estrato_g1_render_header() {
 			</div>
 		</nav>
 
+		<?php if ( $ctx['label'] ) : ?>
+			<div class="estrato-g1-header__editoria">
+				<div class="estrato-g1-header__inner">
+					<span class="estrato-g1-header__editoria-label"><?php echo esc_html( $ctx['label'] ); ?></span>
+				</div>
+			</div>
+		<?php endif; ?>
+
+		<div id="estrato-g1-nav-overlay" class="estrato-g1-header__overlay" hidden></div>
+
 		<div id="estrato-g1-search" class="estrato-g1-header__search-panel" hidden>
 			<div class="estrato-g1-header__inner">
 				<form class="estrato-g1-header__search-form" role="search" method="get" action="<?php echo esc_url( $search ); ?>">
-					<label class="screen-reader-text" for="estrato-g1-search-input">Buscar</label>
-					<input id="estrato-g1-search-input" type="search" name="s" placeholder="Buscar notícias" autocomplete="off" />
+					<label class="screen-reader-text" for="estrato-g1-search-input">Buscar no Estrato</label>
+					<input id="estrato-g1-search-input" type="search" name="s" placeholder="Buscar no Estrato" autocomplete="off" />
 					<button type="submit">Buscar</button>
 				</form>
 			</div>
@@ -294,23 +323,37 @@ function estrato_g1_header_styles() {
 	.estrato-g1-header{
 		--estrato-g1-bar-bg:#C4170C;--estrato-g1-bar-fg:#fff;
 		--estrato-g1-rede-bg:#1e1e1e;--estrato-g1-nav-bg:#fff;--estrato-g1-nav-fg:#1e1e1e;
-		font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-		position:sticky;top:0;z-index:10050;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.06)
+		font-family:var(--estrato-font-body,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif);
+		position:relative;z-index:10050;background:#fff
 	}
 	.estrato-g1-header a:focus-visible,.estrato-g1-header button:focus-visible,.estrato-g1-header input:focus-visible{
 		outline:2px solid #9AFF33;outline-offset:2px
 	}
 	.estrato-g1-header__inner{max-width:1200px;margin:0 auto;padding:0 1rem}
+	/* Rede: fora do sticky; mobile = 1 toque */
 	.estrato-g1-header__rede{background:var(--estrato-g1-rede-bg);color:#ccc;font-size:.75rem}
-	.estrato-g1-header__rede .estrato-g1-header__inner{display:flex;align-items:center;gap:1rem;min-height:32px;overflow-x:auto}
-	.estrato-g1-header__rede-label{font-weight:700;color:#fff;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
-	.estrato-g1-header__rede-list{display:flex;gap:.85rem;list-style:none;margin:0;padding:0;white-space:nowrap}
-	.estrato-g1-header__rede-list a,.estrato-g1-header__rede-list span{color:#ccc;text-decoration:none}
+	.estrato-g1-header__rede-row{display:flex;align-items:center;gap:.75rem;min-height:36px;position:relative}
+	.estrato-g1-header__rede-toggle{
+		background:transparent;border:0;color:#fff;font:inherit;font-weight:700;cursor:pointer;
+		padding:.45rem 0;text-transform:uppercase;letter-spacing:.04em;min-height:44px
+	}
+	.estrato-g1-header__rede-label{display:none;font-weight:700;color:#fff;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+	.estrato-g1-header__rede-list{
+		display:none;list-style:none;margin:0;padding:.5rem 1rem;position:absolute;left:0;right:0;top:100%;z-index:10060;
+		background:#2a2a2a;box-shadow:0 8px 24px rgba(0,0,0,.35);flex-direction:column;gap:0
+	}
+	.estrato-g1-header__rede-list:not([hidden]){display:flex}
+	.estrato-g1-header__rede-list li{border-bottom:1px solid rgba(255,255,255,.08)}
+	.estrato-g1-header__rede-list a,.estrato-g1-header__rede-list span{
+		display:flex;align-items:center;min-height:44px;color:#ccc;text-decoration:none;padding:.25rem 0
+	}
 	.estrato-g1-header__rede-list a:hover{color:#fff;text-decoration:underline}
 	.estrato-g1-header__rede-list .is-current span{color:#fff;font-weight:700}
+	/* Sticky magro: logo + rail */
+	.estrato-g1-header__sticky{position:sticky;top:0;z-index:10055;box-shadow:0 1px 0 rgba(0,0,0,.06)}
 	.estrato-g1-header__principal{background:var(--estrato-g1-bar-bg);color:var(--estrato-g1-bar-fg)}
 	.estrato-g1-header__principal-row{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;min-height:56px}
-	.estrato-g1-header__menu-btn,.estrato-g1-header__search-btn{
+	.estrato-g1-header__menu-btn,.estrato-g1-header__search-btn,.estrato-g1-header__drawer-close{
 		background:transparent;border:0;color:inherit;cursor:pointer;padding:.5rem;
 		display:flex;align-items:center;justify-content:center;width:44px;height:44px
 	}
@@ -333,64 +376,96 @@ function estrato_g1_header_styles() {
 	.estrato-g1-header__editoria{background:var(--estrato-g1-bar-bg);color:var(--estrato-g1-bar-fg);border-top:1px solid rgba(255,255,255,.15)}
 	.estrato-g1-header__editoria .estrato-g1-header__inner{padding:.4rem 1rem}
 	.estrato-g1-header__editoria-label{font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-	.estrato-g1-header__nav{background:var(--estrato-g1-nav-bg);border-bottom:1px solid #e5e5e5}
-	.estrato-g1-header__nav .estrato-g1-header__inner{overflow-x:auto;-webkit-overflow-scrolling:touch}
-	.estrato-g1-menu{display:flex;flex-wrap:nowrap;gap:0;list-style:none;margin:0;padding:0;min-height:44px;align-items:stretch}
-	.estrato-g1-menu>li{position:relative;flex:0 0 auto}
-	.estrato-g1-menu>li>a{
-		display:flex;align-items:center;padding:.65rem .9rem;color:var(--estrato-g1-nav-fg);
-		font-size:.875rem;font-weight:600;text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent
+	/* Trilho horizontal — sempre visível no mobile */
+	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e5e5e5}
+	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+	.estrato-g1-rail{display:flex;flex-wrap:nowrap;gap:0;list-style:none;margin:0;padding:0;min-height:44px;align-items:stretch}
+	.estrato-g1-rail>li{flex:0 0 auto}
+	.estrato-g1-rail>li>a{
+		display:flex;align-items:center;padding:.6rem .85rem;color:#1e1e1e;font-size:.8125rem;font-weight:600;
+		text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent
 	}
-	.estrato-g1-menu>li>a:hover,.estrato-g1-menu>li.current-menu-item>a,.estrato-g1-menu>li.current-menu-ancestor>a{
+	.estrato-g1-rail>li>a:hover,.estrato-g1-rail>li.current-menu-item>a,.estrato-g1-rail>li.current-menu-ancestor>a{
 		color:#C4170C;border-bottom-color:#C4170C
 	}
+	/* Drawer fullscreen */
+	.estrato-g1-header__overlay{
+		position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10070
+	}
+	.estrato-g1-header__overlay:not([hidden]){display:block}
+	.estrato-g1-header__nav{
+		position:fixed;inset:0;z-index:10080;background:var(--estrato-g1-bar-bg);color:#fff;
+		display:flex;flex-direction:column;overflow:hidden
+	}
+	.estrato-g1-header__nav[hidden]{display:none!important}
+	.estrato-g1-header__drawer-head{
+		display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;
+		border-bottom:1px solid rgba(255,255,255,.15);min-height:56px;flex:0 0 auto
+	}
+	.estrato-g1-header__drawer-title{font-weight:700;font-size:1rem;letter-spacing:.02em}
+	.estrato-g1-header__drawer-close{font-size:1.75rem;line-height:1;color:#fff}
+	.estrato-g1-header__drawer-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 2rem}
+	.estrato-g1-menu{display:flex;flex-direction:column;list-style:none;margin:0;padding:0;min-height:0}
+	.estrato-g1-menu>li{display:flex;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(255,255,255,.12)}
+	.estrato-g1-menu>li>a{
+		display:flex;align-items:center;padding:.85rem 1rem;color:#fff;flex:1 1 auto;
+		font-size:1rem;font-weight:600;text-decoration:none;border-bottom:3px solid transparent
+	}
 	.estrato-mega-toggle{
-		display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;
-		border:0;background:transparent;color:inherit;cursor:pointer;flex:0 0 auto;padding:0
+		display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;
+		border:0;background:transparent;color:#fff;cursor:pointer;flex:0 0 auto;padding:0
 	}
 	.estrato-mega-toggle__icon{
 		width:.55rem;height:.55rem;border-right:2px solid currentColor;border-bottom:2px solid currentColor;
 		transform:rotate(45deg);margin-top:-.2rem;transition:transform .15s
 	}
 	.estrato-mega-parent.estrato-mega-open > .estrato-mega-toggle .estrato-mega-toggle__icon{transform:rotate(-135deg);margin-top:.2rem}
-	/* Base = mobile: nav fechada, hamburger, submenu em fluxo. */
-	.estrato-g1-header__nav{display:none;max-height:min(70vh,520px);overflow-y:auto}
-	.estrato-g1-header__nav.estrato-g1-header__nav--open{display:block;border-top:1px solid rgba(255,255,255,.2);background:var(--estrato-g1-bar-bg)}
-	.estrato-g1-header__nav--open .estrato-g1-menu{flex-direction:column;min-height:0}
-	.estrato-g1-header__nav--open .estrato-g1-menu>li{display:flex;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(255,255,255,.12)}
-	.estrato-g1-header__nav--open .estrato-g1-menu>li>a{color:#fff;border-bottom-color:transparent;flex:1 1 auto}
-	.estrato-g1-header__nav--open .estrato-mega-toggle{color:#fff}
-	.estrato-g1-menu>li.estrato-mega-parent{position:relative}
 	.estrato-g1-menu>li.estrato-mega-parent>.sub-menu{
 		background:transparent;border:0;border-top:1px solid rgba(255,255,255,.15);border-radius:0;box-shadow:none;
-		display:none;left:auto;list-style:none;margin:0;min-width:0;padding:.5rem 0 .5rem 1rem;position:relative;right:auto;top:auto;z-index:1;
-		grid-template-columns:1fr;gap:0;flex:1 0 100%
+		display:none;list-style:none;margin:0;padding:.5rem 0 .75rem 1.25rem;position:relative;flex:1 0 100%
 	}
 	.estrato-g1-menu>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:block}
-	.estrato-g1-header__nav--open .estrato-g1-menu .sub-menu a{color:#fff}
 	.estrato-g1-menu .sub-menu .menu-item{margin:0;padding:0}
-	.estrato-g1-menu .sub-menu a{color:#1e293b;display:block;font-size:.875rem;font-weight:500;line-height:1.35;padding:.45rem 0;text-decoration:none;min-height:44px}
-	.estrato-g1-menu .sub-menu a:hover{color:#C4170C}
+	.estrato-g1-menu .sub-menu a{color:#fff;display:block;font-size:.9375rem;font-weight:500;line-height:1.35;padding:.55rem 0;text-decoration:none;min-height:44px}
+	.estrato-g1-menu .sub-menu a:hover{text-decoration:underline}
 	.estrato-g1-menu .estrato-mega-column>a{font-weight:700;border-left:3px solid #9aff33;padding-left:.5rem}
 	.estrato-g1-header__search-panel{background:#f5f5f5;border-bottom:1px solid #e5e5e5;padding:.75rem 0}
 	.estrato-g1-header__search-form{display:flex;gap:.5rem}
 	.estrato-g1-header__search-form input{flex:1;border:1px solid #ccc;border-radius:4px;padding:.55rem .75rem;font-size:1rem}
 	.estrato-g1-header__search-form button{background:#C4170C;color:#fff;border:0;border-radius:4px;padding:.55rem 1rem;font-weight:600;cursor:pointer;min-height:44px}
 	body.estrato-nav-lock{overflow:hidden;touch-action:none}
+	@media(prefers-reduced-motion:reduce){
+		.estrato-mega-toggle__icon{transition:none}
+	}
 	@media(min-width:960px){
-		.estrato-g1-header__menu-btn{display:none}
+		.estrato-g1-header__rede-toggle{display:none}
+		.estrato-g1-header__rede-label{display:inline}
+		.estrato-g1-header__rede-list,
+		.estrato-g1-header__rede-list[hidden]{
+			display:flex!important;position:static;background:transparent;box-shadow:none;
+			flex-direction:row;gap:.85rem;padding:0;white-space:nowrap;overflow-x:auto
+		}
+		.estrato-g1-header__rede-list li{border:0}
+		.estrato-g1-header__rede-list a,.estrato-g1-header__rede-list span{min-height:0;padding:.35rem 0}
+		.estrato-g1-header__menu-btn,.estrato-g1-header__drawer-head,.estrato-g1-header__overlay,.estrato-g1-header__rail{display:none!important}
 		.estrato-mega-toggle{display:none}
 		.estrato-g1-header__principal-row{grid-template-columns:1fr auto 1fr}
 		.estrato-g1-header__logo-wrap{grid-column:2}
 		.estrato-g1-header__actions{grid-column:3}
-		.estrato-g1-header__nav{display:block;border-top:0;background:var(--estrato-g1-nav-bg);max-height:none;overflow:visible}
-		.estrato-g1-header__nav.estrato-g1-header__nav--open{border-top:0;background:var(--estrato-g1-nav-bg)}
-		.estrato-g1-header__nav--open .estrato-g1-menu,
-		.estrato-g1-menu{flex-direction:row;min-height:44px}
-		.estrato-g1-header__nav--open .estrato-g1-menu>li{display:block;border:0}
-		.estrato-g1-header__nav--open .estrato-g1-menu>li>a,
-		.estrato-g1-menu>li>a{color:var(--estrato-g1-nav-fg)}
-		.estrato-g1-menu>li.estrato-mega-parent{position:relative}
+		.estrato-g1-header__nav,
+		.estrato-g1-header__nav[hidden]{
+			display:block!important;position:relative;inset:auto;background:var(--estrato-g1-nav-bg);color:var(--estrato-g1-nav-fg);
+			border-bottom:1px solid #e5e5e5;overflow:visible;max-height:none
+		}
+		.estrato-g1-header__drawer-body{overflow:visible;padding:0}
+		.estrato-g1-menu{flex-direction:row;min-height:44px;align-items:stretch}
+		.estrato-g1-menu>li{display:block;border:0;position:relative;flex:0 0 auto}
+		.estrato-g1-menu>li>a{
+			color:var(--estrato-g1-nav-fg);padding:.65rem .9rem;font-size:.875rem;border-bottom:3px solid transparent;white-space:nowrap
+		}
+		.estrato-g1-menu>li>a:hover,.estrato-g1-menu>li.current-menu-item>a,.estrato-g1-menu>li.current-menu-ancestor>a{
+			color:#C4170C;border-bottom-color:#C4170C
+		}
 		.estrato-g1-menu>li.estrato-mega-parent>.sub-menu{
 			background:#fff;border:1px solid #e2e8f0;border-radius:0 0 6px 6px;box-shadow:0 12px 32px rgba(15,23,42,.12);
 			display:none;left:0;min-width:220px;padding:1rem 1.25rem;position:absolute;right:auto;top:100%;z-index:9999;
@@ -400,6 +475,7 @@ function estrato_g1_header_styles() {
 		.estrato-g1-menu>li.estrato-mega-parent:focus-within>.sub-menu,
 		.estrato-g1-menu>li.estrato-mega-parent.estrato-mega-open>.sub-menu{display:grid}
 		.estrato-g1-menu .sub-menu a{color:#1e293b;min-height:0;padding:.35rem 0}
+		.estrato-g1-menu .sub-menu a:hover{color:#C4170C;text-decoration:none}
 		body.estrato-nav-lock{overflow:auto;touch-action:auto}
 	}
 	<?php
@@ -425,9 +501,13 @@ function estrato_g1_header_scripts() {
 		var root=document.getElementById('estrato-g1-header');
 		if(!root)return;
 		var menuBtn=document.getElementById('estrato-g1-menu-btn');
+		var menuClose=document.getElementById('estrato-g1-menu-close');
 		var nav=document.getElementById('estrato-g1-nav');
+		var overlay=document.getElementById('estrato-g1-nav-overlay');
 		var searchBtn=document.getElementById('estrato-g1-search-btn');
 		var searchPanel=document.getElementById('estrato-g1-search');
+		var redeBtn=document.getElementById('estrato-g1-rede-btn');
+		var redeSheet=document.getElementById('estrato-g1-rede-sheet');
 		var menu=root.querySelector('.estrato-g1-menu');
 		var mq=window.matchMedia('(min-width:960px)');
 		var lastFocus=null;
@@ -439,18 +519,32 @@ function estrato_g1_header_scripts() {
 		}
 		function setMenuOpen(open){
 			if(!nav||!menuBtn)return;
-			nav.classList.toggle('estrato-g1-header__nav--open', open);
+			if(isDesktop()){
+				nav.hidden=false;
+				if(overlay)overlay.hidden=true;
+				document.body.classList.remove('estrato-nav-lock');
+				menuBtn.setAttribute('aria-expanded','false');
+				menuBtn.setAttribute('aria-label','Abrir menu');
+				return;
+			}
+			nav.hidden=!open;
+			if(overlay)overlay.hidden=!open;
 			menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
 			menuBtn.setAttribute('aria-label', open ? 'Fechar menu' : 'Abrir menu');
-			document.body.classList.toggle('estrato-nav-lock', open && !isDesktop());
-			if(open && !isDesktop()){
+			document.body.classList.toggle('estrato-nav-lock', open);
+			if(open){
 				lastFocus=document.activeElement;
 				var f=focusables(nav);
 				if(f[0])f[0].focus();
-			}else if(!open && lastFocus && lastFocus.focus){
+			}else if(lastFocus && lastFocus.focus){
 				lastFocus.focus();
 				lastFocus=null;
 			}
+		}
+		function setRedeOpen(open){
+			if(!redeSheet||!redeBtn||isDesktop())return;
+			redeSheet.hidden=!open;
+			redeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
 		}
 		function closeAllMegas(){
 			root.querySelectorAll('.estrato-mega-open').forEach(function(li){
@@ -480,9 +574,33 @@ function estrato_g1_header_scripts() {
 			searchBtn.setAttribute('aria-expanded','false');
 		}
 
+		if(isDesktop()){
+			if(nav)nav.hidden=false;
+			if(overlay)overlay.hidden=true;
+			if(redeSheet)redeSheet.hidden=false;
+		}else{
+			setMenuOpen(false);
+			setRedeOpen(false);
+		}
+
 		if(menuBtn&&nav){
 			menuBtn.addEventListener('click',function(){
-				setMenuOpen(!nav.classList.contains('estrato-g1-header__nav--open'));
+				var open=nav.hidden;
+				setMenuOpen(open);
+				if(open)setRedeOpen(false);
+			});
+		}
+		if(menuClose){
+			menuClose.addEventListener('click',function(){setMenuOpen(false);});
+		}
+		if(overlay){
+			overlay.addEventListener('click',function(){setMenuOpen(false);});
+		}
+		if(redeBtn&&redeSheet){
+			redeBtn.addEventListener('click',function(){
+				var open=redeSheet.hidden;
+				setRedeOpen(open);
+				if(open){setMenuOpen(false);closeSearch();}
 			});
 		}
 		if(searchBtn&&searchPanel){
@@ -491,6 +609,7 @@ function estrato_g1_header_scripts() {
 				searchPanel.hidden=!willOpen;
 				searchBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 				if(willOpen){
+					setRedeOpen(false);
 					var i=document.getElementById('estrato-g1-search-input');
 					if(i)i.focus();
 				}
@@ -529,7 +648,8 @@ function estrato_g1_header_scripts() {
 		document.addEventListener('keydown',function(e){
 			if(e.key==='Escape'){
 				var changed=false;
-				if(nav&&nav.classList.contains('estrato-g1-header__nav--open')){setMenuOpen(false);changed=true;}
+				if(nav&&!nav.hidden&&!isDesktop()){setMenuOpen(false);changed=true;}
+				if(redeSheet&&!redeSheet.hidden&&!isDesktop()){setRedeOpen(false);changed=true;}
 				if(searchPanel&&!searchPanel.hidden){closeSearch();changed=true;}
 				if(root.querySelector('.estrato-mega-open')){closeAllMegas();changed=true;}
 				if(changed)e.preventDefault();
@@ -537,7 +657,7 @@ function estrato_g1_header_scripts() {
 			}
 			/* Focus trap no drawer mobile */
 			if(e.key!=='Tab')return;
-			if(!nav||!nav.classList.contains('estrato-g1-header__nav--open')||isDesktop())return;
+			if(!nav||nav.hidden||isDesktop())return;
 			var f=focusables(nav);
 			if(!f.length)return;
 			var first=f[0], last=f[f.length-1];
@@ -546,19 +666,29 @@ function estrato_g1_header_scripts() {
 		});
 
 		document.addEventListener('click',function(e){
-			if(root.contains(e.target))return;
-			closeAllMegas();
-			if(nav&&nav.classList.contains('estrato-g1-header__nav--open')&&!isDesktop()){
-				setMenuOpen(false);
+			if(root.contains(e.target)){
+				if(redeSheet&&!redeSheet.hidden&&!isDesktop()&&!e.target.closest('.estrato-g1-header__rede')){
+					setRedeOpen(false);
+				}
+				return;
 			}
+			closeAllMegas();
+			if(nav&&!nav.hidden&&!isDesktop()){setMenuOpen(false);}
+			setRedeOpen(false);
 			closeSearch();
 		});
 
 		if(typeof mq.addEventListener==='function'){
 			mq.addEventListener('change',function(){
 				if(isDesktop()){
-					setMenuOpen(false);
+					if(nav)nav.hidden=false;
+					if(overlay)overlay.hidden=true;
+					if(redeSheet)redeSheet.hidden=false;
 					document.body.classList.remove('estrato-nav-lock');
+					menuBtn&&menuBtn.setAttribute('aria-expanded','false');
+				}else{
+					setMenuOpen(false);
+					setRedeOpen(false);
 				}
 			});
 		}

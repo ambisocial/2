@@ -102,7 +102,11 @@ function estrato_ds_print_styles() {
 		. '.estrato-body-sm{font-size:.875rem}'
 		. '.estrato-caption{font-size:.75rem;color:var(--estrato-muted)}'
 		/* Sidebar PressGrid: sem scroll interno — só o scroll da página. */
-		. '.pg-sidebar,.pg-sidebar[role="complementary"]{max-height:none!important;height:auto!important;overflow:visible!important;overflow-y:visible!important;scrollbar-width:auto}';
+		. '.pg-sidebar,.pg-sidebar[role="complementary"]{max-height:none!important;height:auto!important;overflow:visible!important;overflow-y:visible!important;scrollbar-width:auto}'
+		/* Mobile: sidebar abaixo/oculta; sem publicidade vazia ocupando viewport. */
+		. '@media(max-width:1099px){.pg-sidebar,.pg-sidebar[role="complementary"],.widget_text:has(.ads),.widget.widget_media_image{order:99}}'
+		. '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}'
+		. 'a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid #9AFF33;outline-offset:2px}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-design-system', $css, 'critical' );
 	} else {

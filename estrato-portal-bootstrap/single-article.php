@@ -308,14 +308,35 @@ function estrato_single_share_bar() {
 	if ( ! is_singular( 'post' ) ) {
 		return;
 	}
-	$url   = rawurlencode( get_permalink() );
-	$title = rawurlencode( get_the_title() );
+	$url_raw = get_permalink();
+	$url     = rawurlencode( $url_raw );
+	$title   = rawurlencode( get_the_title() );
 	?>
-	<div class="estrato-share-bar" aria-label="Compartilhar">
+	<div class="estrato-share-bar" aria-label="Compartilhar" data-share-url="<?php echo esc_url( $url_raw ); ?>">
 		<a href="https://wa.me/?text=<?php echo esc_attr( $title . '%20' . $url ); ?>" rel="noopener" target="_blank">WhatsApp</a>
 		<a href="https://twitter.com/intent/tweet?url=<?php echo esc_attr( $url ); ?>&text=<?php echo esc_attr( $title ); ?>" rel="noopener" target="_blank">X</a>
 		<a href="https://www.linkedin.com/sharing/share-offsite/?url=<?php echo esc_attr( $url ); ?>" rel="noopener" target="_blank">LinkedIn</a>
+		<button type="button" class="estrato-share-bar__copy" data-estrato-copy>Copiar link</button>
 	</div>
+	<script>
+	(function(){
+		var btn=document.querySelector('[data-estrato-copy]');
+		if(!btn)return;
+		var bar=btn.closest('.estrato-share-bar');
+		var url=bar&&bar.getAttribute('data-share-url');
+		btn.addEventListener('click',function(){
+			if(!url)return;
+			var done=function(){btn.textContent='Copiado';setTimeout(function(){btn.textContent='Copiar link';},1800);};
+			if(navigator.clipboard&&navigator.clipboard.writeText){
+				navigator.clipboard.writeText(url).then(done).catch(function(){});
+			}else{
+				var i=document.createElement('input');i.value=url;document.body.appendChild(i);i.select();
+				try{document.execCommand('copy');done();}catch(e){}
+				document.body.removeChild(i);
+			}
+		});
+	})();
+	</script>
 	<?php
 }
 
@@ -361,7 +382,9 @@ function estrato_single_styles() {
 		return;
 	}
 	$css = '.estrato-single-breadcrumb-wrap{max-width:680px;margin:0 auto;padding:0 1rem}'
-		. '.estrato-single-breadcrumb-wrap ol li:last-child{max-width:60ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}'
+		. '.estrato-single-breadcrumb-wrap ol{display:flex;flex-wrap:nowrap;gap:.35rem;overflow:hidden;list-style:none;margin:0;padding:.5rem 0;font-size:.75rem}'
+		. '.estrato-single-breadcrumb-wrap ol li{flex:0 1 auto;min-width:0;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+		. '.estrato-single-breadcrumb-wrap ol li:last-child{flex:1 1 auto;max-width:60ch}'
 		. '.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4);padding:0 1rem}'
 		. '.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted);margin:.75rem 0 1rem}'
 		. '.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted);align-items:center}'
@@ -381,13 +404,20 @@ function estrato_single_styles() {
 		. '.estrato-single-next{text-align:right}'
 		. '.estrato-single-prevnext__label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--estrato-muted)}'
 		. '.estrato-single-prevnext__title{font-size:14px;font-weight:600;line-height:1.35;color:var(--estrato-ink)}'
-		/* Base = mobile: barra de share sticky inferior. */
-		. '.estrato-share-bar{position:sticky;bottom:0;left:0;display:flex;flex-direction:row;justify-content:center;gap:.5rem;background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;padding-bottom:calc(.5rem + env(safe-area-inset-bottom,0px));font-size:12px;font-weight:600;z-index:100}'
-		. '@media(min-width:1100px){.estrato-share-bar{position:fixed;left:max(1rem,calc(50% - 420px));top:40%;bottom:auto;flex-direction:column;justify-content:flex-start;background:transparent;border-top:0;padding:0;z-index:50}}'
-		// PressGrid back-to-top: escapa do overflow do .single-content e não sobe sobre o related grid.
-		. '.pg-scroll-top,.pg-back-to-top,#back-to-top{z-index:60!important;bottom:calc(1rem + env(safe-area-inset-bottom,0px))!important;margin-bottom:calc(env(safe-area-inset-bottom,0px) + 3.5rem)!important}'
-		// PressGrid navigation post-navigation com Previous/Next crus: fica em CSS oculto até termos a versão PT-BR abaixo.
-		. '.navigation.post-navigation{display:none!important}';
+		/* Mobile: share fixed acima do chrome do browser + Copiar */
+		. '.estrato-share-bar{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:.5rem;background:#fff;border-top:1px solid var(--estrato-line);padding:.5rem;padding-bottom:calc(.5rem + env(safe-area-inset-bottom,0px));font-size:12px;font-weight:600;z-index:10040}'
+		. '.estrato-share-bar a,.estrato-share-bar__copy{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:.35rem .7rem;color:var(--estrato-ink);text-decoration:none;background:transparent;border:1px solid var(--estrato-line);border-radius:4px;cursor:pointer;font:inherit;font-weight:600}'
+		. '.estrato-share-bar a:hover,.estrato-share-bar__copy:hover{border-color:var(--estrato-cat-color,#5B3E96)}'
+		. 'body.single,body.single-post{padding-bottom:calc(3.5rem + env(safe-area-inset-bottom,0px))}'
+		. '@media(min-width:1100px){.estrato-share-bar{left:max(1rem,calc(50% - 420px));right:auto;top:40%;bottom:auto;flex-direction:column;justify-content:flex-start;background:transparent;border-top:0;padding:0;z-index:50}body.single,body.single-post{padding-bottom:0}}'
+		/* Sidebar: no mobile abaixo do artigo / oculta se vazia */
+		. '@media(max-width:1099px){'
+		. '.pg-sidebar,.pg-sidebar[role="complementary"],aside.pg-sidebar{display:none!important}'
+		. '.pg-single-content,.single-content,.pg-content-wrap,.content-area{width:100%!important;max-width:100%!important;float:none!important}'
+		. '}'
+		. '.pg-scroll-top,.pg-back-to-top,#back-to-top{z-index:60!important;bottom:calc(4.25rem + env(safe-area-inset-bottom,0px))!important}'
+		. '.navigation.post-navigation{display:none!important}'
+		. '@media(prefers-reduced-motion:reduce){.estrato-single-prev,.estrato-single-next{transition:none}}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-single-css', $css, 'main' );
 	} else {

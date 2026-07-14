@@ -237,7 +237,7 @@ function estrato_home_render_layout() {
 		$html .= '<div class="estrato-home-hero__main">' . estrato_home_render_card( $hero, 'hero' ) . '</div>';
 		$html .= '<div class="estrato-home-hero__side">';
 		foreach ( $sec['items'] as $post ) {
-			$html .= estrato_home_render_card( $post, 'secondary' );
+			$html .= estrato_home_render_card( $post, 'list' );
 		}
 		$html .= '</div></section>';
 	}
@@ -246,9 +246,20 @@ function estrato_home_render_layout() {
 	foreach ( $agora['items'] as $post ) {
 		$html .= '<li>' . estrato_home_render_card( $post, 'list' ) . '</li>';
 	}
-	$html .= '</ul></section>';
+	$html .= '</ul>';
+	if ( $agora['items'] ) {
+		$posts_url = get_option( 'page_for_posts' ) ? get_permalink( (int) get_option( 'page_for_posts' ) ) : home_url( '/' );
+		$html     .= '<p class="estrato-home-agora__more"><a href="' . esc_url( $posts_url ) . '">Ver todas</a></p>';
+	}
+	$html .= '</section>';
 
+	$blocks_shown = 0;
+	$max_blocks   = 5;
+	$html        .= '<div id="estrato-home-blocks">';
 	foreach ( $editorias as $slug ) {
+		if ( $blocks_shown >= $max_blocks ) {
+			break;
+		}
 		$term = get_term_by( 'slug', $slug, 'category' );
 		if ( ! $term || is_wp_error( $term ) ) {
 			continue;
@@ -264,16 +275,28 @@ function estrato_home_render_layout() {
 		if ( ! $block['items'] ) {
 			continue;
 		}
-		$color = estrato_ds_editoria_color( $slug );
-		$html .= '<section class="estrato-home-block" style="--estrato-cat-color:' . esc_attr( $color ) . '" aria-label="' . esc_attr( html_entity_decode( $term->name, ENT_QUOTES, 'UTF-8' ) ) . '">';
-		$html .= '<header class="estrato-home-block__head"><h2 class="estrato-display"><a href="' . esc_url( get_category_link( $term ) ) . '">' . esc_html( $term->name ) . '</a></h2></header>';
-		$html .= '<div class="estrato-home-block__grid">';
-		$first = true;
+		++$blocks_shown;
+		$color     = estrato_ds_editoria_color( $slug );
+		$term_name = html_entity_decode( $term->name, ENT_QUOTES, 'UTF-8' );
+		$html     .= '<section class="estrato-home-block" style="--estrato-cat-color:' . esc_attr( $color ) . '" aria-label="' . esc_attr( $term_name ) . '">';
+		$html     .= '<header class="estrato-home-block__head"><h2 class="estrato-display"><a href="' . esc_url( get_category_link( $term ) ) . '">' . esc_html( $term->name ) . '</a></h2></header>';
+		$html     .= '<div class="estrato-home-block__grid">';
+		$first     = true;
 		foreach ( $block['items'] as $post ) {
 			$html .= estrato_home_render_card( $post, $first ? 'secondary' : 'list' );
 			$first = false;
 		}
-		$html .= '</div></section>';
+		$html .= '</div>';
+		$html .= '<p class="estrato-home-block__more"><a href="' . esc_url( get_category_link( $term ) ) . '">Ver mais em ' . esc_html( $term_name ) . '</a></p>';
+		$html .= '</section>';
+	}
+	$html .= '</div>';
+
+	if ( function_exists( 'estrato_nav_network_hub_html' ) ) {
+		$html .= '<section class="estrato-home-rede" aria-label="Mais da Rede Estrato">';
+		$html .= '<h2 class="estrato-kicker">Mais da Rede Estrato</h2>';
+		$html .= estrato_nav_network_hub_html();
+		$html .= '</section>';
 	}
 
 	$html .= '<section class="estrato-home-guias" aria-label="Guias"><h2 class="estrato-kicker">Guias</h2><ul class="estrato-home-guias__list">';
@@ -380,7 +403,8 @@ function estrato_home_styles() {
 		. '@media(min-width:640px){.estrato-home-v2{padding:var(--estrato-space-4) 1rem}}'
 		. '.estrato-home-hero{display:grid;gap:var(--estrato-space-4);margin-bottom:var(--estrato-space-5)}'
 		. '@media(min-width:900px){.estrato-home-hero{grid-template-columns:1.4fr 1fr}}'
-		. '.estrato-home-hero__side{display:grid;gap:var(--estrato-space-3)}'
+		. '.estrato-home-hero__side{display:grid;gap:var(--estrato-space-2)}'
+		. '@media(max-width:899px){.estrato-home-hero__side .estrato-home-card{border-bottom:1px solid var(--estrato-line)}}'
 		. '.estrato-home-card{border-bottom:1px solid var(--estrato-line);padding-bottom:var(--estrato-space-3)}'
 		. '.estrato-home-card__link{color:inherit;text-decoration:none;display:block}'
 		. '.estrato-home-card__title{font-size:clamp(18px,2.5vw,26px);margin:.35rem 0}'
@@ -390,10 +414,20 @@ function estrato_home_styles() {
 		. '.estrato-home-agora__list{list-style:none;margin:0;padding:0;display:grid;gap:var(--estrato-space-2);grid-template-columns:1fr}'
 		. '@media(min-width:640px){.estrato-home-agora__list{grid-template-columns:repeat(2,1fr)}}'
 		. '@media(min-width:960px){.estrato-home-agora__list{grid-template-columns:repeat(5,1fr)}}'
+		. '.estrato-home-agora__more,.estrato-home-block__more{margin:.75rem 0 0;font-size:.875rem;font-weight:600}'
+		. '.estrato-home-agora__more a,.estrato-home-block__more a{color:var(--estrato-cat-color,#C4170C);text-decoration:none}'
+		. '.estrato-home-agora__more a:hover,.estrato-home-block__more a:hover{text-decoration:underline}'
 		. '.estrato-home-block{margin-bottom:var(--estrato-space-5);border-top:4px solid var(--estrato-cat-color);padding-top:var(--estrato-space-3)}'
 		. '.estrato-home-block__grid{display:grid;gap:var(--estrato-space-3);grid-template-columns:1fr}'
 		. '@media(min-width:640px){.estrato-home-block__grid{grid-template-columns:1fr 1fr}}'
 		. '@media(min-width:900px){.estrato-home-block__grid{grid-template-columns:1.2fr 1fr 1fr}}'
+		. '.estrato-home-rede{margin-bottom:var(--estrato-space-5);padding:var(--estrato-space-3) 0;border-top:1px solid var(--estrato-line)}'
+		. '.estrato-network-hub-grid{display:grid;gap:var(--estrato-space-3);list-style:none;margin:var(--estrato-space-3) 0 0;padding:0;grid-template-columns:1fr}'
+		. '@media(min-width:640px){.estrato-network-hub-grid{grid-template-columns:1fr 1fr}}'
+		. '@media(min-width:960px){.estrato-network-hub-grid{grid-template-columns:repeat(3,1fr)}}'
+		. '.estrato-network-hub-grid a{color:inherit;text-decoration:none}'
+		. '.estrato-network-hub-grid a:hover strong{text-decoration:underline}'
+		. '.estrato-network-tagline{color:var(--estrato-muted);font-size:.8125rem}'
 		. '.estrato-home-guias{margin-bottom:var(--estrato-space-5)}'
 		. '.estrato-home-guias__list{display:flex;flex-wrap:wrap;gap:1rem;list-style:none;margin:0;padding:0}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {

@@ -435,8 +435,8 @@ function estrato_ft_footer_styles() {
 	.site-footer,.pg-footer,.pg-site-footer{padding:0!important;background:transparent!important;border:0!important;margin:0!important}
 	.estrato-ft-footer{background:#262a33;color:#ced4da;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin-top:2rem}
 	.estrato-ft-footer__inner{max-width:1200px;margin:0 auto;padding:0 1rem 1.5rem}
-	.estrato-ft-cols{display:grid;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,.12)}
-	@media(min-width:768px){.estrato-ft-cols{grid-template-columns:repeat(4,minmax(0,1fr))}}
+	.estrato-ft-cols{display:none;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,.12)}
+	@media(min-width:768px){.estrato-ft-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.estrato-ft-accordion{display:none!important}}
 	.estrato-ft-cols__title{font-size:.9375rem;font-weight:700;color:#fff;margin:0 0 .75rem}
 	.estrato-ft-cols ul{list-style:none;margin:0;padding:0}
 	.estrato-ft-cols a{color:#ced4da;text-decoration:none;font-size:.875rem;line-height:1.8}
@@ -474,10 +474,6 @@ function estrato_ft_footer_styles() {
 	.estrato-ft-footer__brand{background:#000;padding:.85rem 1rem;text-align:right}
 	.estrato-ft-footer__brand-text{color:#fff;font-size:.8125rem;font-style:italic;font-weight:700;letter-spacing:.02em}
 	@media(min-width:768px){
-		.estrato-ft-accordion{display:grid;grid-template-columns:repeat(3,1fr);gap:0 2rem;border-top:1px solid rgba(255,255,255,.12)}
-		.estrato-ft-accordion__item{border:0!important}
-		.estrato-ft-accordion__item[open] .estrato-ft-accordion__chev,.estrato-ft-accordion__chev{display:none}
-		.estrato-ft-accordion__head{pointer-events:none;padding:.75rem 0 .5rem}
 		.estrato-ft-group__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 	}
 	@media(min-width:1024px){

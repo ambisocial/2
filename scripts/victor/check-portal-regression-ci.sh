@@ -75,16 +75,28 @@ else
   fail "estrato-science.yaml ausente"
 fi
 
-if [[ -f portals/estrato-sustain-taxonomy.php ]]; then
-  ok "estrato-sustain-taxonomy.php presente"
+if [[ -f portals/estrato-agro
+  estrato-esg
+  estrato-viagem-taxonomy.php ]]; then
+  ok "estrato-agro
+  estrato-esg
+  estrato-viagem-taxonomy.php presente"
 else
-  fail "estrato-sustain-taxonomy.php ausente"
+  fail "estrato-agro
+  estrato-esg
+  estrato-viagem-taxonomy.php ausente"
 fi
 
-if [[ -f portals/estrato-sustain.yaml ]]; then
-  ok "estrato-sustain.yaml presente"
+if [[ -f portals/estrato-agro
+  estrato-esg
+  estrato-viagem.yaml ]]; then
+  ok "estrato-agro
+  estrato-esg
+  estrato-viagem.yaml presente"
 else
-  fail "estrato-sustain.yaml ausente"
+  fail "estrato-agro
+  estrato-esg
+  estrato-viagem.yaml ausente"
 fi
 
 if [[ -f portals/estrato-culture-taxonomy.php ]]; then
@@ -109,7 +121,9 @@ for sh in scripts/victor/check-portal-regression.sh \
           scripts/victor/setup-estrato-mind-taxonomy.sh \
           scripts/victor/setup-estrato-lifestyle-taxonomy.sh \
           scripts/victor/setup-estrato-science-taxonomy.sh \
-          scripts/victor/setup-estrato-sustain-taxonomy.sh \
+          scripts/victor/setup-estrato-agro
+  estrato-esg
+  estrato-viagem-taxonomy.sh \
           scripts/victor/setup-estrato-culture-taxonomy.sh; do
   if [[ -f "$sh" ]]; then
     bash -n "$sh" && ok "bash -n $sh"
@@ -165,7 +179,9 @@ sys.exit(1 if d else 0)" 2>/dev/null
   fi
 }
 
-for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php portals/estrato-sustain-taxonomy.php portals/estrato-culture-taxonomy.php; do
+for tax in portals/estrato-finance-taxonomy.php portals/estrato-mind-taxonomy.php portals/estrato-lifestyle-taxonomy.php portals/estrato-science-taxonomy.php portals/estrato-agro
+  estrato-esg
+  estrato-viagem-taxonomy.php portals/estrato-culture-taxonomy.php; do
   if [[ -f "$tax" ]]; then
     if command -v php >/dev/null 2>&1; then
       php -l "$tax" >/dev/null 2>&1 && ok "php -l $(basename "$tax")" || fail "php -l $tax"

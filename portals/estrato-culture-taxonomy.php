@@ -12,11 +12,13 @@ return array(
 	'menu_order'     => array(
 		'jogos-imaginacao',
 		'narrativas-som',
+		'celebridades',
 	),
 	'column_order'   => array(),
 	'index_order'    => array(
 		'jogos-imaginacao',
 		'narrativas-som',
+		'celebridades',
 	),
 	'legacy_merge'   => array(),
 	'legacy_noindex' => array(),
@@ -240,6 +242,65 @@ return array(
 							'url'   => 'https://theblogthatcelebratesitself.blogspot.com/feeds/posts/default?alt=rss',
 							'tier'  => 3,
 						),
+					),
+				),
+			),
+		),
+		'celebridades'          => array(
+			'name'        => 'Celebridades',
+			'description' => 'Famosos, bastidores, TV e cultura pop de celebridades — estilo G1 Pop/Quem/IstoÉ Gente.',
+			'branding'    => array(
+				'brand_name'      => 'Gente',
+				'primary_color'   => '#9B2226',
+				'accent_color'    => '#EE9B00',
+				'secondary_color' => '#BB3E03',
+				'header_variant'  => 'editoria',
+			),
+			'keywords'    => array(
+				'include' => array(),
+				'exclude' => array( 'ibovespa', 'selic', 'bitcoin', 'copom' ),
+			),
+			'feeds'       => array(
+				array( 'title' => 'G1 Celebridades', 'url' => 'https://g1.globo.com/rss/g1/pop-arte/celebridades/', 'tier' => 1 ),
+				array( 'title' => 'Gshow Bastidores', 'url' => 'https://gshow.globo.com/rss/gshow/bastidores/', 'tier' => 1 ),
+				array( 'title' => 'Extra', 'url' => 'https://extra.globo.com/rss.xml', 'tier' => 2 ),
+			),
+			'subcategories' => array(
+				'famosos'      => array(
+					'name'        => 'Famosos',
+					'description' => 'Celebridades nacionais e internacionais, lifetyle e cobertura Quotidiana.',
+					'keywords'    => array(
+						'include' => array( 'famoso', 'celebridade', 'atriz', 'ator', 'influencer', 'reality' ),
+						'exclude' => array(),
+					),
+					'feeds'       => array(
+						array( 'title' => 'G1 Celebridades', 'url' => 'https://g1.globo.com/rss/g1/pop-arte/celebridades/', 'tier' => 1 ),
+						array( 'title' => 'Extra', 'url' => 'https://extra.globo.com/rss.xml', 'tier' => 2 ),
+						array( 'title' => 'F5 Folha', 'url' => 'https://f5.folha.uol.com.br/colunistas/rss091.xml', 'tier' => 2 ),
+					),
+				),
+				'tv-bastidores' => array(
+					'name'        => 'TV & bastidores',
+					'description' => 'Novelas, reality shows e bastidores da televisão.',
+					'keywords'    => array(
+						'include' => array( 'novela', 'reality', 'bastidores', 'gshow', 'globo', 'tv' ),
+						'exclude' => array(),
+					),
+					'feeds'       => array(
+						array( 'title' => 'Gshow Bastidores', 'url' => 'https://gshow.globo.com/rss/gshow/bastidores/', 'tier' => 1 ),
+						array( 'title' => 'Gshow', 'url' => 'https://gshow.globo.com/rss/gshow/', 'tier' => 2 ),
+					),
+				),
+				'cultura-pop'   => array(
+					'name'        => 'Cultura pop & música',
+					'description' => 'Música pop, red carpets e cultura de celebridade.',
+					'keywords'    => array(
+						'include' => array( 'pop', 'cantor', 'cantora', 'álbum', 'album', 'hit', 'red carpet' ),
+						'exclude' => array(),
+					),
+					'feeds'       => array(
+						array( 'title' => 'G1 Pop Música', 'url' => 'https://g1.globo.com/rss/g1/pop-arte/musica/', 'tier' => 1 ),
+						array( 'title' => 'Rolling Stone Brasil', 'url' => 'https://rollingstone.com.br/feed/', 'tier' => 2 ),
 					),
 				),
 			),

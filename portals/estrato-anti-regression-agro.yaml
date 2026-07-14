@@ -1,17 +1,15 @@
-# Estrato Culture — Anti-regressão (satélite)
-# Validação: ESTRATO_PORTAL=estrato-culture bash scripts/victor/check-portal-regression.sh --strict
-
-portal: estrato-culture
-domain: culture.estrato.cc
-web_root: /var/www/culture.estrato.cc
-rss_preset: brasil-culture
+# Anti-regressão — Estrato Agro
+portal: estrato-agro
+domain: agro.estrato.cc
+web_root: /var/www/agro.estrato.cc
+rss_preset: brasil-agro
 extends: estrato-anti-regression.yaml
 satellite: true
 
 required_categories:
-  - jogos-imaginacao
-  - narrativas-som
-  - celebridades
+  - producao-safras
+  - mercado-agro
+  - agroecologia
 
 forbidden_menu_categories:
   - economia
@@ -30,12 +28,11 @@ rule_overrides:
   AR-TAX-003:
     expect_min_pressgrid_sections: 3
   AR-TAX-006:
-    expect_min_matrix_nodes: 9
+    expect_min_matrix_nodes: 6
   AR-RSS-004:
     expect_min_menu_items: 3
 
 hubs_expected:
-  - jogos
-  - narrativas
-  - celebridades
-  - rpg
+  - producao
+  - mercado
+  - agroecologia

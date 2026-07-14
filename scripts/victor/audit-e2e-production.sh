@@ -39,7 +39,9 @@ if [[ "$GATE_RC" -eq 0 ]]; then ok "Gate rede 6/6 PASS"; else fail "Gate rede FA
 echo ""
 
 echo "## 2. Conteúdo por portal"
-PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture)
+PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
+  estrato-esg
+  estrato-viagem estrato-culture)
 for PORTAL_ID in "${PORTALS[@]}"; do
   portal_resolve "$PORTAL_ID"
   pub=$(portal_wp post list --post_status=publish --format=count 2>/dev/null || echo 0)

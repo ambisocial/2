@@ -1,40 +1,11 @@
-# Estrato Sustain — Anti-regressão (satélite)
-# Validação: ESTRATO_PORTAL=estrato-sustain bash scripts/victor/check-portal-regression.sh --strict
+# DEPRECATED — Sustain cisãoado em Agro / ESG / Viagem.
+# Use: estrato-anti-regression-agro|esg|viagem.yaml
 
 portal: estrato-sustain
 domain: sustain.estrato.cc
-web_root: /var/www/sustain.estrato.cc
-rss_preset: brasil-sustain
-extends: estrato-anti-regression.yaml
-satellite: true
-
-required_categories:
-  - agro-sustentavel
-  - economia-alternativa
-  - vida-nomade
-
-forbidden_menu_categories:
-  - economia
-  - mercados
-  - negocios
-  - politica
-  - tecnologia
-  - brasil
-  - sem-categoria
-
-rule_overrides:
-  AR-VISUAL-004:
-    status: na
-  AR-NAV-003:
-    expect_min_hubs: 1
-  AR-TAX-003:
-    expect_min_pressgrid_sections: 3
-  AR-TAX-006:
-    expect_min_matrix_nodes: 7
-  AR-RSS-004:
-    expect_min_menu_items: 3
-
-hubs_expected:
-  - agro
-  - economia
-  - vida
+deprecated: true
+replaced_by:
+  - estrato-agro
+  - estrato-esg
+  - estrato-viagem
+extends: estrato-anti-regression-agro.yaml

@@ -34,7 +34,9 @@ if [[ -d "$PIPELINE_SRC" && -d "$PIPELINE_DST" ]]; then
   done
 fi
 
-PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-sustain estrato-culture)
+PORTALS=(estrato-finance estrato-mind estrato-lifestyle estrato-science estrato-agro
+  estrato-esg
+  estrato-viagem estrato-culture)
 
 for PORTAL_ID in "${PORTALS[@]}"; do
   portal_resolve "$PORTAL_ID"

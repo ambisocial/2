@@ -1,0 +1,61 @@
+# Portal Agro — frente ex-Sustain
+id: estrato-agro
+domain: agro.estrato.cc
+title: Estrato Agro
+tagline: Produção, mercado e agroecologia
+language: pt_BR
+timezone: America/Sao_Paulo
+
+theme:
+  family: pressgrid
+  slug: pressgrid
+  source: https://github.com/stantchev/PressGrid-WordPress-Theme/releases/download/v2.5.0/pressgrid-v2.5.0.zip
+
+plugins:
+  required:
+    - wordpress-seo
+    - contact-form-7
+  bundled:
+    - estrato-portal-bootstrap
+    - estrato-rss-bootstrap
+    - estrato-publisher-bridge
+
+content:
+  mode: pipeline_primary
+  rss_preset: brasil-agro
+  pipeline_enabled: true
+  taxonomy_file: portals/estrato-agro-taxonomy.php
+
+taxonomy:
+  schema_version: 2
+  file: portals/estrato-agro-taxonomy.php
+  layers:
+    - categories
+    - subcategories
+
+categories:
+  - producao-safras
+  - mercado-agro
+  - agroecologia
+
+branding:
+  primary_color: "#386641"
+  accent_color: "#A7C957"
+  secondary_color: "#6A994E"
+  logo_file: estrato-logo.png
+  breaking_category: producao-safras
+  breaking_label: "Safras"
+
+admin:
+  email: tpb@tbj.com.br
+
+hosting:
+  target: victor
+  vps_ip: 187.127.12.186
+  web_root: /var/www/agro.estrato.cc
+
+# Legado: sustain.estrato.cc / estrato-sustain → desta frente (Agro) + ESG + Viagem
+legacy:
+  replaces: estrato-sustain
+  redirect_from:
+    - sustain.estrato.cc

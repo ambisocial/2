@@ -347,12 +347,28 @@ function estrato_nav_network_catalog() {
 			'tagline' => 'Ciência, tecnologia e futuro',
 		),
 		array(
-			'id'      => 'estrato-sustain',
-			'name'    => 'Estrato Sustain',
-			'short'   => 'Su',
-			'color'   => '#1B4332',
-			'url'     => 'https://sustain.estrato.cc/',
-			'tagline' => 'Sustentabilidade e economia alternativa',
+			'id'      => 'estrato-agro',
+			'name'    => 'Estrato Agro',
+			'short'   => 'A',
+			'color'   => '#386641',
+			'url'     => 'https://agro.estrato.cc/',
+			'tagline' => 'Produção, mercado e agroecologia',
+		),
+		array(
+			'id'      => 'estrato-esg',
+			'name'    => 'Estrato ESG',
+			'short'   => 'G',
+			'color'   => '#0B3D2E',
+			'url'     => 'https://esg.estrato.cc/',
+			'tagline' => 'Clima, transição e impacto',
+		),
+		array(
+			'id'      => 'estrato-viagem',
+			'name'    => 'Estrato Viagem',
+			'short'   => 'V',
+			'color'   => '#023E8A',
+			'url'     => 'https://viagem.estrato.cc/',
+			'tagline' => 'Destinos, rotas e nomadismo',
 		),
 		array(
 			'id'      => 'estrato-culture',
@@ -360,7 +376,7 @@ function estrato_nav_network_catalog() {
 			'short'   => 'C',
 			'color'   => '#2D1B69',
 			'url'     => 'https://culture.estrato.cc/',
-			'tagline' => 'Cultura pop e narrativas de nicho',
+			'tagline' => 'Cultura pop, narrativas e celebridades',
 		),
 	);
 }
@@ -396,7 +412,11 @@ function estrato_nav_current_portal_id() {
 		'mente.estrato.cc'     => 'estrato-mind',
 		'lifestyle.estrato.cc' => 'estrato-lifestyle',
 		'science.estrato.cc'   => 'estrato-science',
-		'sustain.estrato.cc'   => 'estrato-sustain',
+		'agro.estrato.cc'      => 'estrato-agro',
+		'esg.estrato.cc'       => 'estrato-esg',
+		'viagem.estrato.cc'    => 'estrato-viagem',
+		// Legado: sustain aponta para Agro até o redirect DNS/nginx.
+		'sustain.estrato.cc'   => 'estrato-agro',
 		'culture.estrato.cc'   => 'estrato-culture',
 	);
 	return $map[ $host ] ?? 'estrato-finance';
@@ -509,8 +529,12 @@ function estrato_nav_crosslink_map() {
 			),
 			'agronegocio' => array(
 				array(
-					'url'   => 'https://sustain.estrato.cc/tudo-sobre/agro/',
-					'title' => 'Agro sustentável — Estrato Sustain',
+					'url'   => 'https://agro.estrato.cc/',
+					'title' => 'Agro — Estrato Agro',
+				),
+				array(
+					'url'   => 'https://esg.estrato.cc/',
+					'title' => 'ESG e clima — Estrato ESG',
 				),
 			),
 		),
@@ -534,11 +558,27 @@ function estrato_nav_crosslink_map() {
 				),
 			),
 		),
-		'estrato-sustain' => array(
-			'agro' => array(
+		'estrato-agro'    => array(
+			'mercado-agro' => array(
 				array(
-					'url'   => 'https://estrato.cc/tudo-sobre/agronegocio/',
+					'url'   => 'https://estrato.cc/category/agronegocio/',
 					'title' => 'Agronegócio — Estrato',
+				),
+			),
+		),
+		'estrato-esg'     => array(
+			'clima-ambiente' => array(
+				array(
+					'url'   => 'https://agro.estrato.cc/category/agroecologia/',
+					'title' => 'Agroecologia — Estrato Agro',
+				),
+			),
+		),
+		'estrato-viagem'  => array(
+			'nomadismo' => array(
+				array(
+					'url'   => 'https://lifestyle.estrato.cc/',
+					'title' => 'Lifestyle — Estrato Lifestyle',
 				),
 			),
 		),

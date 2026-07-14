@@ -1,8 +1,8 @@
-# Portal Entretenimento, cultura pop e narrativas de nicho
-id: estrato-culture
-domain: culture.estrato.cc
-title: Estrato Culture
-tagline: Entretenimento, cultura pop e narrativas de nicho
+# Portal Viagem — frente ex-Sustain
+id: estrato-viagem
+domain: viagem.estrato.cc
+title: Estrato Viagem
+tagline: Destinos, rotas e nomadismo
 language: pt_BR
 timezone: America/Sao_Paulo
 
@@ -22,30 +22,29 @@ plugins:
 
 content:
   mode: pipeline_primary
-  rss_preset: brasil-culture
+  rss_preset: brasil-viagem
   pipeline_enabled: true
-  taxonomy_file: portals/estrato-culture-taxonomy.php
+  taxonomy_file: portals/estrato-viagem-taxonomy.php
 
-# 3 editorias (fonte canônica: estrato-culture-taxonomy.php, schema v2)
 taxonomy:
   schema_version: 2
-  file: portals/estrato-culture-taxonomy.php
+  file: portals/estrato-viagem-taxonomy.php
   layers:
     - categories
     - subcategories
 
 categories:
-  - jogos-imaginacao
-  - narrativas-som
-  - celebridades
+  - destinos
+  - rotas-dicas
+  - nomadismo
 
 branding:
-  primary_color: "#2D1B69"
-  accent_color: "#FF6B9D"
-  secondary_color: "#1A0F3D"
+  primary_color: "#023E8A"
+  accent_color: "#48CAE4"
+  secondary_color: "#0077B6"
   logo_file: estrato-logo.png
-  breaking_category: celebridades
-  breaking_label: "Gente"
+  breaking_category: destinos
+  breaking_label: "Destinos"
 
 admin:
   email: tpb@tbj.com.br
@@ -53,4 +52,7 @@ admin:
 hosting:
   target: victor
   vps_ip: 187.127.12.186
-  web_root: /var/www/culture.estrato.cc
+  web_root: /var/www/viagem.estrato.cc
+
+legacy:
+  replaces: estrato-sustain

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato RSS Bootstrap
  * Description: Cria categorias, remove posts de exemplo e importa notícias reais via RSS.
- * Version: 1.9.0
+ * Version: 1.10.0
  * Author: Cursor Agent
  */
 
@@ -203,8 +203,12 @@ function estrato_rss_get_presets() {
 	$brasil_mind       = estrato_rss_taxonomy_to_preset( estrato_rss_load_mind_taxonomy() );
 	$brasil_lifestyle  = estrato_rss_taxonomy_to_preset( estrato_rss_load_lifestyle_taxonomy() );
 	$brasil_science    = estrato_rss_taxonomy_to_preset( estrato_rss_load_science_taxonomy() );
-	$brasil_sustain    = estrato_rss_taxonomy_to_preset( estrato_rss_load_sustain_taxonomy() );
+	$brasil_agro       = estrato_rss_taxonomy_to_preset( estrato_rss_load_agro_taxonomy() );
+	$brasil_esg        = estrato_rss_taxonomy_to_preset( estrato_rss_load_esg_taxonomy() );
+	$brasil_viagem     = estrato_rss_taxonomy_to_preset( estrato_rss_load_viagem_taxonomy() );
 	$brasil_culture    = estrato_rss_taxonomy_to_preset( estrato_rss_load_culture_taxonomy() );
+	// Compat legado.
+	$brasil_sustain    = $brasil_agro;
 	if ( empty( $brasil_financeiro ) ) {
 		$brasil_financeiro = array(
 			'economia'          => array(
@@ -282,8 +286,11 @@ function estrato_rss_get_presets() {
 		'brasil-mind'       => $brasil_mind,
 		'brasil-lifestyle'  => $brasil_lifestyle,
 		'brasil-science'    => $brasil_science,
-		'brasil-sustain'    => $brasil_sustain,
+		'brasil-agro'       => $brasil_agro,
+		'brasil-esg'        => $brasil_esg,
+		'brasil-viagem'     => $brasil_viagem,
 		'brasil-culture'    => $brasil_culture,
+		'brasil-sustain'    => $brasil_sustain,
 	);
 }
 
@@ -357,8 +364,14 @@ function estrato_rss_get_menu_order() {
 	if ( 'brasil-science' === $preset ) {
 		return estrato_rss_get_science_menu_order();
 	}
-	if ( 'brasil-sustain' === $preset ) {
-		return estrato_rss_get_sustain_menu_order();
+	if ( 'brasil-agro' === $preset || 'brasil-sustain' === $preset ) {
+		return estrato_rss_get_agro_menu_order();
+	}
+	if ( 'brasil-esg' === $preset ) {
+		return estrato_rss_get_esg_menu_order();
+	}
+	if ( 'brasil-viagem' === $preset ) {
+		return estrato_rss_get_viagem_menu_order();
 	}
 	if ( 'brasil-culture' === $preset ) {
 		return estrato_rss_get_culture_menu_order();

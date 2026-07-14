@@ -17,7 +17,9 @@ PORTALS=(
   estrato-mind
   estrato-lifestyle
   estrato-science
-  estrato-sustain
+  estrato-agro
+  estrato-esg
+  estrato-viagem
   estrato-culture
 )
 
@@ -31,7 +33,9 @@ declare -A COLOR_BG=(
   [estrato-mind]='#1B2E4B'
   [estrato-lifestyle]='#5D2E46'
   [estrato-science]='#0F3B39'
-  [estrato-sustain]='#2D4A26'
+  [estrato-agro
+  estrato-esg
+  estrato-viagem]='#2D4A26'
   [estrato-culture]='#3D1E5F'
 )
 
@@ -40,7 +44,9 @@ declare -A LABEL=(
   [estrato-mind]='Estrato Mente'
   [estrato-lifestyle]='Estrato Lifestyle'
   [estrato-science]='Estrato Science'
-  [estrato-sustain]='Estrato Sustain'
+  [estrato-agro
+  estrato-esg
+  estrato-viagem]='Estrato Sustain'
   [estrato-culture]='Estrato Culture'
 )
 

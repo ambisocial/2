@@ -143,7 +143,7 @@ if grep -Fq 'WebSite' "$HOME_HTML"; then ok "AR-SCHEMA-001 WebSite"; else block 
 if grep -Fq 'NewsMediaOrganization' "$HOME_HTML" || grep -Fq 'Organization' "$HOME_HTML"; then ok "AR-SCHEMA-002 Organization"; else block "AR-SCHEMA-002 sem Organization"; fi
 if grep -Fq 'NewsMediaOrganization' "$HOME_HTML"; then ok "AR-SCHEMA-003 NewsMediaOrganization"; else warn "AR-SCHEMA-003 preferir NewsMediaOrganization"; fi
 if grep -Fq 'Свързани' "$HOME_HTML" || grep -Fq 'Сподели:' "$HOME_HTML"; then block "AR-VISUAL-003 strings búlgaras na home"; else ok "AR-VISUAL-003 sem búlgaro"; fi
-rm -f "$HOME_HTML"
+# HOME_HTML retained for AR-MOBILE-* (cleaned up at end)
 
 # ─── D. SCHEMA & META (post) ─────────────────────────────────────
 echo "## D. schema & meta (último post)"
@@ -343,17 +343,19 @@ if echo "$hdr" | grep -qi nosniff; then ok "AR-PERF-002 X-Content-Type-Options";
 
 # ─── H. MOBILE-FIRST ──────────────────────────────────────────────
 echo "## H. mobile-first"
-if echo "$HOME_HTML" | grep -qiE '<meta[^>]+name=["'\'']viewport["'\''][^>]+width=device-width'; then
+if grep -qiE '<meta[^>]+name=["'\'']?viewport["'\'']?[^>]*width=device-width' "$HOME_HTML" \
+  || grep -qiE '<meta[^>]+content=["'\''][^"'\'']*width=device-width' "$HOME_HTML"; then
   ok "AR-MOBILE-002 viewport device-width"
 else
   block "AR-MOBILE-002 viewport ausente ou incorreto"
 fi
-mf_live=$(echo "$HOME_HTML" | grep -oE '@media[^{]*max-width[^{]*\{' || true)
+mf_live=$(grep -oE '@media[^{]*max-width[^{]*\{' "$HOME_HTML" || true)
 if [[ -z "$mf_live" ]]; then
   ok "AR-MOBILE-003 home sem @media max-width (mobile-first)"
 else
   warn "AR-MOBILE-003 home ainda tem @media max-width (possível CSS de tema)"
 fi
+rm -f "$HOME_HTML"
 
 # ─── RESUMO ─────────────────────────────────────────────────────
 echo

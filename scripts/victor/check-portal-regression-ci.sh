@@ -251,11 +251,14 @@ check_mobile_marker "AR-MOBILE-UX-H3 reduced-motion" estrato-portal-bootstrap/de
 check_mobile_marker "AR-MOBILE-UX-A9 busca suggest" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-search-suggest'
 check_mobile_marker "AR-MOBILE-UX-B4 label clicável" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-header__editoria-label'
 check_mobile_marker "AR-MOBILE-UX-G3 tipografia DS" estrato-portal-bootstrap/nav-header-g1.php 'estrato-font-body'
+check_mobile_marker "AR-MOBILE-UX-E1 hide PressGrid Urgente" estrato-portal-bootstrap/nav-header-g1.php 'pg-breaking-bar.*display:none|pg-breaking-bar,.pg-breaking-label'
 if tree_has 'function estrato_nav_columns_ribbon|estrato-columns-ribbon'; then
   fail "AR-MOBILE-UX-A10 ribbon morto ainda presente"
 else
   ok "AR-MOBILE-UX-A10 ribbon morto removido"
 fi
+check_mobile_marker "AR-MOBILE-UX-C2 title dedupe" estrato-portal-bootstrap/home-layout.php 'estrato_home_normalize_title'
+check_mobile_marker "AR-MOBILE-UX-title portal" estrato-portal-bootstrap/seo-yoast-defaults.php 'estrato_yoast_portal_document_title'
 
 # Removido bloco antigo de dup único finance
 true

@@ -411,6 +411,8 @@ function estrato_single_styles() {
 		/* Sidebar: mobile-first oculta; desktop (≥1100px) restaura. */
 		. '.pg-sidebar,.pg-sidebar[role="complementary"],aside.pg-sidebar{display:none!important}'
 		. '.pg-single-content,.single-content,.pg-content-wrap,.content-area{width:100%!important;max-width:100%!important;float:none!important}'
+		/* D5: Publicidade vazia não ocupa viewport no mobile. */
+		. '.pg-sidebar .widget:empty,.widget_text:has(.ads):not(:has(img)):not(:has(iframe)){display:none!important}'
 		. '@media(min-width:1100px){'
 		. '.pg-sidebar,.pg-sidebar[role="complementary"],aside.pg-sidebar{display:block!important}'
 		. '}'

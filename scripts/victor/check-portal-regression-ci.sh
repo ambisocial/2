@@ -195,11 +195,66 @@ if [[ -f portals/firesfera-feeds.json ]]; then
 fi
 
 # Mobile-first: zero @media (max-width) / matchMedia max-width no CSS/JS Estrato.
-mf_hits=$(rg -n --glob '*.php' --glob '*.js' --glob '*.css' '@media\s*\([^)]*max-width|matchMedia\([^\)]*max-width' estrato-portal-bootstrap 2>/dev/null || true)
+if command -v rg >/dev/null 2>&1; then
+  mf_hits=$(rg -n --glob '*.php' --glob '*.js' --glob '*.css' '@media\s*\([^)]*max-width|matchMedia\([^\)]*max-width' estrato-portal-bootstrap 2>/dev/null || true)
+else
+  mf_hits=$(grep -RInE --include='*.php' --include='*.js' --include='*.css' '@media[[:space:]]*\([^)]*max-width|matchMedia\([^)]*max-width' estrato-portal-bootstrap 2>/dev/null || true)
+fi
 if [[ -z "$mf_hits" ]]; then
   ok "AR-MOBILE-001 CSS/JS Estrato sem @media/matchMedia max-width (mobile-first)"
 else
   fail "AR-MOBILE-001 desktop-first restante:"$'\n'"$mf_hits"
+fi
+
+# Checklist UI/UX mobile — P0 markers (chrome, home, ticker, single).
+# Usa grep quando ripgrep não está no CI.
+file_has() {
+  local pattern="$1" file="$2"
+  if command -v rg >/dev/null 2>&1; then
+    rg -q -- "$pattern" "$file" 2>/dev/null
+  else
+    grep -qE -- "$pattern" "$file" 2>/dev/null
+  fi
+}
+tree_has() {
+  local pattern="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg -q -- "$pattern" estrato-portal-bootstrap 2>/dev/null
+  else
+    grep -RIqE --include='*.php' --include='*.js' --include='*.css' -- "$pattern" estrato-portal-bootstrap 2>/dev/null
+  fi
+}
+check_mobile_marker() {
+  local id="$1" file="$2" pattern="$3"
+  if file_has "$pattern" "$file"; then
+    ok "$id"
+  else
+    fail "$id ausente em $file (pattern: $pattern)"
+  fi
+}
+check_mobile_marker "AR-MOBILE-UX-A3 sticky magro" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-header__sticky'
+check_mobile_marker "AR-MOBILE-UX-A7 trilho editorias" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-rail'
+check_mobile_marker "AR-MOBILE-UX-A4 drawer fullscreen" estrato-portal-bootstrap/nav-header-g1.php 'position:fixed;inset:0'
+check_mobile_marker "AR-MOBILE-UX-B2 Outras marcas" estrato-portal-bootstrap/nav-header-g1.php 'Outras marcas'
+check_mobile_marker "AR-MOBILE-UX-C3 Ver mais em" estrato-portal-bootstrap/home-layout.php 'Ver mais em'
+check_mobile_marker "AR-MOBILE-UX-C2 Ver todas" estrato-portal-bootstrap/home-layout.php 'Ver todas'
+check_mobile_marker "AR-MOBILE-UX-B3 network hub" estrato-portal-bootstrap/home-layout.php 'estrato_nav_network_hub_html'
+if file_has "estrato-finance" estrato-portal-bootstrap/ticker-br.php && file_has "estrato_ticker_inject" estrato-portal-bootstrap/ticker-br.php && file_has "!== \\\$portal|!== \$portal" estrato-portal-bootstrap/ticker-br.php; then
+  ok "AR-MOBILE-UX-E3 ticker finance-only"
+else
+  fail "AR-MOBILE-UX-E3 ticker finance-only ausente"
+fi
+check_mobile_marker "AR-MOBILE-UX-D3 share fixed + Copiar" estrato-portal-bootstrap/single-article.php 'data-estrato-copy'
+check_mobile_marker "AR-MOBILE-UX-D5 sidebar mobile oculta" estrato-portal-bootstrap/single-article.php 'aside.pg-sidebar\{display:none'
+check_mobile_marker "AR-MOBILE-UX-F2 footer cols off mobile" estrato-portal-bootstrap/nav-footer-ft.php 'estrato-ft-cols\{display:none'
+check_mobile_marker "AR-MOBILE-UX-H3 reduced-motion" estrato-portal-bootstrap/design-system.php 'prefers-reduced-motion'
+check_mobile_marker "AR-MOBILE-UX-A9 busca suggest" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-search-suggest'
+check_mobile_marker "AR-MOBILE-UX-B4 label clicável" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-header__editoria-label'
+check_mobile_marker "AR-MOBILE-UX-G3 tipografia DS" estrato-portal-bootstrap/nav-header-g1.php 'estrato-font-body'
+if tree_has 'function estrato_nav_columns_ribbon|estrato-columns-ribbon'; then
+  fail "AR-MOBILE-UX-A10 ribbon morto ainda presente"
+else
+  ok "AR-MOBILE-UX-A10 ribbon morto removido"
 fi
 
 # Removido bloco antigo de dup único finance

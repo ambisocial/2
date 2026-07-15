@@ -474,6 +474,9 @@ function estrato_ft_footer_styles() {
 	.estrato-ft-accordion__head::-webkit-details-marker{display:none}
 	.estrato-ft-accordion__chev{width:.5rem;height:.5rem;border-right:2px solid #ced4da;border-bottom:2px solid #ced4da;transform:rotate(45deg);transition:transform .2s;margin-right:.25rem}
 	.estrato-ft-accordion__item[open] .estrato-ft-accordion__chev{transform:rotate(-135deg);margin-top:.35rem}
+	@media(prefers-reduced-motion:reduce){
+		.estrato-ft-accordion__chev{transition:none}
+	}
 	.estrato-ft-accordion__body{list-style:none;margin:0 0 1rem;padding:0}
 	.estrato-ft-accordion__body a{display:block;padding:.45rem 0;color:#ced4da;text-decoration:none;font-size:.875rem}
 	.estrato-ft-accordion__body a:hover{color:#fff;text-decoration:underline}

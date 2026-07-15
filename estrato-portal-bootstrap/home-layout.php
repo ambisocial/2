@@ -187,7 +187,8 @@ function estrato_home_feed_page() {
  * @return int
  */
 function estrato_home_feed_per_page() {
-	return 16;
+	/* Checklist C3: ≤5 itens na 1ª dobra + CTA “Mostrar mais”. */
+	return 5;
 }
 
 /**
@@ -379,7 +380,7 @@ function estrato_home_fetch_agora( $used_ids, $limit = 8 ) {
 }
 
 /**
- * Layout completo da home (hero + Agora + feed finito).
+ * Layout completo da home (hero + Agora + ≤5 blocos de editoria).
  *
  * @return string
  */
@@ -388,10 +389,6 @@ function estrato_home_render_layout() {
 	$editorias = function_exists( 'estrato_aeo_portal_editorias' )
 		? estrato_aeo_portal_editorias()
 		: array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' );
-
-	$feed_page = estrato_home_feed_page();
-	$per_page  = estrato_home_feed_per_page();
-	$feed_need = $feed_page * $per_page;
 
 	$pool = estrato_home_fetch_posts( array( 'posts_per_page' => 40 ) );
 	$hero = estrato_home_pick_hero( $pool, $editorias );
@@ -406,16 +403,57 @@ function estrato_home_render_layout() {
 	$breaking = estrato_home_render_breaking( $used );
 	$used     = $breaking['used'];
 
-	$agora = estrato_home_fetch_agora( $used, 8 );
+	/* Checklist C2: 4–5 itens + “Ver todas”. */
+	$agora = estrato_home_fetch_agora( $used, 5 );
 	$used  = $agora['used'];
 
-	$feed_pool = estrato_home_fetch_posts( array( 'posts_per_page' => max( 48, $feed_need + 8 ) ) );
-	$feed_all  = estrato_home_take_unique( $feed_pool, $used, $feed_need + 1 );
-	$has_more  = count( $feed_all['items'] ) > $feed_need;
-	$feed_items = $has_more ? array_slice( $feed_all['items'], 0, $feed_need ) : $feed_all['items'];
-	foreach ( $feed_items as $fp ) {
-		$used[] = $fp->ID;
+	/* Checklist C3: até 5 blocos de editoria com CTA “Ver mais em …”. */
+	$max_blocks   = 5;
+	$blocks_shown = 0;
+	$block_html   = '';
+	foreach ( $editorias as $slug ) {
+		if ( $blocks_shown >= $max_blocks ) {
+			break;
+		}
+		$term = get_term_by( 'slug', $slug, 'category' );
+		if ( ! $term || is_wp_error( $term ) ) {
+			continue;
+		}
+		$cat_pool = estrato_home_fetch_posts(
+			array(
+				'posts_per_page' => 4,
+				'cat'            => (int) $term->term_id,
+			)
+		);
+		$block = estrato_home_take_unique( $cat_pool, $used, 4 );
+		if ( ! $block['items'] ) {
+			continue;
+		}
+		$used = $block['used'];
+		++$blocks_shown;
+		$color     = estrato_ds_editoria_color( $slug );
+		$term_name = html_entity_decode( $term->name, ENT_QUOTES, 'UTF-8' );
+		$block_html .= '<section class="estrato-home-block" style="--estrato-cat-color:' . esc_attr( $color ) . '" aria-label="' . esc_attr( $term_name ) . '">';
+		$block_html .= '<header class="estrato-home-block__head"><h2 class="estrato-display"><a href="' . esc_url( get_category_link( $term ) ) . '">' . esc_html( $term->name ) . '</a></h2></header>';
+		$block_html .= '<div class="estrato-home-block__grid">';
+		$first = true;
+		foreach ( $block['items'] as $post ) {
+			$block_html .= estrato_home_render_card( $post, $first ? 'secondary' : 'list' );
+			$first       = false;
+		}
+		$block_html .= '</div>';
+		$block_html .= '<p class="estrato-home-block__more"><a href="' . esc_url( get_category_link( $term ) ) . '">Ver mais em ' . esc_html( $term_name ) . '</a></p>';
+		$block_html .= '</section>';
 	}
+
+	/* Feed finito G1: leva curta (≤5) abaixo dos blocos, sem competir com a 1ª dobra. */
+	$feed_page  = estrato_home_feed_page();
+	$per_page   = estrato_home_feed_per_page();
+	$feed_need  = $feed_page * $per_page;
+	$feed_pool  = estrato_home_fetch_posts( array( 'posts_per_page' => max( 48, $feed_need + 8 ) ) );
+	$feed_all   = estrato_home_take_unique( $feed_pool, $used, $feed_need + 1 );
+	$has_more   = count( $feed_all['items'] ) > $feed_need;
+	$feed_items = $has_more ? array_slice( $feed_all['items'], 0, $feed_need ) : $feed_all['items'];
 
 	$html = '<div class="estrato-home-v2">';
 
@@ -443,34 +481,41 @@ function estrato_home_render_layout() {
 			$html .= '<li>' . estrato_home_render_card( $post, 'list' ) . '</li>';
 		}
 		$html .= '</ul>';
+		$html .= '<p class="estrato-home-agora__more"><a href="#estrato-home-feed">Ver todas</a></p>';
 	} else {
 		$html .= '<p class="estrato-caption">Nenhuma atualização recente.</p>';
 	}
 	$html .= '</section>';
 
-	$html .= '<section class="estrato-home-feed" aria-label="Feed de notícias" id="estrato-home-feed">';
-	$html .= '<h2 class="estrato-kicker">Em destaque</h2>';
-	$html .= '<div class="estrato-home-feed__list">';
-	foreach ( $feed_items as $i => $post ) {
-		$html .= estrato_home_render_card(
-			$post,
-			'feed',
-			array(
-				'index' => $i,
-			)
-		);
+	if ( $block_html ) {
+		$html .= '<div id="estrato-home-blocks">' . $block_html . '</div>';
 	}
-	$html .= '</div>';
 
-	if ( $has_more ) {
-		$next = add_query_arg(
-			'feed_page',
-			$feed_page + 1,
-			home_url( '/' )
-		);
-		$html .= '<p class="estrato-home-feed__more"><a class="estrato-home-feed__more-btn" href="' . esc_url( $next ) . '#estrato-home-feed">Mostrar mais</a></p>';
+	if ( $feed_items ) {
+		$html .= '<section class="estrato-home-feed" aria-label="Feed de notícias" id="estrato-home-feed">';
+		$html .= '<h2 class="estrato-kicker">Em destaque</h2>';
+		$html .= '<div class="estrato-home-feed__list">';
+		foreach ( $feed_items as $i => $post ) {
+			$html .= estrato_home_render_card(
+				$post,
+				'feed',
+				array(
+					'index' => $i,
+				)
+			);
+		}
+		$html .= '</div>';
+
+		if ( $has_more ) {
+			$next = add_query_arg(
+				'feed_page',
+				$feed_page + 1,
+				home_url( '/' )
+			);
+			$html .= '<p class="estrato-home-feed__more"><a class="estrato-home-feed__more-btn" href="' . esc_url( $next ) . '#estrato-home-feed">Mostrar mais</a></p>';
+		}
+		$html .= '</section>';
 	}
-	$html .= '</section>';
 
 	if ( function_exists( 'estrato_nav_network_hub_html' ) ) {
 		$html .= '<section class="estrato-home-rede" aria-label="Mais da Rede Estrato">';
@@ -607,6 +652,16 @@ function estrato_home_styles() {
 		. '.estrato-home-agora__list{list-style:none;margin:0;padding:0;display:grid;gap:var(--estrato-space-2);grid-template-columns:1fr}'
 		. '@media(min-width:640px){.estrato-home-agora__list{grid-template-columns:repeat(2,1fr)}}'
 		. '@media(min-width:960px){.estrato-home-agora__list{grid-template-columns:repeat(4,1fr)}}'
+		. '.estrato-home-agora__more,.estrato-home-block__more{margin:.75rem 0 0;font-size:.875rem;font-weight:600}'
+		. '.estrato-home-agora__more a,.estrato-home-block__more a{color:var(--estrato-cat-color,#C4170C);text-decoration:none}'
+		. '.estrato-home-agora__more a:hover,.estrato-home-block__more a:hover{text-decoration:underline}'
+		. '.estrato-home-block{margin-bottom:var(--estrato-space-5);border-top:4px solid var(--estrato-cat-color);padding-top:var(--estrato-space-3)}'
+		. '.estrato-home-block__head .estrato-display{font-size:clamp(1.125rem,2.5vw,1.5rem);margin:0 0 var(--estrato-space-3)}'
+		. '.estrato-home-block__head a{color:inherit;text-decoration:none}'
+		. '.estrato-home-block__head a:hover{text-decoration:underline}'
+		. '.estrato-home-block__grid{display:grid;gap:var(--estrato-space-3);grid-template-columns:1fr}'
+		. '@media(min-width:640px){.estrato-home-block__grid{grid-template-columns:1fr 1fr}}'
+		. '@media(min-width:900px){.estrato-home-block__grid{grid-template-columns:1.2fr 1fr 1fr}}'
 		. '.estrato-home-feed{margin-bottom:var(--estrato-space-5)}'
 		. '.estrato-home-feed__list{display:flex;flex-direction:column}'
 		. '.estrato-home-card--feed{padding-bottom:var(--estrato-space-3)}'

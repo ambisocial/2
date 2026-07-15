@@ -285,14 +285,6 @@ function estrato_nav_mega_menu_item_classes( $classes, $item ) {
 add_filter( 'nav_menu_css_class', 'estrato_nav_mega_menu_item_classes', 20, 2 );
 
 /**
- * Faixa de colunas em destaque — removida (A10): trilho de editorias no header.
- */
-function estrato_nav_columns_ribbon() {
-	/* no-op: ribbon morto removido do DOM; rail G1 cobre o papel. */
-}
-add_action( 'wp_body_open', 'estrato_nav_columns_ribbon', 8 );
-
-/**
  * CSS do mega menu institucional.
  */
 function estrato_nav_mega_menu_styles() {

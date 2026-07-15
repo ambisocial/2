@@ -202,6 +202,40 @@ else
   fail "AR-MOBILE-001 desktop-first restante:"$'\n'"$mf_hits"
 fi
 
+# Checklist UI/UX mobile — P0 markers (chrome, home, ticker, single).
+check_mobile_marker() {
+  local id="$1" file="$2" pattern="$3"
+  if rg -q "$pattern" "$file" 2>/dev/null; then
+    ok "$id"
+  else
+    fail "$id ausente em $file (pattern: $pattern)"
+  fi
+}
+check_mobile_marker "AR-MOBILE-UX-A3 sticky magro" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-header__sticky'
+check_mobile_marker "AR-MOBILE-UX-A7 trilho editorias" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-rail'
+check_mobile_marker "AR-MOBILE-UX-A4 drawer fullscreen" estrato-portal-bootstrap/nav-header-g1.php 'position:fixed;inset:0'
+check_mobile_marker "AR-MOBILE-UX-B2 Outras marcas" estrato-portal-bootstrap/nav-header-g1.php 'Outras marcas'
+check_mobile_marker "AR-MOBILE-UX-C3 Ver mais em" estrato-portal-bootstrap/home-layout.php 'Ver mais em'
+check_mobile_marker "AR-MOBILE-UX-C2 Ver todas" estrato-portal-bootstrap/home-layout.php 'Ver todas'
+check_mobile_marker "AR-MOBILE-UX-B3 network hub" estrato-portal-bootstrap/home-layout.php 'estrato_nav_network_hub_html'
+if rg -q "estrato-finance' !== \\\$portal" estrato-portal-bootstrap/ticker-br.php || rg -q "estrato-finance' !== \$portal" estrato-portal-bootstrap/ticker-br.php; then
+  ok "AR-MOBILE-UX-E3 ticker finance-only"
+else
+  fail "AR-MOBILE-UX-E3 ticker finance-only ausente"
+fi
+check_mobile_marker "AR-MOBILE-UX-D3 share fixed + Copiar" estrato-portal-bootstrap/single-article.php 'data-estrato-copy'
+check_mobile_marker "AR-MOBILE-UX-D5 sidebar mobile oculta" estrato-portal-bootstrap/single-article.php 'aside.pg-sidebar\{display:none'
+check_mobile_marker "AR-MOBILE-UX-F2 footer cols off mobile" estrato-portal-bootstrap/nav-footer-ft.php 'estrato-ft-cols\{display:none'
+check_mobile_marker "AR-MOBILE-UX-H3 reduced-motion" estrato-portal-bootstrap/design-system.php 'prefers-reduced-motion'
+check_mobile_marker "AR-MOBILE-UX-A9 busca suggest" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-search-suggest'
+check_mobile_marker "AR-MOBILE-UX-B4 label clicável" estrato-portal-bootstrap/nav-header-g1.php 'estrato-g1-header__editoria-label'
+check_mobile_marker "AR-MOBILE-UX-G3 tipografia DS" estrato-portal-bootstrap/nav-header-g1.php 'estrato-font-body'
+if rg -q 'function estrato_nav_columns_ribbon|estrato-columns-ribbon' estrato-portal-bootstrap 2>/dev/null; then
+  fail "AR-MOBILE-UX-A10 ribbon morto ainda presente"
+else
+  ok "AR-MOBILE-UX-A10 ribbon morto removido"
+fi
+
 # Removido bloco antigo de dup único finance
 true
 

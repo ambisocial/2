@@ -313,7 +313,6 @@ function estrato_g1_header_hide_pressgrid() {
 		return;
 	}
 	$css = '.pg-topbar,.pg-masthead,.pg-nav-wrap{display:none!important}'
-		. '.estrato-columns-ribbon{display:none!important}'
 		// Fix pós auditoria visual 2026-07-13 (P1 featured hidden + P1 kicker dup):
 		// esconde SÓ o cabeçalho antigo do PressGrid; o wrapper do featured
 		// (`.pg-featured-image`, `.pg-single-thumbnail`) continua visível para

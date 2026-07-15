@@ -147,26 +147,48 @@ function estrato_home_fetch_posts( $args ) {
 }
 
 /**
+ * Normaliza título para dedupe soft (cópias / reexports com mesmo headline).
+ *
+ * @param string $title
+ * @return string
+ */
+function estrato_home_normalize_title( $title ) {
+	$decoded = html_entity_decode( wp_strip_all_tags( (string) $title ), ENT_QUOTES, 'UTF-8' );
+	$decoded = function_exists( 'mb_strtolower' ) ? mb_strtolower( $decoded, 'UTF-8' ) : strtolower( $decoded );
+	$decoded = preg_replace( '/\s+/u', ' ', $decoded );
+	return trim( (string) $decoded );
+}
+
+/**
  * @param array<int, WP_Post> $posts
  * @param array<int, int>     $used_ids
  * @param int                 $limit
- * @return array{items:array<int,WP_Post>,used:array<int,int>}
+ * @param array<int, string>  $used_titles
+ * @return array{items:array<int,WP_Post>,used:array<int,int>,titles:array<int,string>}
  */
-function estrato_home_take_unique( $posts, $used_ids, $limit ) {
+function estrato_home_take_unique( $posts, $used_ids, $limit, $used_titles = array() ) {
 	$items = array();
 	foreach ( $posts as $post ) {
 		if ( in_array( $post->ID, $used_ids, true ) ) {
 			continue;
 		}
+		$norm = estrato_home_normalize_title( get_the_title( $post ) );
+		if ( $norm && in_array( $norm, $used_titles, true ) ) {
+			continue;
+		}
 		$items[]    = $post;
 		$used_ids[] = $post->ID;
+		if ( $norm ) {
+			$used_titles[] = $norm;
+		}
 		if ( count( $items ) >= $limit ) {
 			break;
 		}
 	}
 	return array(
-		'items' => $items,
-		'used'  => $used_ids,
+		'items'  => $items,
+		'used'   => $used_ids,
+		'titles' => $used_titles,
 	);
 }
 
@@ -280,16 +302,18 @@ function estrato_home_render_card( $post, $variant = 'list', $opts = array() ) {
 /**
  * Faixa breaking opcional (só se houver post recente na categoria).
  *
- * @param array<int, int> $exclude_ids
- * @return array{html:string,used:array<int,int>}
+ * @param array<int, int>    $exclude_ids
+ * @param array<int, string> $exclude_titles
+ * @return array{html:string,used:array<int,int>,titles:array<int,string>}
  */
-function estrato_home_render_breaking( $exclude_ids = array() ) {
+function estrato_home_render_breaking( $exclude_ids = array(), $exclude_titles = array() ) {
 	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
 	/* Breaking "Mercados" só faz sentido no portal financeiro. */
 	if ( 'estrato-finance' !== $portal ) {
 		return array(
-			'html' => '',
-			'used' => $exclude_ids,
+			'html'   => '',
+			'used'   => $exclude_ids,
+			'titles' => $exclude_titles,
 		);
 	}
 	$config = function_exists( 'estrato_portal_get_config' ) ? estrato_portal_get_config() : array();
@@ -306,8 +330,9 @@ function estrato_home_render_breaking( $exclude_ids = array() ) {
 	}
 	if ( ! $term || is_wp_error( $term ) ) {
 		return array(
-			'html' => '',
-			'used' => $exclude_ids,
+			'html'   => '',
+			'used'   => $exclude_ids,
+			'titles' => $exclude_titles,
 		);
 	}
 	if ( '' === $label ) {
@@ -323,11 +348,12 @@ function estrato_home_render_breaking( $exclude_ids = array() ) {
 			),
 		)
 	);
-	$pick = estrato_home_take_unique( $pool, $exclude_ids, 1 );
+	$pick = estrato_home_take_unique( $pool, $exclude_ids, 1, $exclude_titles );
 	if ( ! $pick['items'] ) {
 		return array(
-			'html' => '',
-			'used' => $exclude_ids,
+			'html'   => '',
+			'used'   => $exclude_ids,
+			'titles' => $exclude_titles,
 		);
 	}
 	$post = $pick['items'][0];
@@ -338,19 +364,21 @@ function estrato_home_render_breaking( $exclude_ids = array() ) {
 	$html .= '</a></div>';
 
 	return array(
-		'html' => $html,
-		'used' => $pick['used'],
+		'html'   => $html,
+		'used'   => $pick['used'],
+		'titles' => $pick['titles'],
 	);
 }
 
 /**
  * Query Agora: 4h multi-editoria, fallback 24h.
  *
- * @param array<int, int> $used_ids
- * @param int             $limit
- * @return array{items:array<int,WP_Post>,used:array<int,int>}
+ * @param array<int, int>    $used_ids
+ * @param int                $limit
+ * @param array<int, string> $used_titles
+ * @return array{items:array<int,WP_Post>,used:array<int,int>,titles:array<int,string>}
  */
-function estrato_home_fetch_agora( $used_ids, $limit = 8 ) {
+function estrato_home_fetch_agora( $used_ids, $limit = 8, $used_titles = array() ) {
 	$pool = estrato_home_fetch_posts(
 		array(
 			'posts_per_page' => 16,
@@ -359,7 +387,7 @@ function estrato_home_fetch_agora( $used_ids, $limit = 8 ) {
 			),
 		)
 	);
-	$agora = estrato_home_take_unique( $pool, $used_ids, $limit );
+	$agora = estrato_home_take_unique( $pool, $used_ids, $limit, $used_titles );
 	if ( count( $agora['items'] ) < 5 ) {
 		$pool  = estrato_home_fetch_posts(
 			array(
@@ -369,12 +397,12 @@ function estrato_home_fetch_agora( $used_ids, $limit = 8 ) {
 				),
 			)
 		);
-		$agora = estrato_home_take_unique( $pool, $used_ids, $limit );
+		$agora = estrato_home_take_unique( $pool, $used_ids, $limit, $used_titles );
 	}
 	/* Portais de baixo volume: completar com os mais recentes sem janela. */
 	if ( count( $agora['items'] ) < 5 ) {
 		$pool  = estrato_home_fetch_posts( array( 'posts_per_page' => 16 ) );
-		$agora = estrato_home_take_unique( $pool, $used_ids, $limit );
+		$agora = estrato_home_take_unique( $pool, $used_ids, $limit, $used_titles );
 	}
 	return $agora;
 }
@@ -386,6 +414,7 @@ function estrato_home_fetch_agora( $used_ids, $limit = 8 ) {
  */
 function estrato_home_render_layout() {
 	$used      = array();
+	$titles    = array();
 	$editorias = function_exists( 'estrato_aeo_portal_editorias' )
 		? estrato_aeo_portal_editorias()
 		: array( 'economia', 'mercados', 'negocios', 'financas-pessoais', 'criptomoedas', 'agronegocio', 'mundo' );
@@ -393,19 +422,26 @@ function estrato_home_render_layout() {
 	$pool = estrato_home_fetch_posts( array( 'posts_per_page' => 40 ) );
 	$hero = estrato_home_pick_hero( $pool, $editorias );
 	if ( $hero ) {
-		$used[] = $hero->ID;
+		$used[]  = $hero->ID;
+		$norm    = estrato_home_normalize_title( get_the_title( $hero ) );
+		if ( $norm ) {
+			$titles[] = $norm;
+		}
 	}
 
+	/* Agora antes das laterais: inventário fino não esvazia a faixa “Agora”. */
+	$agora  = estrato_home_fetch_agora( $used, 5, $titles );
+	$used   = $agora['used'];
+	$titles = $agora['titles'];
+
 	$secondary_pool = estrato_home_fetch_posts( array( 'posts_per_page' => 12 ) );
-	$sec            = estrato_home_take_unique( $secondary_pool, $used, 2 );
+	$sec            = estrato_home_take_unique( $secondary_pool, $used, 2, $titles );
 	$used           = $sec['used'];
+	$titles         = $sec['titles'];
 
-	$breaking = estrato_home_render_breaking( $used );
+	$breaking = estrato_home_render_breaking( $used, $titles );
 	$used     = $breaking['used'];
-
-	/* Checklist C2: 4–5 itens + “Ver todas”. */
-	$agora = estrato_home_fetch_agora( $used, 5 );
-	$used  = $agora['used'];
+	$titles   = $breaking['titles'];
 
 	/* Checklist C3: até 5 blocos de editoria com CTA “Ver mais em …”. */
 	$max_blocks   = 5;
@@ -425,11 +461,12 @@ function estrato_home_render_layout() {
 				'cat'            => (int) $term->term_id,
 			)
 		);
-		$block = estrato_home_take_unique( $cat_pool, $used, 4 );
+		$block = estrato_home_take_unique( $cat_pool, $used, 4, $titles );
 		if ( ! $block['items'] ) {
 			continue;
 		}
-		$used = $block['used'];
+		$used   = $block['used'];
+		$titles = $block['titles'];
 		++$blocks_shown;
 		$color     = estrato_ds_editoria_color( $slug );
 		$term_name = html_entity_decode( $term->name, ENT_QUOTES, 'UTF-8' );
@@ -451,7 +488,7 @@ function estrato_home_render_layout() {
 	$per_page   = estrato_home_feed_per_page();
 	$feed_need  = $feed_page * $per_page;
 	$feed_pool  = estrato_home_fetch_posts( array( 'posts_per_page' => max( 48, $feed_need + 8 ) ) );
-	$feed_all   = estrato_home_take_unique( $feed_pool, $used, $feed_need + 1 );
+	$feed_all   = estrato_home_take_unique( $feed_pool, $used, $feed_need + 1, $titles );
 	$has_more   = count( $feed_all['items'] ) > $feed_need;
 	$feed_items = $has_more ? array_slice( $feed_all['items'], 0, $feed_need ) : $feed_all['items'];
 
@@ -474,18 +511,17 @@ function estrato_home_render_layout() {
 		$html .= '</section>';
 	}
 
-	$html .= '<section class="estrato-home-agora" aria-label="Agora"><h2 class="estrato-kicker">Agora</h2>';
+	/* Omitir Agora vazia (portais novos / inventário fino). */
 	if ( $agora['items'] ) {
+		$html .= '<section class="estrato-home-agora" aria-label="Agora"><h2 class="estrato-kicker">Agora</h2>';
 		$html .= '<ul class="estrato-home-agora__list">';
 		foreach ( $agora['items'] as $post ) {
 			$html .= '<li>' . estrato_home_render_card( $post, 'list' ) . '</li>';
 		}
 		$html .= '</ul>';
 		$html .= '<p class="estrato-home-agora__more"><a href="#estrato-home-feed">Ver todas</a></p>';
-	} else {
-		$html .= '<p class="estrato-caption">Nenhuma atualização recente.</p>';
+		$html .= '</section>';
 	}
-	$html .= '</section>';
 
 	if ( $block_html ) {
 		$html .= '<div id="estrato-home-blocks">' . $block_html . '</div>';

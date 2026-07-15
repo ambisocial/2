@@ -274,9 +274,8 @@ function estrato_ticker_styles() {
 		return;
 	}
 	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
-	$css    = '.pg-forex-bar,.pg-forex-ticker-wrap,.pg-forex-ticker{display:none!important}'
-		. '.pg-breaking-bar{background:#fff1e5!important;border-top:1px solid #e8d5c4!important;border-bottom:1px solid #e8d5c4!important;color:#1e1e1e!important}'
-		. '.pg-breaking-label{background:#C4170C!important;color:#fff!important}';
+	$css = '.pg-forex-bar,.pg-forex-ticker-wrap,.pg-forex-ticker{display:none!important}'
+		. '.pg-breaking-bar,.pg-breaking-label,.pg-breaking-ticker,.pg-breaking-inner{display:none!important}';
 	if ( 'estrato-finance' === $portal ) {
 		$css .= '.estrato-ticker-br{background:#fff;border-bottom:1px solid var(--estrato-line,#e4e1da);font-family:var(--estrato-font-mono,monospace);font-size:12px;color:#1e1e1e}'
 			. '.estrato-ticker-br__inner{display:flex;flex-wrap:nowrap;gap:.5rem;align-items:center;overflow-x:auto;max-width:1200px;margin:0 auto;padding:.45rem 1rem;color:#1e1e1e;text-decoration:none;white-space:nowrap}'

@@ -124,3 +124,29 @@ function estrato_yoast_organization_same_as( $data ) {
 	return $data;
 }
 add_filter( 'wpseo_schema_organization', 'estrato_yoast_organization_same_as', 15 );
+
+/**
+ * Título do documento alinhado ao blogname do portal (evita título finance vazado).
+ *
+ * @param string $title
+ * @return string
+ */
+function estrato_yoast_portal_document_title( $title ) {
+	if ( is_admin() ) {
+		return $title;
+	}
+	if ( ! is_front_page() && ! is_home() ) {
+		return $title;
+	}
+	$name = trim( (string) get_bloginfo( 'name', 'display' ) );
+	$tag  = trim( (string) get_bloginfo( 'description', 'display' ) );
+	if ( ! $name ) {
+		return $title;
+	}
+	if ( $tag && false === stripos( $name, $tag ) ) {
+		return $name . ' | ' . $tag;
+	}
+	return $name;
+}
+add_filter( 'pre_get_document_title', 'estrato_yoast_portal_document_title', 40 );
+add_filter( 'wpseo_title', 'estrato_yoast_portal_document_title', 40 );

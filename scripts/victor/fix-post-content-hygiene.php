@@ -16,6 +16,11 @@
  */
 
 $dry_run = ( ! empty( getenv( 'ESTRATO_HYGIENE_DRY_RUN' ) ) && '0' !== getenv( 'ESTRATO_HYGIENE_DRY_RUN' ) );
+// Bound superior para uso via cron (evita travar em portais com centenas de posts).
+$max_posts = (int) getenv( 'ESTRATO_HYGIENE_MAX_POSTS' );
+if ( $max_posts < 1 ) {
+	$max_posts = 0; // 0 = ilimitado (uso manual / CLI)
+}
 
 /**
  * @param int $post_id
@@ -120,12 +125,18 @@ $backfilled_ttl  = 0;
 $backfilled_dek  = 0;
 $skipped         = 0;
 $errors          = 0;
+$processed       = 0;
 
 foreach ( $q->posts as $post_id ) {
 	if ( get_post_meta( $post_id, '_estrato_content_hygiene_v1_at', true ) ) {
 		++$skipped;
 		continue;
 	}
+	if ( $max_posts > 0 && $processed >= $max_posts ) {
+		echo "[max_posts=$max_posts atingido, continua no próximo run]\n";
+		break;
+	}
+	++$processed;
 	$post = get_post( $post_id );
 	if ( ! $post ) {
 		++$errors;

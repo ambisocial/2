@@ -97,6 +97,50 @@ function estrato_single_reading_time( $post_id = 0 ) {
 }
 
 /**
+ * V9 (auditoria produção 2026-07-15) — Rebaixa o `<h1 class="pg-single-title">`
+ * do PressGrid para `<span>` no HTML servido, preservando o markup nativo do
+ * tema mas evitando dois `<h1>` no DOM (o do PressGrid, com título truncado
+ * pelo worker externo, e o nosso `<h1 class="estrato-h1 entry-title">` com
+ * o título backfilled). Google/Lighthouse antes flagavam 2 `<h1>` no
+ * accessibility audit; agora só o nosso é semanticamente H1.
+ *
+ * Aplicado com `ob_start` no `template_redirect` e regex-strip no
+ * `shutdown` para não depender de `the_content` (a tag do PressGrid é
+ * emitida diretamente pelo template do tema, não pelo filter).
+ */
+function estrato_single_start_dom_normalize_buffer() {
+	if ( is_admin() || is_feed() || ! is_singular( 'post' ) ) {
+		return;
+	}
+	ob_start( 'estrato_single_dom_normalize' );
+}
+add_action( 'template_redirect', 'estrato_single_start_dom_normalize_buffer', 1 );
+
+/**
+ * @param string $html
+ * @return string
+ */
+function estrato_single_dom_normalize( $html ) {
+	if ( '' === $html ) {
+		return $html;
+	}
+	// 1. rebaixa <h1 class="pg-single-title">…</h1> para <span data-legacy="pg-single-title" aria-hidden="true">…</span>.
+	$html = preg_replace(
+		'#<h1(\s[^>]*class="[^"]*\bpg-single-title\b[^"]*"[^>]*)>(.*?)</h1>#is',
+		'<span$1 data-legacy="pg-single-title" aria-hidden="true">$2</span>',
+		$html
+	);
+	// 2. adiciona aria-hidden ao wrapper legado do PressGrid — ainda escondido por CSS mas
+	// AT (screen readers) e crawlers agora entendem que não é conteúdo primário.
+	$html = preg_replace(
+		'#<header(\s[^>]*class="[^"]*\bpg-single-header\b[^"]*"[^>]*)>#i',
+		'<header$1 aria-hidden="true">',
+		$html
+	);
+	return $html;
+}
+
+/**
  * V5 (auditoria visual 2026-07-13) — Fallback do kicker quando o post está
  * apenas na editoria root (sem subcategoria) ou sem categorias válidas.
  *

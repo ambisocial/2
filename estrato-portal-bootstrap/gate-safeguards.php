@@ -187,15 +187,15 @@ function estrato_gate_require_source_in_matrix( $post_id ) {
 		return;
 	}
 
-	$rss_src = (string) get_post_meta( $post_id, '_estrato_rss_source_url', true );
-	// Pipeline rewrite (`_estrato_source_url` só) é livre de matriz no finance.
-	// Off-matrix só bloqueia import RSS (meta RSS) ou satélites.
-	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
-	$is_rss = ( '' !== $rss_src );
-	if ( ! $is_rss && 'estrato-finance' === $portal ) {
-		return;
-	}
-
+	// Fix pós-auditoria 2026-07-16: o bypass anterior tratava
+	// "pipeline rewrite (_estrato_source_url só) como livre de matriz no
+	// finance". Isso deixou passar 71 posts em <24h (olhardigital=49,
+	// seudinheiro=11, tecnoblog=7, oeco=4). A regression metric já contava
+	// esses como off-matrix (usa ambas as keys), mas o guard não. Removido
+	// o bypass — todo post publicado (via bridge OU RSS) precisa ter host
+	// dentro da matriz, exceto quando explicitamente marcado como
+	// editorial (_estrato_editorial_source) ou análise (_estrato_content_mode=analysis),
+	// checagens que já foram feitas acima.
 	$src_host = strtolower( (string) wp_parse_url( $src, PHP_URL_HOST ) );
 	if ( ! $src_host ) {
 		return;

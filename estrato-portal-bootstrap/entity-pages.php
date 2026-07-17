@@ -93,10 +93,15 @@ function estrato_entity_upsert_page( $slug, $title, $content, $parent = 0 ) {
 	);
 
 	if ( $existing ) {
-		// Não sobrescreve conteúdo editorial rico já customizado.
-		$marker = 'estrato-entity-hub';
-		if ( false === strpos( (string) $existing->post_content, $marker )
-			&& false === strpos( (string) $existing->post_content, 'estrato_hub_posts' ) ) {
+		$old            = (string) $existing->post_content;
+		$has_structured = false !== strpos( $old, 'estrato-entity-hub' )
+			|| false !== strpos( $old, 'estrato_hub_posts' );
+		$has_faq        = false !== strpos( $old, 'estrato-entity-faq' );
+		// Preserva páginas longas 100% custom (sem nossos marcadores).
+		if ( ! $has_structured && strlen( wp_strip_all_tags( $old ) ) > 400 ) {
+			return (int) $existing->ID;
+		}
+		if ( ! $has_structured || ! $has_faq ) {
 			$data['ID'] = $existing->ID;
 			$id         = wp_update_post( $data, true );
 			return is_wp_error( $id ) ? 0 : (int) $id;

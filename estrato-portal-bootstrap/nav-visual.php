@@ -463,8 +463,8 @@ function estrato_nav_current_portal_id() {
 		'agro.estrato.cc'      => 'estrato-agro',
 		'esg.estrato.cc'       => 'estrato-esg',
 		'viagem.estrato.cc'    => 'estrato-viagem',
-		// Legado: sustain aponta para Agro até o redirect DNS/nginx.
-		'sustain.estrato.cc'   => 'estrato-agro',
+		// Legado: install próprio (não reutilizar roster Agro).
+		'sustain.estrato.cc'   => 'estrato-sustain',
 		'politica.estrato.cc'  => 'estrato-politica',
 		'esporte.estrato.cc'   => 'estrato-esporte',
 		'saude.estrato.cc'     => 'estrato-saude',

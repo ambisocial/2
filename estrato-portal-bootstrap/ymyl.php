@@ -83,6 +83,7 @@ function estrato_ymyl_append_disclaimer( $content ) {
 	$editor_id = ! empty( $map['editor_id'] ) ? (int) $map['editor_id'] : 0;
 	$editor    = $editor_id ? get_userdata( $editor_id ) : null;
 
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : '';
 	$html  = '<aside class="estrato-ymyl-box" aria-label="Aviso YMYL">';
 	$html .= '<p class="estrato-ymyl-box__label">Transparência editorial</p>';
 	$html .= '<p>' . esc_html( estrato_ymyl_disclaimer_text() ) . '</p>';
@@ -91,8 +92,21 @@ function estrato_ymyl_append_disclaimer( $content ) {
 	$html .= '<a href="' . esc_url( home_url( '/etica-editorial/' ) ) . '">Ética</a> · ';
 	$html .= '<a href="' . esc_url( home_url( '/correcoes/' ) ) . '">Correções</a> · ';
 	$html .= '<a href="' . esc_url( home_url( '/equipe/' ) ) . '">Equipe</a>';
-	if ( $editor ) {
-		$html .= ' · Revisado pela mesa: <a href="' . esc_url( get_author_posts_url( $editor_id ) ) . '">'
+	if ( 'estrato-saude' === $portal || 'estrato-mind' === $portal ) {
+		$html .= ' · <a href="' . esc_url( home_url( '/aviso-medico/' ) ) . '">Aviso médico</a>';
+	}
+	if ( 'estrato-finance' === $portal ) {
+		$html .= ' · <a href="' . esc_url( home_url( '/aviso-financeiro/' ) ) . '">Aviso financeiro</a>';
+	}
+	$reviewed = (int) get_post_meta( get_the_ID(), 'estrato_reviewed_by', true );
+	if ( $reviewed ) {
+		$rev_user = get_userdata( $reviewed );
+		if ( $rev_user ) {
+			$html .= ' · Revisado por: <a href="' . esc_url( get_author_posts_url( $reviewed ) ) . '">'
+				. esc_html( $rev_user->display_name ) . '</a>';
+		}
+	} elseif ( $editor ) {
+		$html .= ' · Mesa editorial: <a href="' . esc_url( get_author_posts_url( $editor_id ) ) . '">'
 			. esc_html( $editor->display_name ) . '</a>';
 	}
 	$html .= '</p></aside>';
@@ -102,7 +116,74 @@ function estrato_ymyl_append_disclaimer( $content ) {
 add_filter( 'the_content', 'estrato_ymyl_append_disclaimer', 30 );
 
 /**
+ * Marca revisão do editor-chefe (meta) em posts YMYL altos.
+ *
+ * @param int $post_id
+ */
+function estrato_ymyl_mark_reviewed_on_save( $post_id ) {
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+		return;
+	}
+	$post = get_post( $post_id );
+	if ( ! $post || 'post' !== $post->post_type || 'publish' !== $post->post_status ) {
+		return;
+	}
+	if ( ! estrato_ymyl_is_high_portal() ) {
+		return;
+	}
+	if ( get_post_meta( $post_id, 'estrato_reviewed_by', true ) ) {
+		return;
+	}
+	$map       = get_option( defined( 'ESTRATO_STAFF_OPTION' ) ? ESTRATO_STAFF_OPTION : 'estrato_editorial_staff_map', array() );
+	$editor_id = ! empty( $map['editor_id'] ) ? (int) $map['editor_id'] : 0;
+	if ( ! $editor_id ) {
+		return;
+	}
+	update_post_meta( $post_id, 'estrato_reviewed_by', $editor_id );
+	update_post_meta( $post_id, 'estrato_reviewed_at', gmdate( 'c' ) );
+}
+add_action( 'save_post_post', 'estrato_ymyl_mark_reviewed_on_save', 50 );
+
+/**
+ * Backfill reviewedBy meta em inventário YMYL.
+ *
+ * @return array{marked:int}
+ */
+function estrato_ymyl_backfill_reviewed_meta() {
+	if ( ! estrato_ymyl_is_high_portal() ) {
+		return array( 'marked' => 0 );
+	}
+	$map       = get_option( defined( 'ESTRATO_STAFF_OPTION' ) ? ESTRATO_STAFF_OPTION : 'estrato_editorial_staff_map', array() );
+	$editor_id = ! empty( $map['editor_id'] ) ? (int) $map['editor_id'] : 0;
+	if ( ! $editor_id ) {
+		return array( 'marked' => 0 );
+	}
+	$ids = get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => array(
+				array(
+					'key'     => 'estrato_reviewed_by',
+					'compare' => 'NOT EXISTS',
+				),
+			),
+		)
+	);
+	$n = 0;
+	foreach ( $ids as $id ) {
+		update_post_meta( (int) $id, 'estrato_reviewed_by', $editor_id );
+		update_post_meta( (int) $id, 'estrato_reviewed_at', gmdate( 'c' ) );
+		++$n;
+	}
+	return array( 'marked' => $n );
+}
+
+/**
  * reviewedBy + disclaimers no NewsArticle (Yoast).
+ * reviewedBy só quando há meta estrato_reviewed_by.
  *
  * @param array<string,mixed> $data
  * @return array<string,mixed>
@@ -115,31 +196,30 @@ function estrato_ymyl_schema_article( $data ) {
 	$data['isAccessibleForFree'] = true;
 	$data['inLanguage']            = 'pt-BR';
 
-	$map       = get_option( defined( 'ESTRATO_STAFF_OPTION' ) ? ESTRATO_STAFF_OPTION : 'estrato_editorial_staff_map', array() );
-	$editor_id = ! empty( $map['editor_id'] ) ? (int) $map['editor_id'] : 0;
-	if ( $editor_id ) {
-		$editor = get_userdata( $editor_id );
+	$reviewed = (int) get_post_meta( get_the_ID(), 'estrato_reviewed_by', true );
+	if ( $reviewed ) {
+		$editor = get_userdata( $reviewed );
 		if ( $editor ) {
 			$data['reviewedBy'] = array(
 				'@type'    => 'Person',
 				'name'     => $editor->display_name,
-				'jobTitle' => (string) get_user_meta( $editor_id, 'estrato_job_title', true ),
-				'url'      => get_author_posts_url( $editor_id ),
+				'jobTitle' => (string) get_user_meta( $reviewed, 'estrato_job_title', true ),
+				'url'      => get_author_posts_url( $reviewed ),
 			);
+			$at = (string) get_post_meta( get_the_ID(), 'estrato_reviewed_at', true );
+			if ( $at ) {
+				$data['lastReviewed'] = $at;
+			}
 		}
 	}
 
 	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : '';
+	$data['disclaimer'] = estrato_ymyl_disclaimer_text();
 	if ( 'estrato-saude' === $portal ) {
-		$data['disclaimer'] = estrato_ymyl_disclaimer_text();
-		$data['about']      = array(
+		$data['about'] = array(
 			'@type' => 'MedicalWebPage',
 			'name'  => get_the_title(),
 		);
-	} elseif ( 'estrato-finance' === $portal ) {
-		$data['disclaimer'] = estrato_ymyl_disclaimer_text();
-	} else {
-		$data['disclaimer'] = estrato_ymyl_disclaimer_text();
 	}
 
 	$data['publisher'] = array(
@@ -200,7 +280,7 @@ function estrato_ymyl_ensure_institutional_pages() {
 		),
 		'correcoes'           => array(
 			'title'   => 'Correções',
-			'content' => '<p>Encontrou um erro? Escreva para redacao@estrato.cc ou use a página de Contato. Correções materiais são atualizadas na matéria com indicação de horário.</p>',
+			'content' => '<p>Encontrou um erro? Escreva para redacao@estrato.cc ou use a página de Contato. Correções materiais são atualizadas na matéria com indicação de horário.</p><div class="estrato-corrections-log" data-estrato-corrections="1"></div>',
 		),
 		'equipe'              => array(
 			'title'   => 'Equipe',
@@ -210,6 +290,14 @@ function estrato_ymyl_ensure_institutional_pages() {
 			'title'   => 'Política editorial',
 			'content' => '<p>Política de seleção, verificação, atualização e transparência YMYL da rede Estrato. Conteúdo informativo; não substitui aconselhamento profissional personalizado.</p>',
 		),
+		'aviso-medico'        => array(
+			'title'   => 'Aviso médico',
+			'content' => '<p>O conteúdo de saúde do Estrato é informativo e educacional. Não substitui consulta, diagnóstico, prescrição ou tratamento com profissional de saúde habilitado. Em emergência, procure serviço médico ou SAMU 192.</p><p>Fontes clínicas e estudos são citados quando disponíveis; a interpretação jornalística não constitui parecer médico.</p>',
+		),
+		'aviso-financeiro'    => array(
+			'title'   => 'Aviso financeiro',
+			'content' => '<p>O conteúdo econômico e financeiro do Estrato é jornalístico. Não constitui recomendação de compra ou venda de ativos, consultoria de valores mobiliários, análise de investimento personalizada nem planejamento financeiro.</p><p>Decisões de investimento envolvem risco de perda. Consulte profissionais habilitados quando necessário.</p>',
+		),
 	);
 
 	$ids = array();
@@ -217,6 +305,16 @@ function estrato_ymyl_ensure_institutional_pages() {
 		$existing = get_page_by_path( $slug, OBJECT, 'page' );
 		if ( $existing ) {
 			$ids[ $slug ] = (int) $existing->ID;
+			// Atualiza páginas de aviso/correções se conteúdo estiver vazio/curto.
+			if ( in_array( $slug, array( 'aviso-medico', 'aviso-financeiro', 'correcoes' ), true )
+				&& strlen( wp_strip_all_tags( (string) $existing->post_content ) ) < 40 ) {
+				wp_update_post(
+					array(
+						'ID'           => $existing->ID,
+						'post_content' => $def['content'],
+					)
+				);
+			}
 			continue;
 		}
 		$id = wp_insert_post(
@@ -235,3 +333,102 @@ function estrato_ymyl_ensure_institutional_pages() {
 	}
 	return $ids;
 }
+
+/**
+ * Semear log de correções a partir de posts atualizados materialmente.
+ *
+ * @param int $limit
+ * @return int
+ */
+function estrato_ymyl_seed_corrections_log( $limit = 15 ) {
+	$log = get_option( 'estrato_corrections_log', array() );
+	if ( ! is_array( $log ) ) {
+		$log = array();
+	}
+	$posts = get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => 'publish',
+			'posts_per_page' => 40,
+			'orderby'        => 'modified',
+			'order'          => 'DESC',
+		)
+	);
+	foreach ( $posts as $p ) {
+		$pub = get_post_time( 'U', true, $p );
+		$mod = get_post_modified_time( 'U', true, $p );
+		if ( ! $pub || ! $mod || ( $mod - $pub ) < HOUR_IN_SECONDS ) {
+			continue;
+		}
+		$key = 'p' . $p->ID . '-' . $mod;
+		$exists = false;
+		foreach ( $log as $row ) {
+			if ( ( $row['key'] ?? '' ) === $key ) {
+				$exists = true;
+				break;
+			}
+		}
+		if ( $exists ) {
+			continue;
+		}
+		array_unshift(
+			$log,
+			array(
+				'key'     => $key,
+				'post_id' => (int) $p->ID,
+				'title'   => get_the_title( $p ),
+				'url'     => get_permalink( $p ),
+				'at'      => gmdate( 'c', $mod ),
+				'note'    => 'Atualização material registrada na matéria (selo ATUALIZADO).',
+			)
+		);
+		if ( count( $log ) >= $limit ) {
+			break;
+		}
+	}
+	$log = array_slice( $log, 0, $limit );
+	update_option( 'estrato_corrections_log', $log, false );
+	return count( $log );
+}
+
+/**
+ * Injeta lista pública de correções na página /correcoes/.
+ *
+ * @param string $content
+ * @return string
+ */
+function estrato_ymyl_corrections_page_content( $content ) {
+	if ( ! is_page( 'correcoes' ) || ! in_the_loop() || ! is_main_query() ) {
+		return $content;
+	}
+	if ( false !== strpos( $content, 'estrato-corrections-log__list' ) ) {
+		return $content;
+	}
+	$log = get_option( 'estrato_corrections_log', array() );
+	if ( ! is_array( $log ) || ! $log ) {
+		estrato_ymyl_seed_corrections_log( 12 );
+		$log = get_option( 'estrato_corrections_log', array() );
+	}
+	$html  = '<section class="estrato-corrections-log__list" aria-label="Registro de correções">';
+	$html .= '<h2>Registro recente</h2>';
+	if ( ! $log ) {
+		$html .= '<p>Nenhuma correção material registrada neste período. Para reportar um erro: redacao@estrato.cc.</p>';
+	} else {
+		$html .= '<ul>';
+		foreach ( $log as $row ) {
+			$ts = strtotime( (string) ( $row['at'] ?? '' ) );
+			$html .= '<li><time datetime="' . esc_attr( (string) ( $row['at'] ?? '' ) ) . '">'
+				. esc_html( $ts ? date_i18n( 'd/m/Y H:i', $ts ) : '' )
+				. '</time> — <a href="' . esc_url( (string) ( $row['url'] ?? '#' ) ) . '">'
+				. esc_html( (string) ( $row['title'] ?? 'Matéria' ) ) . '</a>: '
+				. esc_html( (string) ( $row['note'] ?? '' ) ) . '</li>';
+		}
+		$html .= '</ul>';
+	}
+	$html .= '</section>';
+	if ( false !== strpos( $content, 'data-estrato-corrections' ) ) {
+		return preg_replace( '/<div class="estrato-corrections-log"[^>]*><\/div>/', $html, $content, 1 );
+	}
+	return $content . $html;
+}
+add_filter( 'the_content', 'estrato_ymyl_corrections_page_content', 32 );

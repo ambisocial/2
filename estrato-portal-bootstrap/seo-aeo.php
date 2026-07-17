@@ -488,6 +488,34 @@ function estrato_aeo_build_llms_full_txt() {
 	}
 
 	$lines[] = '';
+	$lines[] = '## Top 50 matérias recentes';
+	$lines[] = '';
+	$posts = get_posts(
+		array(
+			'post_type'              => 'post',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 50,
+			'orderby'                => 'date',
+			'order'                  => 'DESC',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+	foreach ( $posts as $i => $p ) {
+		$url     = get_permalink( $p );
+		$title   = wp_strip_all_tags( get_the_title( $p ) );
+		$excerpt = trim( wp_strip_all_tags( (string) $p->post_excerpt ) );
+		if ( strlen( $excerpt ) < 40 ) {
+			$excerpt = wp_trim_words( wp_strip_all_tags( (string) $p->post_content ), 28, '…' );
+		}
+		$lines[] = ( $i + 1 ) . '. ' . $title;
+		$lines[] = '   URL: ' . $url;
+		$lines[] = '   Resumo: ' . $excerpt;
+		$lines[] = '   Publicado: ' . get_the_date( 'c', $p );
+		$lines[] = '';
+	}
+
 	$lines[] = '## Formato de conteúdo';
 	$lines[] = '';
 	$lines[] = 'Matérias incluem: lead factual, resumo AEO, contexto, perguntas frequentes (FAQ) e links internos. Mínimo editorial: 300 palavras em posts publicados.';

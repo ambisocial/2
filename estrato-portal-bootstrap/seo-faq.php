@@ -68,6 +68,48 @@ function estrato_faq_institutional_base() {
  * @param WP_Post $post
  * @return array<int, array{q:string,a:string}>
  */
+/**
+ * Extrai H2 do conteúdo (texto puro) para FAQ contextual.
+ *
+ * @param string $content
+ * @return array<int, string>
+ */
+function estrato_faq_extract_h2s( $content ) {
+	$heads = array();
+	if ( preg_match_all( '/<h2[^>]*>(.*?)<\/h2>/is', (string) $content, $m ) ) {
+		foreach ( $m[1] as $raw ) {
+			$text = trim( wp_strip_all_tags( html_entity_decode( $raw, ENT_QUOTES, 'UTF-8' ) ) );
+			if ( strlen( $text ) < 8 || strlen( $text ) > 120 ) {
+				continue;
+			}
+			if ( preg_match( '/perguntas frequentes|leia também|veja também|relacionad/i', $text ) ) {
+				continue;
+			}
+			$heads[] = $text;
+			if ( count( $heads ) >= 5 ) {
+				break;
+			}
+		}
+	}
+	return $heads;
+}
+
+/**
+ * Trecho após um H2 (até o próximo heading) para resposta.
+ *
+ * @param string $content
+ * @param string $heading
+ * @return string
+ */
+function estrato_faq_answer_near_h2( $content, $heading ) {
+	$quoted = preg_quote( $heading, '/' );
+	if ( ! preg_match( '/<h2[^>]*>\s*' . $quoted . '\s*<\/h2>(.*?)(?:<h2|<\/article|$)/is', (string) $content, $m ) ) {
+		return '';
+	}
+	$chunk = wp_trim_words( wp_strip_all_tags( $m[1] ), 42, '…' );
+	return strlen( $chunk ) >= 40 ? $chunk : '';
+}
+
 function estrato_faq_contextual_for_post( $post ) {
 	$title = wp_strip_all_tags( get_the_title( $post ) );
 	$area  = 'esta cobertura';
@@ -85,21 +127,37 @@ function estrato_faq_contextual_for_post( $post ) {
 		$excerpt = wp_trim_words( wp_strip_all_tags( (string) $post->post_content ), 36, '…' );
 	}
 
-	return array(
+	$items = array(
 		array(
 			'q' => sprintf( 'Sobre o que trata “%s”?', wp_trim_words( $title, 10, '…' ) ),
 			'a' => $excerpt
 				? $excerpt
 				: sprintf( 'Esta matéria organiza o contexto essencial de %s para leitores no Brasil, com fontes verificáveis e atualização quando há novos dados.', $area ),
 		),
-		array(
+	);
+
+	$h2s = estrato_faq_extract_h2s( (string) $post->post_content );
+	foreach ( $h2s as $h2 ) {
+		$ans = estrato_faq_answer_near_h2( (string) $post->post_content, $h2 );
+		$items[] = array(
+			'q' => ( '?' === substr( $h2, -1 ) ) ? $h2 : ( 'O que a matéria explica sobre “' . wp_trim_words( $h2, 12, '…' ) . '”?' ),
+			'a' => $ans
+				? $ans
+				: sprintf( 'A seção “%s” organiza o contexto de %s com fatos e implicações práticas destacados pela redação.', $h2, $area ),
+		);
+	}
+
+	if ( count( $h2s ) < 2 ) {
+		$items[] = array(
 			'q' => sprintf( 'Por que %s importa agora?', $area ),
 			'a' => sprintf(
 				'O tema impacta decisões e debates cotidianos ligados a %s. A redação destaca fatos, datas e implicações práticas sem substituir orientação profissional personalizada.',
 				$area
 			),
-		),
-	);
+		);
+	}
+
+	return array_slice( $items, 0, 5 );
 }
 
 /**

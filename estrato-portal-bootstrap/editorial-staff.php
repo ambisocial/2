@@ -110,6 +110,24 @@ function estrato_staff_rosters() {
 				array( 'login' => 'thiago-mello', 'first' => 'Thiago', 'last' => 'Mello', 'gender' => 'man', 'job' => 'Repórter de Infra e cloud', 'focus' => 'infraestrutura e dados' ),
 			),
 		),
+		// Install legado sustain.estrato.cc — mesa própria (clima/impacto), não Agro.
+		'estrato-sustain'   => array(
+			'editor'  => array(
+				'login' => 'helena-rios-editora',
+				'first' => 'Helena',
+				'last'  => 'Rios',
+				'gender'=> 'woman',
+				'job'   => 'Editora-chefe — Clima e impacto (legado Sustain)',
+				'focus' => 'clima, transição energética e ESG',
+			),
+			'authors' => array(
+				array( 'login' => 'miguel-costa', 'first' => 'Miguel', 'last' => 'Costa', 'gender' => 'man', 'job' => 'Repórter de Clima', 'focus' => 'ciência do clima e política ambiental' ),
+				array( 'login' => 'olivia-freitas', 'first' => 'Olívia', 'last' => 'Freitas', 'gender' => 'woman', 'job' => 'Repórter de Transição', 'focus' => 'energia limpa e descarbonização' ),
+				array( 'login' => 'davi-nogueira', 'first' => 'Davi', 'last' => 'Nogueira', 'gender' => 'man', 'job' => 'Repórter de Impacto', 'focus' => 'empresas, ESG e cadeia produtiva' ),
+				array( 'login' => 'rebeca-mota', 'first' => 'Rebeca', 'last' => 'Mota', 'gender' => 'woman', 'job' => 'Repórter de Biodiversidade', 'focus' => 'biomas e conservação' ),
+				array( 'login' => 'enrique-paiva', 'first' => 'Enrique', 'last' => 'Paiva', 'gender' => 'man', 'job' => 'Repórter de Economia verde', 'focus' => 'finanças climáticas e carbono' ),
+			),
+		),
 	);
 }
 
@@ -179,17 +197,18 @@ function estrato_staff_build_bio( $person, $portal_label, $is_editor = false ) {
 	$name  = trim( ( $person['first'] ?? '' ) . ' ' . ( $person['last'] ?? '' ) );
 	$focus = (string) ( $person['focus'] ?? 'cobertura editorial' );
 	$job   = (string) ( $person['job'] ?? 'Redação' );
-	$role  = $is_editor ? 'editoria-chefe' : 'reportagem';
 
 	$parts = array(
-		$name . ' integra a equipe editorial do ' . $portal_label . ' (rede Estrato) na função de ' . $job . '.',
-		'Escopo de cobertura: ' . $focus . '.',
-		'No dia a dia, prioriza fontes primárias, datas verificáveis e linguagem clara para o leitor brasileiro.',
+		$name . ' integra a equipe editorial do ' . $portal_label . ', vertical da rede Estrato, na função de ' . $job . '.',
+		'O escopo permanente de cobertura inclui ' . $focus . ', com atenção ao leitor brasileiro que busca contexto factual, datas oficiais e implicações práticas.',
+		'Na produção diária, prioriza fontes primárias (órgãos públicos, balanços, papers e documentos oficiais), cruza pelo menos duas referências independentes quando o tema é contestado e evita manchetes que prometam certeza onde há incerteza.',
+		'Critérios de qualidade: lead com o fato principal, atribuição clara de autoria da equipe Estrato, atualização com selo quando há mudança material e linguagem acessível sem simplificar demais o risco ou o contexto.',
 		$is_editor
-			? 'Como ' . $role . ', revisa pautas sensíveis (YMYL), padrões de correção e alinhamento à política editorial da marca.'
-			: 'Trabalha sob revisão da mesa editorial e do editor-chefe, com atualização de matérias quando surgem novos dados oficiais.',
-		'Este perfil descreve o papel editorial na marca Estrato. Não constitui aconselhamento profissional personalizado.',
-		'Transparência: correções em /correcoes/, metodologia em /metodologia/ e contato em /contato/.',
+			? 'Como editor(a)-chefe, conduz a mesa de pautas, revisa matérias sensíveis (YMYL — dinheiro, saúde e bem-estar), valida disclaimers e garante alinhamento à política editorial, ética e página de correções da marca.'
+			: 'Trabalha sob revisão da mesa editorial e do editor-chefe do portal. Matérias YMYL recebem segunda leitura antes da publicação e podem ser atualizadas quando surgem novos dados oficiais.',
+		'Limites: este perfil descreve o papel editorial na marca Estrato. O conteúdo publicado é informativo e não constitui aconselhamento médico, financeiro, jurídico ou profissional personalizado.',
+		'Transparência ao leitor: metodologia em /metodologia/, ética em /etica-editorial/, correções em /correcoes/, equipe em /equipe/ e canal em /contato/ (redacao@estrato.cc).',
+		'Na página-mãe da rede, a bio ampliada e o arquivo de matérias ficam em estrato.cc/blog/, com link para o arquivo do autor em cada portal.',
 	);
 
 	return implode( ' ', $parts );

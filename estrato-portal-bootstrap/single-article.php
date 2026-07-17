@@ -250,18 +250,43 @@ function estrato_single_render_header_fallback( $content ) {
 		<?php if ( $thumb_html ) : ?>
 			<figure class="estrato-single-featured"><?php echo $thumb_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></figure>
 		<?php endif; ?>
+		<?php
+		$blog_url = '';
+		if ( $author_id ) {
+			$blog_page = (int) get_user_meta( $author_id, 'estrato_blog_page_id', true );
+			if ( $blog_page ) {
+				$blog_url = get_permalink( $blog_page );
+			}
+			if ( ! $blog_url ) {
+				$login = $author_data ? $author_data->user_nicename : '';
+				$blog_url = $login ? 'https://estrato.cc/blog/' . sanitize_title( $login ) . '/' : '';
+			}
+		}
+		$avatar = $author_id ? get_avatar( $author_id, 72, '', $author_name, array( 'class' => 'estrato-single-avatar' ) ) : '';
+		?>
 		<div class="estrato-single-byline">
-			<span class="estrato-single-author">
-				Por <?php echo esc_html( $author_name ); ?><?php if ( $job ) : ?>, <?php echo esc_html( $job ); ?><?php endif; ?><?php if ( $is_persona ) : ?> <span class="estrato-persona-badge" title="Persona editorial coletiva do Estrato">Redação</span><?php endif; ?>
-			</span>
-			<time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'd/m/Y H:i' ) ); ?></time>
-			<span class="estrato-single-read"><?php echo esc_html( $read ); ?></span>
-			<?php
-			$post = get_post( $post_id );
-			if ( $post && get_post_time( 'U', true, $post ) < get_post_modified_time( 'U', true, $post ) ) :
-				?>
-				<span class="estrato-updated-badge">ATUALIZADO às <?php echo esc_html( get_the_modified_time( 'H:i' ) ); ?></span>
+			<?php if ( $avatar ) : ?>
+				<a class="estrato-single-avatar-link" href="<?php echo esc_url( get_author_posts_url( $author_id ) ); ?>"><?php echo $avatar; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
 			<?php endif; ?>
+			<div class="estrato-single-byline__meta">
+				<span class="estrato-single-author">
+					Por
+					<a href="<?php echo esc_url( get_author_posts_url( $author_id ) ); ?>"><?php echo esc_html( $author_name ); ?></a><?php if ( $job ) : ?>,
+					<span class="estrato-single-job"><?php echo esc_html( $job ); ?></span><?php endif; ?>
+					<?php if ( $is_persona ) : ?> <span class="estrato-persona-badge" title="Persona editorial coletiva do Estrato">Redação</span><?php endif; ?>
+				</span>
+				<?php if ( $blog_url ) : ?>
+					<span class="estrato-single-blog"><a href="<?php echo esc_url( $blog_url ); ?>">Bio e blog</a></span>
+				<?php endif; ?>
+				<time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'd/m/Y H:i' ) ); ?></time>
+				<span class="estrato-single-read"><?php echo esc_html( $read ); ?></span>
+				<?php
+				$post = get_post( $post_id );
+				if ( $post && get_post_time( 'U', true, $post ) < get_post_modified_time( 'U', true, $post ) ) :
+					?>
+					<span class="estrato-updated-badge">ATUALIZADO às <?php echo esc_html( get_the_modified_time( 'H:i' ) ); ?></span>
+				<?php endif; ?>
+			</div>
 		</div>
 	</div>
 	<?php
@@ -429,8 +454,13 @@ function estrato_single_styles() {
 		. '.estrato-single-breadcrumb-wrap .estrato-breadcrumb{margin:.35rem 0 .75rem}'
 		. '.estrato-single-header{max-width:680px;margin:0 auto var(--estrato-space-4);padding:0 1rem}'
 		. '.estrato-single-dek{font-size:20px;line-height:1.45;color:var(--estrato-muted);margin:.75rem 0 1rem}'
-		. '.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.75rem;font-size:14px;color:var(--estrato-muted);align-items:center}'
+		. '.estrato-single-byline{display:flex;flex-wrap:wrap;gap:.85rem;font-size:14px;color:var(--estrato-muted);align-items:center}'
 		. '.estrato-single-byline br{display:none}'
+		. '.estrato-single-avatar-link{flex:0 0 auto;line-height:0}'
+		. '.estrato-single-avatar{width:56px;height:56px;border-radius:50%;object-fit:cover;display:block}'
+		. '.estrato-single-byline__meta{display:flex;flex-wrap:wrap;gap:.55rem .85rem;align-items:center}'
+		. '.estrato-single-job{font-weight:600;color:inherit}'
+		. '.estrato-single-blog a{font-weight:600}'
 		. '.estrato-persona-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--estrato-line);color:var(--estrato-muted);padding:.1rem .45rem;border-radius:3px;margin-left:.35rem;vertical-align:baseline}'
 		. '.estrato-updated-badge{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--estrato-cat-color,#5B3E96)}'
 		. '.entry-content,.post-content{max-width:680px;margin:0 auto;font-size:18px;line-height:1.6}'

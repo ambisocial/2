@@ -274,6 +274,12 @@ check_mobile_marker "AR-SEO-PATH-aliases" estrato-portal-bootstrap/network-hubs.
 check_mobile_marker "AR-SEO-GEO-normalize" estrato-portal-bootstrap/seo-aeo.php 'AI crawl allow 100%'
 check_mobile_marker "AR-SEO-STAFF-reassign" estrato-portal-bootstrap/editorial-staff.php 'estrato_staff_reassign_inventory'
 check_mobile_marker "AR-SEO-STAFF-scrub" estrato-portal-bootstrap/editorial-staff.php 'estrato_staff_scrub_fake_same_as'
+check_mobile_marker "AR-SEO-YMYL-aviso" estrato-portal-bootstrap/ymyl.php 'aviso-medico'
+check_mobile_marker "AR-SEO-YMYL-reviewed-meta" estrato-portal-bootstrap/ymyl.php 'estrato_reviewed_by'
+check_mobile_marker "AR-SEO-FAQ-H2" estrato-portal-bootstrap/seo-faq.php 'estrato_faq_extract_h2s'
+check_mobile_marker "AR-SEO-LLMS-TOP50" estrato-portal-bootstrap/seo-aeo.php 'Top 50 matérias recentes'
+check_mobile_marker "AR-SEO-BYLINE-AVATAR" estrato-portal-bootstrap/single-article.php 'estrato-single-avatar'
+check_mobile_marker "AR-SEO-SUSTAIN-ID" estrato-portal-bootstrap/nav-visual.php "'estrato-sustain'"
 if tree_has 'linkedin.com/in/.*estrato_same_as|estrato_same_as.*linkedin.com/in'; then
   fail "AR-SEO-EEAT-sameAs fake LinkedIn ainda presente"
 else

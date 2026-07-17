@@ -41,6 +41,14 @@ function estrato_entity_hub_content( $hub_slug, $category_slug, $title ) {
 	$html .= '<h2>Por que esta página existe</h2>';
 	$html .= '<p>Centralizamos definições, atualizações e links internos para fortalecer a compreensão da entidade <strong>'
 		. esc_html( $title ) . '</strong> — padrão AEO/GEO da rede Estrato.</p>';
+	$html .= '<h2>Perguntas frequentes</h2><dl class="estrato-entity-faq">';
+	$html .= '<div><dt>O que é ' . esc_html( $title ) . '?</dt><dd>'
+		. esc_html( $desc ) . '</dd></div>';
+	$html .= '<div><dt>Como o ' . esc_html( $blog ) . ' cobre ' . esc_html( $title ) . '?</dt><dd>'
+		. 'Com matérias factuais, atualização quando há novos dados oficiais e links para metodologia e equipe editorial.</dd></div>';
+	$html .= '<div><dt>Onde ler mais sobre ' . esc_html( $title ) . '?</dt><dd>'
+		. 'Na lista de matérias abaixo e nos hubs da rede em <a href="https://estrato.cc/">estrato.cc</a>.</dd></div>';
+	$html .= '</dl>';
 	$html .= '<h2>Últimas matérias</h2>';
 	$html .= '[estrato_hub_posts category="' . esc_attr( $category_slug ) . '" count="8"]';
 	$html .= '<h2>Transparência</h2>';

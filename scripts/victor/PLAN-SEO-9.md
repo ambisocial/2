@@ -1,6 +1,8 @@
 # Plano executável — SEO / AEO / EEAT / GEO / YMYL → 9/10
 
-Base pós-1.36.2 (~8.4–8.5). Cada item tem comando/verificação mensurável.
+Base pós-1.36.3 (execução do plano). Cada item tem comando/verificação mensurável.
+
+Status da execução: ver commits `setup-plan-seo-9.php` + `check-seo-live-gate.sh`.
 
 ## Meta por pilar
 

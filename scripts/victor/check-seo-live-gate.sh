@@ -18,9 +18,17 @@ check_gpt_allow() {
 }
 
 echo "== SEO live gate =="
-for h in estrato.cc mente.estrato.cc saude.estrato.cc sustain.estrato.cc tech.estrato.cc; do
+# sustain.estrato.cc redireciona 301→agro no edge; validamos agro + hosts vivos.
+for h in estrato.cc mente.estrato.cc saude.estrato.cc agro.estrato.cc tech.estrato.cc; do
   check_gpt_allow "$h"
 done
+# Confirma redirect legado sustain→agro
+sust_loc=$(curl -sS -m 20 -D - -o /dev/null "https://sustain.estrato.cc/" | tr -d '\r' | awk 'tolower($1)=="location:"{print $2; exit}')
+if [[ "$sust_loc" == *"agro.estrato.cc"* ]]; then
+  pass "Sustain legado 301→agro"
+else
+  fail "Sustain legado redirect (got: $sust_loc)"
+fi
 
 # Aliases 301
 loc=$(curl -sS -m 20 -D - -o /dev/null "https://estrato.cc/ciencia/" | tr -d '\r' | awk 'tolower($1)=="location:"{print $2; exit}')
@@ -37,26 +45,31 @@ for p in aviso-medico aviso-financeiro metodologia correcoes; do
 done
 
 # Path hub title
-title=$(curl -sS -m 25 "https://estrato.cc/financas/" | grep -oi '<title>[^<]*' | head -1 | sed 's/<title>//I')
+tmp=$(mktemp)
+curl -sS -m 25 -o "$tmp" "https://estrato.cc/financas/" || true
+title=$(grep -oi '<title>[^<]*' "$tmp" | head -1 | sed 's/<title>//I')
 if echo "$title" | grep -qi 'Finanças'; then pass "Path hub title financas"; else fail "Path hub title financas ($title)"; fi
 
 # llms-full has Top 50
-if curl -fsS -m 25 "https://estrato.cc/llms-full.txt" | grep -q 'Top 50'; then
+curl -sS -m 25 -o "$tmp" "https://estrato.cc/llms-full.txt" || true
+if grep -q 'Top 50' "$tmp"; then
   pass "llms-full Top 50"
 else
   fail "llms-full Top 50"
 fi
 
-# Article signals (latest from sitemap-ish home link fallback)
-art=$(curl -sS -m 25 "https://estrato.cc/post-sitemap.xml" | grep -oE 'https://estrato.cc/[^<]+/' | grep -v sitemap | head -1 || true)
+# Article signals
+art=$(curl -sS -m 25 "https://estrato.cc/post-sitemap.xml" | grep -oE 'https://estrato.cc/[a-z0-9-]+/' | grep -vE 'sitemap|wp-content|category|tag|author|page' | head -1 || true)
 if [[ -n "$art" ]]; then
-  html=$(curl -sS -m 30 "$art" || true)
-  echo "$html" | grep -q 'FAQPage' && pass "FAQPage article" || fail "FAQPage article"
-  echo "$html" | grep -qi 'linkedin.com/in/' && fail "LinkedIn fake no HTML" || pass "Sem LinkedIn fake"
-  echo "$html" | grep -q 'estrato-single-avatar\|estrato-single-byline' && pass "Byline EEAT" || fail "Byline EEAT"
+  curl -sS -m 35 -L -o "$tmp" "$art" || true
+  grep -q 'FAQPage' "$tmp" && pass "FAQPage article" || fail "FAQPage article"
+  grep -qi 'linkedin.com/in/' "$tmp" && fail "LinkedIn fake no HTML" || pass "Sem LinkedIn fake"
+  grep -q 'estrato-single-avatar\|estrato-single-byline' "$tmp" && pass "Byline EEAT" || fail "Byline EEAT"
+  grep -q 'reviewedBy' "$tmp" && pass "reviewedBy schema" || fail "reviewedBy schema"
 else
   fail "Não achou artigo para amostrar"
 fi
+rm -f "$tmp"
 
 if [[ "$FAIL" -gt 0 ]]; then
   echo "RESULT: FAIL ($FAIL)"

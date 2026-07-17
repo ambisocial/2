@@ -270,7 +270,10 @@ function estrato_home_render_card( $post, $variant = 'list', $opts = array() ) {
 				$html .= '<span class="estrato-kicker estrato-home-card__kicker">' . esc_html( $kick['label'] ) . '</span>';
 			}
 		}
-		$html .= '<h3 class="estrato-display estrato-home-card__title"><a href="' . esc_url( $permalink ) . '">' . esc_html( get_the_title( $post ) ) . '</a></h3>';
+		$title_text = function_exists( 'estrato_home_normalize_title' )
+			? estrato_home_normalize_title( get_the_title( $post ) )
+			: get_the_title( $post );
+		$html      .= '<h3 class="estrato-display estrato-home-card__title"><a href="' . esc_url( $permalink ) . '">' . esc_html( $title_text ) . '</a></h3>';
 		if ( $time ) {
 			$html .= '<time class="estrato-caption" datetime="' . esc_attr( get_the_date( 'c', $post ) ) . '">' . esc_html( $time ) . '</time>';
 		}
@@ -288,7 +291,12 @@ function estrato_home_render_card( $post, $variant = 'list', $opts = array() ) {
 		if ( $kick['label'] ) {
 			$html .= '<span class="estrato-kicker">' . esc_html( $kick['label'] ) . '</span>';
 		}
-		$html .= '<h3 class="estrato-display estrato-home-card__title">' . esc_html( get_the_title( $post ) ) . '</h3>';
+		// H1 da home é o masthead; manchete hero usa H2, demais H3.
+		$heading    = ( 'hero' === $variant ) ? 'h2' : 'h3';
+		$title_text = function_exists( 'estrato_home_normalize_title' )
+			? estrato_home_normalize_title( get_the_title( $post ) )
+			: get_the_title( $post );
+		$html      .= '<' . $heading . ' class="estrato-display estrato-home-card__title">' . esc_html( $title_text ) . '</' . $heading . '>';
 		if ( $time ) {
 			$html .= '<time class="estrato-caption" datetime="' . esc_attr( get_the_date( 'c', $post ) ) . '">' . esc_html( $time ) . '</time>';
 		}
@@ -297,6 +305,46 @@ function estrato_home_render_card( $post, $variant = 'list', $opts = array() ) {
 
 	$html .= '</article>';
 	return $html;
+}
+
+/**
+ * H1 semântico único da home (best practice 2026): marca + intenção topical.
+ *
+ * @return string
+ */
+function estrato_home_document_h1() {
+	$blog    = get_bloginfo( 'name' );
+	$tagline = trim( (string) get_bloginfo( 'description' ) );
+	$portal  = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : 'estrato-finance';
+
+	$defaults = array(
+		'estrato-finance'   => 'notícias de economia, mercados e finanças',
+		'estrato-mind'      => 'conhecimento, aprendizado e desenvolvimento pessoal',
+		'estrato-lifestyle' => 'estilos de vida, hobbies e rotina',
+		'estrato-science'   => 'ciência, tecnologia e futuro',
+		'estrato-agro'      => 'agronegócio, produção e mercado',
+		'estrato-esg'       => 'ESG, clima e impacto',
+		'estrato-viagem'    => 'viagens, destinos e rotas',
+		'estrato-politica'  => 'política, Brasília e poder',
+		'estrato-esporte'   => 'esporte e arena competitiva',
+		'estrato-saude'     => 'saúde, medicina e bem-estar',
+		'estrato-educacao'  => 'educação e carreira',
+		'estrato-tech'      => 'tecnologia e inovação',
+		'estrato-carros'    => 'carros e mobilidade',
+		'estrato-culture'   => 'cultura pop, narrativas e celebridades',
+	);
+
+	$intent = $defaults[ $portal ] ?? 'notícias e análises';
+	if ( $tagline && strlen( $tagline ) >= 24 && strlen( $tagline ) <= 110 ) {
+		$h1 = $blog . ' — ' . $tagline;
+	} else {
+		$h1 = $blog . ' — ' . $intent;
+	}
+
+	return '<header class="estrato-home-masthead">'
+		. '<h1 class="estrato-display estrato-home-masthead__h1">' . esc_html( $h1 ) . '</h1>'
+		. '<p class="estrato-home-masthead__dek">Cobertura editorial com equipe verificável, entity pages e padrões YMYL da rede Estrato.</p>'
+		. '</header>';
 }
 
 /**
@@ -493,6 +541,7 @@ function estrato_home_render_layout() {
 	$feed_items = $has_more ? array_slice( $feed_all['items'], 0, $feed_need ) : $feed_all['items'];
 
 	$html = '<div class="estrato-home-v2">';
+	$html .= estrato_home_document_h1();
 
 	if ( $breaking['html'] ) {
 		$html .= $breaking['html'];
@@ -666,6 +715,9 @@ function estrato_home_styles() {
 	}
 	$css = '.estrato-home-v2{max-width:1200px;margin:0 auto;padding:var(--estrato-space-3) 1rem}'
 		. '@media(min-width:640px){.estrato-home-v2{padding:var(--estrato-space-4) 1rem}}'
+		. '.estrato-home-masthead{margin:0 0 var(--estrato-space-4);padding-bottom:var(--estrato-space-3);border-bottom:1px solid var(--estrato-line,#e5e5e5)}'
+		. '.estrato-home-masthead__h1{font-size:clamp(22px,3.2vw,34px);line-height:1.15;margin:0 0 .4rem;max-width:42rem}'
+		. '.estrato-home-masthead__dek{margin:0;opacity:.82;max-width:42rem;font-size:.98rem}'
 		. '.estrato-home-breaking{margin:0 0 var(--estrato-space-3);background:#fff1e5;border:1px solid #e8d5c4;border-radius:var(--estrato-radius,4px)}'
 		. '.estrato-home-breaking__link{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;color:inherit;text-decoration:none;min-height:44px}'
 		. '.estrato-home-breaking__label{flex:0 0 auto;background:#C4170C;color:#fff;font-size:.6875rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:.25rem .5rem}'

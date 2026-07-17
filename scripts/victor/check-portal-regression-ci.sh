@@ -260,6 +260,22 @@ fi
 check_mobile_marker "AR-MOBILE-UX-C2 title dedupe" estrato-portal-bootstrap/home-layout.php 'estrato_home_normalize_title'
 check_mobile_marker "AR-MOBILE-UX-title portal" estrato-portal-bootstrap/seo-yoast-defaults.php 'estrato_yoast_portal_document_title'
 
+# SEO / GEO / AEO / EEAT (1.36)
+check_mobile_marker "AR-SEO-GEO-AI-allow" estrato-portal-bootstrap/seo-aeo.php 'AI crawl allow 100%'
+check_mobile_marker "AR-SEO-GEO-Allow" estrato-portal-bootstrap/seo-aeo.php 'Allow: /'
+check_mobile_marker "AR-SEO-FAQ-institutional" estrato-portal-bootstrap/seo-faq.php 'estrato-institutional-faq'
+check_mobile_marker "AR-SEO-H1-home" estrato-portal-bootstrap/home-layout.php 'estrato_home_document_h1'
+check_mobile_marker "AR-SEO-STAFF" estrato-portal-bootstrap/editorial-staff.php 'estrato_staff_provision_current_portal'
+check_mobile_marker "AR-SEO-YMYL" estrato-portal-bootstrap/ymyl.php 'estrato_ymyl_disclaimer_text'
+check_mobile_marker "AR-SEO-ENTITY" estrato-portal-bootstrap/entity-pages.php 'estrato_entity_ensure_all_hubs'
+check_mobile_marker "AR-SEO-PATH-HUBS" estrato-portal-bootstrap/network-hubs.php 'estrato_network_ensure_path_hubs'
+check_mobile_marker "AR-SEO-PATH-financas" estrato-portal-bootstrap/network-hubs.php "'financas'"
+if tree_has 'linkedin.com/in/.*estrato_same_as|estrato_same_as.*linkedin.com/in'; then
+  fail "AR-SEO-EEAT-sameAs fake LinkedIn ainda presente"
+else
+  ok "AR-SEO-EEAT-sameAs sem LinkedIn fabricado"
+fi
+
 # Removido bloco antigo de dup único finance
 true
 

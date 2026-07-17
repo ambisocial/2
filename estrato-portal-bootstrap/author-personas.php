@@ -144,11 +144,11 @@ function estrato_eeat_sideload_portrait( $user_id, $login, $persona ) {
 	$display = $persona['display_name'] ?? 'Jornalista';
 	$gender  = $persona['gender'] ?? 'person';
 	$seed    = abs( crc32( $login ) );
-	$prompt  = 'Ultra realistic professional headshot portrait photo of a Brazilian ' . $gender
-		. ' financial journalist, age 38, business casual attire, soft studio lighting, neutral gray background,'
-		. ' editorial magazine quality, natural skin, looking at camera, no text, no watermark';
+	$prompt  = 'Black and white ultra realistic professional headshot portrait of a Brazilian ' . $gender
+		. ' editorial journalist, age 36 to 45, natural skin texture, soft studio lighting, neutral gray background,'
+		. ' monochrome photography, sharp eyes, looking at camera, no text, no watermark, no color';
 	$img_url = 'https://image.pollinations.ai/prompt/' . rawurlencode( $prompt )
-		. '?width=512&height=512&seed=' . $seed . '&nologo=true';
+		. '?width=768&height=768&seed=' . $seed . '&nologo=true';
 
 	$tmp = download_url( $img_url, 45 );
 	if ( is_wp_error( $tmp ) ) {
@@ -253,11 +253,16 @@ function estrato_eeat_ensure_author_for_term( $term_id, $full_slug, $parent_slug
 	$job = $persona['job_title'] ?? '';
 	update_user_meta( $user_id, 'estrato_job_title', $job );
 	update_user_meta( $user_id, 'wpseo_job_title', $job );
-	$same_as = 'https://www.linkedin.com/in/' . rawurlencode( $login ) . '/';
-	update_user_meta( $user_id, 'estrato_same_as', esc_url_raw( $same_as ) );
+	// sameAs apenas URLs internas verificáveis (arquivo + blog na página-mãe).
+	$same_as = array(
+		home_url( '/author/' . $login . '/' ),
+		'https://estrato.cc/blog/' . sanitize_title( $login ) . '/',
+	);
+	update_user_meta( $user_id, 'estrato_same_as', $same_as );
 	update_user_meta( $user_id, 'estrato_author_term_slug', $full_slug );
 	update_user_meta( $user_id, 'estrato_author_parent', $parent_slug );
 	update_user_meta( $user_id, 'estrato_author_type', $term_type );
+	update_user_meta( $user_id, 'estrato_author_disclosure', 'Equipe editorial Estrato — perfil de cobertura da marca.' );
 	update_term_meta( $term_id, 'estrato_author_user_id', (int) $user_id );
 
 	estrato_eeat_sideload_portrait( (int) $user_id, $login, $persona );

@@ -515,15 +515,21 @@ function estrato_nav_network_hub_html( $args = array() ) {
 		$html .= '<h3 class="estrato-network-hub__title">Mais da Rede Estrato</h3>';
 	}
 	if ( $args['intro'] ) {
-		$html .= '<p class="estrato-network-hub__intro">Explore os portais especializados da rede Estrato:</p>';
+		$html .= '<p class="estrato-network-hub__intro">Explore as verticais da rede Estrato (estrato.cc/{vertical} + portais):</p>';
 	}
 	$html .= '<ul class="estrato-network-hub-grid">';
+	$path_map = function_exists( 'estrato_network_path_map' ) ? estrato_network_path_map() : array();
 	foreach ( estrato_nav_network_catalog() as $node ) {
 		if ( $node['id'] === $current ) {
 			continue;
 		}
+		$href = $node['url'];
+		// Preferir landing no domínio mãe (estrato.cc/{path}/) quando existir.
+		if ( ! empty( $path_map[ $node['id'] ]['path'] ) ) {
+			$href = 'https://estrato.cc/' . $path_map[ $node['id'] ]['path'] . '/';
+		}
 		$mark  = estrato_nav_network_mark_html( $node );
-		$html .= '<li><a class="estrato-network-hub__link" href="' . esc_url( $node['url'] ) . '">'
+		$html .= '<li><a class="estrato-network-hub__link" href="' . esc_url( $href ) . '">'
 			. $mark
 			. '<span class="estrato-network-hub__text"><strong>' . esc_html( $node['name'] ) . '</strong>'
 			. '<span class="estrato-network-tagline">' . esc_html( $node['tagline'] ) . '</span></span>'

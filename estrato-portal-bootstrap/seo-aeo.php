@@ -14,23 +14,37 @@ define( 'ESTRATO_INDEXNOW_ENABLED_OPTION', 'estrato_bridge_indexnow_enabled' );
 define( 'ESTRATO_NEWS_SITEMAP_CRON', 'estrato_news_sitemap_hourly' );
 
 /**
+ * Crawlers de IA liberados 100% (GEO).
+ *
  * @return array<int, string>
  */
 function estrato_aeo_ai_bot_agents() {
 	return array(
 		'GPTBot',
 		'ChatGPT-User',
+		'OAI-SearchBot',
 		'CCBot',
 		'anthropic-ai',
 		'ClaudeBot',
+		'Claude-SearchBot',
 		'PerplexityBot',
+		'Perplexity-User',
 		'Bytespider',
 		'cohere-ai',
+		'Google-Extended',
+		'Google-CloudVertexBot',
+		'Applebot-Extended',
+		'Amazonbot',
+		'meta-externalagent',
+		'FacebookBot',
+		'Diffbot',
+		'YouBot',
+		'AI2Bot',
 	);
 }
 
 /**
- * Regras robots para crawlers de IA (BPMoney / Folha).
+ * Regras robots GEO — Allow total para crawlers de IA.
  *
  * @param string $output
  * @param bool   $public
@@ -41,22 +55,42 @@ function estrato_aeo_filter_robots_txt( $output, $public ) {
 		return $output;
 	}
 
-	if ( false !== stripos( $output, 'GPTBot' ) ) {
+	// Remove bloqueios legados de bots de IA (Disallow: /).
+	$output = preg_replace(
+		'/(?:^|\n)#\s*Estrato AEO\/GEO[^\n]*\n(?:User-agent:[^\n]+\nDisallow:\s*\/\n?)+/iu',
+		"\n",
+		(string) $output
+	);
+	foreach ( estrato_aeo_ai_bot_agents() as $agent ) {
+		$quoted = preg_quote( $agent, '/' );
+		$output = preg_replace(
+			'/User-agent:\s*' . $quoted . '\s*\nDisallow:\s*\/\s*\n?/i',
+			'',
+			(string) $output
+		);
+	}
+
+	if ( false !== stripos( $output, 'GPTBot' ) && false !== stripos( $output, "Allow: /\n" ) ) {
+		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
+		if ( $domain && false === stripos( $output, 'llms.txt' ) ) {
+			$output = rtrim( $output ) . "\n\n# GEO\n# llms: https://{$domain}/llms.txt\n";
+		}
 		return $output;
 	}
 
-	$extra = "\n# Estrato AEO/GEO — crawlers IA (Sprint 6)\n";
+	$extra = "\n# Estrato GEO — AI crawl allow 100%\n";
 	foreach ( estrato_aeo_ai_bot_agents() as $agent ) {
-		$extra .= "User-agent: {$agent}\nDisallow: /\n";
+		$extra .= "User-agent: {$agent}\nAllow: /\n";
 	}
 
 	$domain = wp_parse_url( home_url(), PHP_URL_HOST );
 	if ( $domain && false === stripos( $output, 'llms.txt' ) ) {
 		$extra .= "\n# GEO\n";
 		$extra .= "# llms: https://{$domain}/llms.txt\n";
+		$extra .= "# llms-full: https://{$domain}/llms-full.txt\n";
 	}
 
-	return rtrim( $output ) . "\n" . $extra;
+	return rtrim( (string) $output ) . "\n" . $extra;
 }
 add_filter( 'robots_txt', 'estrato_aeo_filter_robots_txt', 1000001, 2 );
 
@@ -387,9 +421,11 @@ function estrato_aeo_build_llms_txt() {
 	$lines[] = '- Sitemap: ' . home_url( '/sitemap_index.xml' );
 	$lines[] = '- News sitemap: ' . home_url( '/news-sitemap.xml' );
 	$lines[] = '';
-	$lines[] = '## Citação';
+	$lines[] = '## Citação e uso por IA';
 	$lines[] = '';
-	$lines[] = 'Ao citar o ' . $blog . ', indique o título da matéria, a URL e a data de publicação.';
+	$lines[] = 'Crawlers de IA estão liberados (Allow: /). Ao citar o ' . $blog . ', indique o título da matéria, a URL canônica e a data de publicação/atualização.';
+	$lines[] = 'Política editorial: ' . home_url( '/politica-editorial/' );
+	$lines[] = 'Equipe: ' . home_url( '/equipe/' );
 
 	return implode( "\n", $lines ) . "\n";
 }
@@ -417,7 +453,7 @@ function estrato_aeo_build_llms_full_txt() {
 		'## Políticas',
 		'',
 		'- Política editorial: ' . home_url( '/politica-editorial/' ),
-		'- Privacidade (LGPD): ' . home_url( '/privacidade/' ),
+		'- Privacidade (LGPD): ' . home_url( '/politica-de-privacidade/' ),
 		'',
 		'## Taxonomia editorial',
 		'',

@@ -1,13 +1,16 @@
 # Estrato — llms.txt (GEO / AEO)
 # Portal de economia, mercados financeiros e finanças pessoais no Brasil.
-# Última atualização: 2026-07-10
+# Última atualização: 2026-07-17
 
-> O Estrato publica notícias e guias sobre macroeconomia, B3, câmbio, Selic, inflação, empresas e finanças pessoais. Conteúdo em português (pt-BR), com política editorial e fontes citadas.
+> O Estrato publica notícias e guias sobre macroeconomia, B3, câmbio, Selic, inflação, empresas e finanças pessoais. Conteúdo em português (pt-BR), com política editorial e fontes citadas. Crawlers de IA estão liberados (Allow: /).
 
 ## Sobre
 
 - Site: https://estrato.cc/
+- Hub finanças (path): https://estrato.cc/financas/
 - Política editorial: https://estrato.cc/politica-editorial/
+- Equipe: https://estrato.cc/equipe/
+- Blog da redação: https://estrato.cc/blog/
 - Sobre: https://estrato.cc/sobre/
 - Contato: https://estrato.cc/contato/
 
@@ -41,6 +44,6 @@
 - Sitemap: https://estrato.cc/sitemap_index.xml
 - News sitemap: https://estrato.cc/news-sitemap.xml
 
-## Citação
+## Citação e uso por IA
 
-Ao citar o Estrato, indique o título da matéria, a URL e a data de publicação. Para correções: redacao@estrato.cc
+Crawlers de IA estão liberados (Allow: /). Ao citar o Estrato, indique o título da matéria, a URL canônica e a data de publicação/atualização. Correções: redacao@estrato.cc

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Portal Bootstrap
  * Description: Provisiona tema (PressGrid ou Newspack), plugins e integração com pipeline/RSS por portal.
- * Version: 1.35.0
+ * Version: 1.36.0
  * Author: Cursor Agent
  */
 
@@ -15,6 +15,7 @@ require_once __DIR__ . '/seo-robots.php';
 require_once __DIR__ . '/seo-schema.php';
 require_once __DIR__ . '/eeat.php';
 require_once __DIR__ . '/author-personas.php';
+require_once __DIR__ . '/editorial-staff.php';
 require_once __DIR__ . '/syndication.php';
 require_once __DIR__ . '/content-quality.php';
 require_once __DIR__ . '/nav-visual.php';
@@ -22,6 +23,10 @@ require_once __DIR__ . '/nav-mega-menu.php';
 require_once __DIR__ . '/nav-header-g1.php';
 require_once __DIR__ . '/nav-footer-ft.php';
 require_once __DIR__ . '/seo-aeo.php';
+require_once __DIR__ . '/seo-faq.php';
+require_once __DIR__ . '/ymyl.php';
+require_once __DIR__ . '/entity-pages.php';
+require_once __DIR__ . '/network-hubs.php';
 require_once __DIR__ . '/gate-safeguards.php';
 require_once __DIR__ . '/taxonomy.php';
 require_once __DIR__ . '/portal-taxonomy.php';
@@ -43,7 +48,7 @@ require_once __DIR__ . '/retention.php';
 require_once __DIR__ . '/ops.php';
 require_once __DIR__ . '/category-redirects.php';
 
-define( 'ESTRATO_PORTAL_VERSION', '1.35.0' );
+define( 'ESTRATO_PORTAL_VERSION', '1.36.0' );
 define( 'ESTRATO_PORTAL_CONFIG_OPTION', 'estrato_portal_config' );
 
 register_activation_hook( __FILE__, 'estrato_portal_activate' );

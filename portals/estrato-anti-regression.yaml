@@ -407,6 +407,30 @@ rules:
     command: "estrato_regression_hub_faq_schema"
     expect_min: 3
 
+  - id: AR-AEO-003
+    severity: warning
+    category: geo
+    name: FAQ institucional padrão presente no plugin
+    check: wp_cli_eval
+    command: "estrato_regression_faq_marker_present"
+    expect_min: 5
+
+  - id: AR-EEAT-007
+    severity: warning
+    category: eeat
+    name: Equipe editorial 5 autores + editor-chefe
+    check: wp_cli_eval
+    command: "estrato_regression_staff_count"
+    expect_min: 6
+
+  - id: AR-ENTITY-001
+    severity: info
+    category: aeo
+    name: Entity hubs /tudo-sobre provisionados
+    check: wp_cli_eval
+    command: "estrato_regression_entity_hub_count"
+    expect_min: 3
+
   # ═══════════════════════════════════════════════════════════════
   # I. INDEXAÇÃO & BOT
   # Referência: Metrópoles news sitemap, Fase 4 roadmap

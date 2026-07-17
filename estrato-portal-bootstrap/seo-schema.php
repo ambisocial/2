@@ -86,8 +86,29 @@ function estrato_seo_schema_person( $data ) {
 
 	$same_as = get_user_meta( (int) $author_id, 'estrato_same_as', true );
 	if ( is_string( $same_as ) && str_starts_with( $same_as, 'http' ) ) {
-		$data['sameAs'] = esc_url_raw( $same_as );
+		$data['sameAs'] = array( esc_url_raw( $same_as ) );
+	} elseif ( is_array( $same_as ) ) {
+		$urls = array();
+		foreach ( $same_as as $url ) {
+			$url = trim( (string) $url );
+			if ( str_starts_with( $url, 'http' ) ) {
+				$urls[] = esc_url_raw( $url );
+			}
+		}
+		if ( $urls ) {
+			$data['sameAs'] = array_values( array_unique( $urls ) );
+		}
 	}
+
+	$works = get_user_meta( (int) $author_id, 'estrato_works_for', true );
+	if ( ! $works ) {
+		$works = get_bloginfo( 'name' );
+	}
+	$data['worksFor'] = array(
+		'@type' => 'NewsMediaOrganization',
+		'name'  => $works,
+		'url'   => home_url( '/' ),
+	);
 
 	return $data;
 }

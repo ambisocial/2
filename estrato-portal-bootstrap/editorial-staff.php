@@ -444,7 +444,8 @@ function estrato_staff_provision_current_portal() {
 	}
 
 	$network_blogs = array();
-	if ( $is_hub || 'estrato-finance' === $portal_id ) {
+	if ( ( $is_hub || 'estrato-finance' === $portal_id )
+		&& (string) getenv( 'ESTRATO_SKIP_NETWORK_BLOGS' ) !== '1' ) {
 		$network_blogs = estrato_staff_provision_network_blogs_on_hub();
 	}
 

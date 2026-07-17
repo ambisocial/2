@@ -17,6 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $skip_portraits  = (string) getenv( 'ESTRATO_SKIP_PORTRAITS' ) === '1';
 $force_portraits = (string) getenv( 'ESTRATO_FORCE_PORTRAITS' ) === '1';
+// Rede blogs já provisionados — skip por padrão no hardening em massa.
+if ( getenv( 'ESTRATO_SKIP_NETWORK_BLOGS' ) === false || getenv( 'ESTRATO_SKIP_NETWORK_BLOGS' ) === '' ) {
+	putenv( 'ESTRATO_SKIP_NETWORK_BLOGS=1' );
+}
 
 $result = array(
 	'portal' => function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : '',

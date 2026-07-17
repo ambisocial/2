@@ -13,9 +13,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Aliases de path → path canônico (301 na mãe).
+ *
+ * @return array<string,string>
+ */
+function estrato_network_path_aliases() {
+	return array(
+		'ciencia'     => 'science',
+		'cultura'     => 'culture',
+		'clima'       => 'esg',
+		'sustentabilidade' => 'esg',
+		'tecnologia'  => 'tech',
+		'politico'    => 'politica',
+		'negocios'    => 'financas',
+		'economia'    => 'financas',
+		'health'      => 'saude',
+		'sports'      => 'esporte',
+		'mind'        => 'mente',
+	);
+}
+
+/**
  * Mapa portal_id → path na mãe.
  *
- * @return array<string, array{path:string,title:string,tagline:string,domain:string}>
+ * @return array<string, array{path:string,title:string,seo_title:string,tagline:string,metadesc:string,domain:string,url:string}>
  */
 function estrato_network_path_map() {
 	$out = array();
@@ -38,18 +59,44 @@ function estrato_network_path_map() {
 		'estrato-carros'   => 'carros',
 		'estrato-culture'  => 'culture',
 	);
+	$path_labels = array(
+		'financas'  => 'Finanças',
+		'mente'     => 'Mente',
+		'lifestyle' => 'Lifestyle',
+		'science'   => 'Science',
+		'agro'      => 'Agro',
+		'esg'       => 'ESG e clima',
+		'viagem'    => 'Viagem',
+		'politica'  => 'Política',
+		'esporte'   => 'Esporte',
+		'saude'     => 'Saúde',
+		'educacao'  => 'Educação',
+		'tech'      => 'Tech',
+		'carros'    => 'Carros',
+		'culture'   => 'Cultura',
+	);
 	foreach ( estrato_nav_network_catalog() as $node ) {
 		$id = $node['id'] ?? '';
 		if ( ! $id || empty( $defaults[ $id ] ) ) {
 			continue;
 		}
-		$host = (string) wp_parse_url( $node['url'] ?? '', PHP_URL_HOST );
+		$host    = (string) wp_parse_url( $node['url'] ?? '', PHP_URL_HOST );
+		$path    = $defaults[ $id ];
+		$label   = $path_labels[ $path ] ?? (string) ( $node['name'] ?? $path );
+		$tagline = (string) ( $node['tagline'] ?? '' );
 		$out[ $id ] = array(
-			'path'    => $defaults[ $id ],
-			'title'   => (string) ( $node['name'] ?? $defaults[ $id ] ),
-			'tagline' => (string) ( $node['tagline'] ?? '' ),
-			'domain'  => $host,
-			'url'     => (string) ( $node['url'] ?? '' ),
+			'path'      => $path,
+			'title'     => $label,
+			'seo_title' => $label . ' — ' . ( $tagline ? $tagline : 'rede Estrato' ) . ' | Estrato',
+			'tagline'   => $tagline,
+			'metadesc'  => sprintf(
+				'Hub %s da rede Estrato: %s. Cobertura no portal %s com equipe editorial, entity pages e padrões YMYL.',
+				$label,
+				$tagline ? $tagline : 'notícias e análises',
+				$host ?: 'especializado'
+			),
+			'domain'    => $host,
+			'url'       => (string) ( $node['url'] ?? '' ),
 		);
 	}
 	return $out;
@@ -69,7 +116,7 @@ function estrato_network_path_page_content( $node ) {
 
 	$html  = '<section class="estrato-network-path">';
 	$html .= '<p class="estrato-kicker">Rede Estrato</p>';
-	$html .= '<h1 class="estrato-display">' . esc_html( $title ) . '</h1>';
+	// Título H1 vem do tema/página; evita H1 duplicado no conteúdo.
 	$html .= '<p class="estrato-network-path__lead">' . esc_html( $tagline ) . '</p>';
 	$html .= '<p>Esta é a página-hub da vertical <strong>' . esc_html( $path )
 		. '</strong> no domínio mãe <strong>estrato.cc</strong>. A cobertura contínua vive no portal especializado '
@@ -132,14 +179,44 @@ function estrato_network_ensure_path_hubs() {
 		if ( ! is_wp_error( $id ) ) {
 			$ids[ $slug ] = (int) $id;
 			update_post_meta( (int) $id, '_estrato_network_portal', $portal_id );
-			// Canonical da landing aponta para ela mesma no domínio mãe.
 			update_post_meta( (int) $id, '_yoast_wpseo_canonical', home_url( '/' . $slug . '/' ) );
+			update_post_meta( (int) $id, '_yoast_wpseo_title', $node['seo_title'] );
+			update_post_meta( (int) $id, '_yoast_wpseo_metadesc', $node['metadesc'] );
+			update_post_meta( (int) $id, '_yoast_wpseo_opengraph-title', $node['seo_title'] );
+			update_post_meta( (int) $id, '_yoast_wpseo_opengraph-description', $node['metadesc'] );
 		}
 	}
 
 	update_option( 'estrato_network_path_hubs', $ids, false );
 	return $ids;
 }
+
+/**
+ * 301 de aliases (/ciencia → /science) apenas no domínio mãe.
+ */
+function estrato_network_alias_redirect() {
+	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+		return;
+	}
+	$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+	$portal = function_exists( 'estrato_nav_current_portal_id' ) ? estrato_nav_current_portal_id() : '';
+	if ( 'estrato.cc' !== $host && 'estrato-finance' !== $portal ) {
+		return;
+	}
+
+	$path = trim( (string) wp_parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+	if ( ! $path || false !== strpos( $path, '/' ) ) {
+		return;
+	}
+	$aliases = estrato_network_path_aliases();
+	if ( empty( $aliases[ $path ] ) ) {
+		return;
+	}
+	$target = home_url( '/' . $aliases[ $path ] . '/' );
+	wp_safe_redirect( $target, 301 );
+	exit;
+}
+add_action( 'template_redirect', 'estrato_network_alias_redirect', 1 );
 
 /**
  * Enrich network catalog with mother path URLs.

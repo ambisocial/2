@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Estrato Portal Bootstrap
  * Description: Provisiona tema (PressGrid ou Newspack), plugins e integração com pipeline/RSS por portal.
- * Version: 1.36.1
+ * Version: 1.36.2
  * Author: Cursor Agent
  */
 

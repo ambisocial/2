@@ -26,6 +26,14 @@ if ( function_exists( 'estrato_staff_provision_current_portal' ) ) {
 	$result['staff'] = estrato_staff_provision_current_portal();
 }
 
+if ( function_exists( 'estrato_staff_scrub_fake_same_as' ) ) {
+	$result['same_as_scrub'] = estrato_staff_scrub_fake_same_as();
+}
+
+if ( function_exists( 'estrato_staff_reassign_inventory' ) && (string) getenv( 'ESTRATO_REASSIGN' ) === '1' ) {
+	$result['reassign'] = estrato_staff_reassign_inventory( 0 );
+}
+
 if ( function_exists( 'estrato_entity_ensure_all_hubs' ) ) {
 	$result['entity_hubs'] = array_keys( estrato_entity_ensure_all_hubs() );
 }

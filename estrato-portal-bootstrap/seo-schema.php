@@ -86,17 +86,24 @@ function estrato_seo_schema_person( $data ) {
 
 	$same_as = get_user_meta( (int) $author_id, 'estrato_same_as', true );
 	if ( is_string( $same_as ) && str_starts_with( $same_as, 'http' ) ) {
-		$data['sameAs'] = array( esc_url_raw( $same_as ) );
-	} elseif ( is_array( $same_as ) ) {
+		$same_as = array( $same_as );
+	}
+	if ( is_array( $same_as ) ) {
 		$urls = array();
 		foreach ( $same_as as $url ) {
 			$url = trim( (string) $url );
+			// Bloqueia sameAs social fabricado (ex.: linkedin.com/in/{login}).
+			if ( preg_match( '#linkedin\.com/in/#i', $url ) ) {
+				continue;
+			}
 			if ( str_starts_with( $url, 'http' ) ) {
 				$urls[] = esc_url_raw( $url );
 			}
 		}
 		if ( $urls ) {
 			$data['sameAs'] = array_values( array_unique( $urls ) );
+		} else {
+			unset( $data['sameAs'] );
 		}
 	}
 

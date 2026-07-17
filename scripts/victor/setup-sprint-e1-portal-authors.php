@@ -38,11 +38,28 @@ if ( function_exists( 'estrato_rss_sync_portal_taxonomy' ) ) {
 $same_as_patched = 0;
 foreach ( get_users( array( 'role' => 'author', 'fields' => 'all' ) ) as $user ) {
 	$login = $user->user_login;
-	if ( ! get_user_meta( $user->ID, 'estrato_same_as', true ) ) {
+	// sameAs apenas URLs internas verificáveis (nunca LinkedIn fabricado).
+	$same_as = get_user_meta( $user->ID, 'estrato_same_as', true );
+	$needs   = empty( $same_as );
+	if ( is_string( $same_as ) && preg_match( '#linkedin\.com/in/#i', $same_as ) ) {
+		$needs = true;
+	}
+	if ( is_array( $same_as ) ) {
+		foreach ( $same_as as $u ) {
+			if ( preg_match( '#linkedin\.com/in/#i', (string) $u ) ) {
+				$needs = true;
+				break;
+			}
+		}
+	}
+	if ( $needs ) {
 		update_user_meta(
 			$user->ID,
 			'estrato_same_as',
-			esc_url_raw( 'https://www.linkedin.com/in/' . rawurlencode( $login ) . '/' )
+			array(
+				home_url( '/author/' . sanitize_title( $login ) . '/' ),
+				'https://estrato.cc/blog/' . sanitize_title( $login ) . '/',
+			)
 		);
 		++$same_as_patched;
 	}

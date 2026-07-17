@@ -593,3 +593,224 @@ function estrato_regression_staff_count() {
 	}
 	return $n;
 }
+
+/**
+ * Remove sameAs LinkedIn fabricado e normaliza URLs internas.
+ *
+ * @return array{scrubbed:int,users:int}
+ */
+function estrato_staff_scrub_fake_same_as() {
+	$users = get_users(
+		array(
+			'fields' => array( 'ID', 'user_login' ),
+			'number' => -1,
+		)
+	);
+	$scrubbed = 0;
+	foreach ( $users as $user ) {
+		$uid     = (int) $user->ID;
+		$login   = (string) $user->user_login;
+		$same_as = get_user_meta( $uid, 'estrato_same_as', true );
+		$changed = false;
+		$urls    = array();
+
+		if ( is_string( $same_as ) && $same_as ) {
+			$same_as = array( $same_as );
+		}
+		if ( ! is_array( $same_as ) ) {
+			$same_as = array();
+		}
+
+		foreach ( $same_as as $url ) {
+			$url = trim( (string) $url );
+			if ( ! $url ) {
+				continue;
+			}
+			if ( preg_match( '#linkedin\.com/in/#i', $url ) ) {
+				$changed = true;
+				continue;
+			}
+			$urls[] = $url;
+		}
+
+		// Garante sameAs interno mínimo para quem tem meta de equipe/persona.
+		$is_staff = (bool) get_user_meta( $uid, 'estrato_staff_portal', true )
+			|| (bool) get_user_meta( $uid, 'estrato_author_term_slug', true )
+			|| (bool) get_user_meta( $uid, ESTRATO_STAFF_EDITOR_META, true );
+		if ( $is_staff || $changed ) {
+			$internal = array(
+				home_url( '/author/' . sanitize_title( $login ) . '/' ),
+				'https://estrato.cc/blog/' . sanitize_title( $login ) . '/',
+			);
+			$urls = array_values( array_unique( array_merge( $urls, $internal ) ) );
+			$urls = array_values(
+				array_filter(
+					$urls,
+					static function ( $u ) {
+						return (bool) preg_match( '#^https?://#i', $u )
+							&& ! preg_match( '#linkedin\.com/in/#i', $u );
+					}
+				)
+			);
+			update_user_meta( $uid, 'estrato_same_as', $urls );
+			++$scrubbed;
+		}
+
+		// Yoast person social (se existir).
+		foreach ( array( 'wpseo_user_schema', 'facebook', 'twitter', 'linkedin' ) as $key ) {
+			$val = get_user_meta( $uid, $key, true );
+			if ( is_string( $val ) && preg_match( '#linkedin\.com/in/#i', $val ) ) {
+				delete_user_meta( $uid, $key );
+				$changed = true;
+			}
+		}
+	}
+
+	return array(
+		'scrubbed' => $scrubbed,
+		'users'    => count( $users ),
+	);
+}
+
+/**
+ * Reatribui posts publicados à equipe editorial (staff map).
+ *
+ * @param int $batch Tamanho do lote (0 = todos).
+ * @return array{updated:int,total:int,skipped:int}
+ */
+function estrato_staff_reassign_inventory( $batch = 0 ) {
+	$map = get_option( ESTRATO_STAFF_OPTION, array() );
+	if ( empty( $map['author_ids'] ) ) {
+		if ( function_exists( 'estrato_staff_provision_current_portal' ) ) {
+			$map = estrato_staff_provision_current_portal();
+		}
+	}
+	if ( empty( $map['author_ids'] ) ) {
+		return array(
+			'updated' => 0,
+			'total'   => 0,
+			'skipped' => 0,
+		);
+	}
+
+	$args = array(
+		'post_type'              => 'post',
+		'post_status'            => 'publish',
+		'posts_per_page'         => $batch > 0 ? (int) $batch : -1,
+		'fields'                 => 'ids',
+		'orderby'                => 'ID',
+		'order'                  => 'DESC',
+		'no_found_rows'          => true,
+		'update_post_meta_cache' => false,
+		'update_post_term_cache' => false,
+	);
+	$ids = get_posts( $args );
+	$updated = 0;
+	$skipped = 0;
+
+	foreach ( $ids as $post_id ) {
+		$post_id = (int) $post_id;
+		$uid     = estrato_staff_resolve_author_for_post( $post_id );
+		if ( ! $uid ) {
+			++$skipped;
+			continue;
+		}
+		$current = (int) get_post_field( 'post_author', $post_id );
+		if ( $current === $uid ) {
+			++$skipped;
+			continue;
+		}
+		$r = wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_author' => $uid,
+			),
+			true
+		);
+		if ( ! is_wp_error( $r ) ) {
+			++$updated;
+		} else {
+			++$skipped;
+		}
+	}
+
+	return array(
+		'updated' => $updated,
+		'total'   => count( $ids ),
+		'skipped' => $skipped,
+	);
+}
+
+/**
+ * Backfill de retratos P&B para equipe (staff + editor).
+ *
+ * @param bool $force Regenera mesmo se já houver attachment.
+ * @return array{ok:int,fail:int,skipped:int}
+ */
+function estrato_staff_backfill_portraits( $force = false ) {
+	if ( ! function_exists( 'estrato_eeat_sideload_portrait' ) ) {
+		return array(
+			'ok'      => 0,
+			'fail'    => 0,
+			'skipped' => 0,
+		);
+	}
+
+	$map = get_option( ESTRATO_STAFF_OPTION, array() );
+	$ids = array();
+	if ( ! empty( $map['editor_id'] ) ) {
+		$ids[] = (int) $map['editor_id'];
+	}
+	foreach ( (array) ( $map['author_ids'] ?? array() ) as $id ) {
+		$ids[] = (int) $id;
+	}
+	$ids = array_values( array_unique( array_filter( $ids ) ) );
+
+	$ok = 0;
+	$fail = 0;
+	$skipped = 0;
+
+	foreach ( $ids as $uid ) {
+		$user = get_userdata( $uid );
+		if ( ! $user ) {
+			++$fail;
+			continue;
+		}
+		$existing = (int) get_user_meta( $uid, 'estrato_avatar_attachment_id', true );
+		if ( $existing && get_post( $existing ) && ! $force ) {
+			++$skipped;
+			continue;
+		}
+		if ( $force && $existing ) {
+			delete_user_meta( $uid, 'estrato_avatar_attachment_id' );
+			delete_user_meta( $uid, 'estrato_avatar_url' );
+		}
+		$persona = array(
+			'display_name' => $user->display_name,
+			'gender'       => 'person',
+		);
+		// Gênero a partir do roster quando possível.
+		$roster = estrato_staff_roster_for_portal(
+			(string) ( get_user_meta( $uid, 'estrato_staff_portal', true ) ?: ( $map['portal'] ?? '' ) )
+		);
+		foreach ( array_merge( array( $roster['editor'] ), $roster['authors'] ) as $person ) {
+			if ( ( $person['login'] ?? '' ) === $user->user_login ) {
+				$persona['gender'] = $person['gender'] ?? $persona['gender'];
+				break;
+			}
+		}
+
+		$attach = estrato_eeat_sideload_portrait( $uid, $user->user_login, $persona );
+		if ( $attach ) {
+			++$ok;
+		} else {
+			++$fail;
+		}
+	}
+
+	return array(
+		'ok'      => $ok,
+		'fail'    => $fail,
+		'skipped' => $skipped,
+	);
+}

@@ -46,6 +46,10 @@ function estrato_aeo_ai_bot_agents() {
 /**
  * Regras robots GEO — Allow total para crawlers de IA.
  *
+ * Normaliza sempre: remove blocos legados (Allow ou Disallow) dos bots de IA
+ * e reinsere um bloco limpo. Evita early-return falso positivo quando Yoast
+ * já tem "Allow: /wp-admin/..." (substring "Allow: /").
+ *
  * @param string $output
  * @param bool   $public
  * @return string
@@ -55,28 +59,28 @@ function estrato_aeo_filter_robots_txt( $output, $public ) {
 		return $output;
 	}
 
-	// Remove bloqueios legados de bots de IA (Disallow: /).
+	$output = str_replace( array( "\r\n", "\r" ), "\n", (string) $output );
+
+	// Remove blocos comentados legados (# Estrato AEO/GEO …).
 	$output = preg_replace(
-		'/(?:^|\n)#\s*Estrato AEO\/GEO[^\n]*\n(?:User-agent:[^\n]+\nDisallow:\s*\/\n?)+/iu',
+		'/(?:^|\n)#\s*Estrato\s+(?:AEO\/GEO|GEO)[^\n]*\n(?:(?:#\s*[^\n]*\n)|(?:User-agent:[^\n]+\n(?:Allow|Disallow):\s*\/[^\n]*\n?))+/iu',
 		"\n",
-		(string) $output
+		$output
 	);
+
+	// Remove qualquer regra User-agent dos bots de IA (Allow ou Disallow).
 	foreach ( estrato_aeo_ai_bot_agents() as $agent ) {
 		$quoted = preg_quote( $agent, '/' );
 		$output = preg_replace(
-			'/User-agent:\s*' . $quoted . '\s*\nDisallow:\s*\/\s*\n?/i',
+			'/User-agent:\s*' . $quoted . '\s*\n(?:Allow|Disallow):\s*\/[^\n]*\n?/i',
 			'',
 			(string) $output
 		);
 	}
 
-	if ( false !== stripos( $output, 'GPTBot' ) && false !== stripos( $output, "Allow: /\n" ) ) {
-		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
-		if ( $domain && false === stripos( $output, 'llms.txt' ) ) {
-			$output = rtrim( $output ) . "\n\n# GEO\n# llms: https://{$domain}/llms.txt\n";
-		}
-		return $output;
-	}
+	// Remove comentários GEO/llms duplicados — recolocamos abaixo.
+	$output = preg_replace( '/\n?#\s*GEO[^\n]*\n(?:#\s*llms[^\n]*\n)*/i', "\n", (string) $output );
+	$output = preg_replace( "/\n{3,}/", "\n\n", (string) $output );
 
 	$extra = "\n# Estrato GEO — AI crawl allow 100%\n";
 	foreach ( estrato_aeo_ai_bot_agents() as $agent ) {
@@ -84,7 +88,7 @@ function estrato_aeo_filter_robots_txt( $output, $public ) {
 	}
 
 	$domain = wp_parse_url( home_url(), PHP_URL_HOST );
-	if ( $domain && false === stripos( $output, 'llms.txt' ) ) {
+	if ( $domain ) {
 		$extra .= "\n# GEO\n";
 		$extra .= "# llms: https://{$domain}/llms.txt\n";
 		$extra .= "# llms-full: https://{$domain}/llms-full.txt\n";

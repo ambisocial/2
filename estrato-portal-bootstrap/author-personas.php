@@ -128,6 +128,10 @@ function estrato_eeat_author_login_from_slugs( $parent_slug, $sub_slug ) {
  * @return int Attachment ID ou 0.
  */
 function estrato_eeat_sideload_portrait( $user_id, $login, $persona ) {
+	if ( (string) getenv( 'ESTRATO_SKIP_PORTRAITS' ) === '1' ) {
+		return 0;
+	}
+
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 	require_once ABSPATH . 'wp-admin/includes/media.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';

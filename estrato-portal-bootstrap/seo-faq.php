@@ -78,9 +78,11 @@ function estrato_faq_contextual_for_post( $post ) {
 		$area = estrato_content_category_label( '' );
 	}
 
-	$excerpt = wp_strip_all_tags( get_the_excerpt( $post ) );
+	// Nunca chamar get_the_excerpt() aqui: em páginas sem excerpt o core aplica
+	// the_content e reentra neste filtro (stack overflow / HTTP 500).
+	$excerpt = trim( wp_strip_all_tags( (string) $post->post_excerpt ) );
 	if ( strlen( $excerpt ) < 60 ) {
-		$excerpt = wp_trim_words( wp_strip_all_tags( $post->post_content ), 36, '…' );
+		$excerpt = wp_trim_words( wp_strip_all_tags( (string) $post->post_content ), 36, '…' );
 	}
 
 	return array(
@@ -174,6 +176,10 @@ function estrato_faq_print_schema( $items ) {
  * @return string
  */
 function estrato_faq_append_to_content( $content ) {
+	static $guard = false;
+	if ( $guard ) {
+		return $content;
+	}
 	if ( is_admin() || is_feed() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 		return $content;
 	}
@@ -199,7 +205,9 @@ function estrato_faq_append_to_content( $content ) {
 		}
 	}
 
-	$html = estrato_faq_render_html( estrato_faq_build_items( $post ) );
+	$guard = true;
+	$html  = estrato_faq_render_html( estrato_faq_build_items( $post ) );
+	$guard = false;
 	return $html ? ( $content . "\n" . $html ) : $content;
 }
 add_filter( 'the_content', 'estrato_faq_append_to_content', 28 );

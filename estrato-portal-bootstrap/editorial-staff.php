@@ -708,6 +708,10 @@ function estrato_staff_reassign_inventory( $batch = 0 ) {
 	$updated = 0;
 	$skipped = 0;
 
+	// Evita cascata de save_post (syndication, assign, Yoast…) no bulk.
+	remove_action( 'save_post_post', 'estrato_staff_assign_on_save', 40 );
+	global $wpdb;
+
 	foreach ( $ids as $post_id ) {
 		$post_id = (int) $post_id;
 		$uid     = estrato_staff_resolve_author_for_post( $post_id );
@@ -720,19 +724,21 @@ function estrato_staff_reassign_inventory( $batch = 0 ) {
 			++$skipped;
 			continue;
 		}
-		$r = wp_update_post(
-			array(
-				'ID'          => $post_id,
-				'post_author' => $uid,
-			),
-			true
+		$ok = $wpdb->update(
+			$wpdb->posts,
+			array( 'post_author' => $uid ),
+			array( 'ID' => $post_id ),
+			array( '%d' ),
+			array( '%d' )
 		);
-		if ( ! is_wp_error( $r ) ) {
+		if ( false !== $ok ) {
+			clean_post_cache( $post_id );
 			++$updated;
 		} else {
 			++$skipped;
 		}
 	}
+	add_action( 'save_post_post', 'estrato_staff_assign_on_save', 40 );
 
 	return array(
 		'updated' => $updated,

@@ -322,7 +322,9 @@ function estrato_g1_header_hide_pressgrid() {
 		// (`.pg-featured-image`, `.pg-single-thumbnail`) continua visível para
 		// o nosso featured render logo abaixo do header. Também esconde
 		// `.pg-single-breadcrumbs` que duplica o breadcrumb do template.
-		. 'header.pg-single-header,.pg-single-header .pg-single-title,.pg-single-header .pg-single-meta,.pg-single-header .pg-post-category,.pg-single-breadcrumbs,.pg-single-breadcrumb{display:none!important}'
+		. 'header.pg-single-header,.pg-single-header .pg-single-title,.pg-single-header .pg-single-meta,.pg-single-header .pg-post-category,.pg-single-breadcrumbs,.pg-single-breadcrumb,.pg-breadcrumbs{display:none!important}'
+		// Contenção mobile-first: coluna PressGrid não pode forçar ~680px e overflow-X.
+		. '@media(max-width:959px){.pg-main-col,.pg-container,.pg-main,.pg-content-wrap,.content-area,.pg-single-content{max-width:100%!important;width:100%!important;box-sizing:border-box!important;float:none!important;padding-left:0!important;padding-right:0!important}}'
 		// Aumenta z-index e adiciona safe-area no back-to-top do PressGrid.
 		. '.pg-back-to-top,.pg-scroll-top,#back-to-top{bottom:calc(1rem + env(safe-area-inset-bottom,0px))!important}'
 		/* PressGrid “Urgente”: ocultar — breaking canônico é estrato-home-breaking (finance). */

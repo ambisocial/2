@@ -264,7 +264,8 @@ function estrato_ticker_inject() {
 	}
 	echo estrato_ticker_render_bar(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
-add_action( 'wp_body_open', 'estrato_ticker_inject', 3 );
+/* Após o header G1 (prio 5) e landmark (6): rede → logo → rail → ticker. */
+add_action( 'wp_body_open', 'estrato_ticker_inject', 7 );
 
 /**
  * CSS ticker BR + contraste do forex PressGrid.

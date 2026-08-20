@@ -762,8 +762,7 @@ function estrato_g1_header_scripts() {
 			if(e.key==='Escape'){
 				var changed=false;
 				if(nav&&!nav.hidden&&!isDesktop()){setMenuOpen(false);changed=true;}
-				if(redeSheet&&!redeSheet.hidden&&!isDesktop()){setRedeOpen(false);changed=true;}
-				if(searchPanel&&!searchPanel.hidden){closeSearch();changed=true;}
+					if(searchPanel&&!searchPanel.hidden){closeSearch();changed=true;}
 				if(root.querySelector('.estrato-mega-open')){closeAllMegas();changed=true;}
 				if(changed)e.preventDefault();
 				return;
@@ -780,14 +779,10 @@ function estrato_g1_header_scripts() {
 
 		document.addEventListener('click',function(e){
 			if(root.contains(e.target)){
-				if(redeSheet&&!redeSheet.hidden&&!isDesktop()&&!e.target.closest('.estrato-g1-header__rede')){
-					setRedeOpen(false);
-				}
 				return;
 			}
 			closeAllMegas();
 			if(nav&&!nav.hidden&&!isDesktop()){setMenuOpen(false);}
-			setRedeOpen(false);
 			closeSearch();
 		});
 
@@ -796,12 +791,10 @@ function estrato_g1_header_scripts() {
 				if(isDesktop()){
 					if(nav)nav.hidden=false;
 					if(overlay)overlay.hidden=true;
-					if(redeSheet)redeSheet.hidden=false;
 					document.body.classList.remove('estrato-nav-lock');
 					menuBtn&&menuBtn.setAttribute('aria-expanded','false');
 				}else{
 					setMenuOpen(false);
-					setRedeOpen(false);
 				}
 			});
 		}

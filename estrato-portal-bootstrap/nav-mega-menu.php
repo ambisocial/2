@@ -258,9 +258,24 @@ function estrato_nav_rebuild_principal_menu( $categories = null ) {
  * @return array<string, mixed>
  */
 function estrato_nav_mega_menu_args( $args ) {
-	$loc = $args['theme_location'] ?? '';
+	$loc   = $args['theme_location'] ?? '';
+	$class = (string) ( $args['menu_class'] ?? 'menu' );
+	/*
+	 * Trilho horizontal (estrato-g1-rail): NÃO herdar estrato-g1-menu / mega-nav.
+	 * Essas classes forçam flex-direction:column no mobile e transformam o
+	 * trilho em lista vertical com “botões apagados” (só aparecem no scroll).
+	 */
+	if ( false !== strpos( $class, 'estrato-g1-rail' ) ) {
+		$args['menu_class'] = 'estrato-g1-rail';
+		return $args;
+	}
 	if ( in_array( $loc, array( 'primary', 'top-menu', 'footer-menu' ), true ) ) {
-		$args['menu_class'] = trim( ( $args['menu_class'] ?? 'menu' ) . ' estrato-mega-nav estrato-g1-menu' );
+		foreach ( array( 'estrato-mega-nav', 'estrato-g1-menu' ) as $need ) {
+			if ( false === strpos( $class, $need ) ) {
+				$class .= ' ' . $need;
+			}
+		}
+		$args['menu_class'] = trim( $class );
 	}
 	return $args;
 }

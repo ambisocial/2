@@ -361,31 +361,33 @@ function estrato_g1_header_styles() {
 		outline:2px solid #9AFF33;outline-offset:2px
 	}
 	.estrato-g1-header__inner{max-width:1200px;margin:0 auto;padding:0 1rem}
-	/* Rede: chips horizontais (piso Globo) — sem “Outras marcas” opaco no mobile */
-	.estrato-g1-header__rede{background:var(--estrato-g1-rede-bg);color:#ccc;font-size:.75rem}
+	/* Rede: chips sempre visíveis (piso Globo) — contraste alto, sem toggle */
+	.estrato-g1-header__rede{background:var(--estrato-g1-rede-bg);color:#fff;font-size:.75rem}
 	.estrato-g1-header__rede-row{display:flex;align-items:center;gap:.5rem;min-height:32px;position:relative}
-	.estrato-g1-header__rede-toggle{display:none}
+	.estrato-g1-header__rede-toggle{display:none!important}
 	.estrato-g1-header__rede-label{display:none;font-weight:700;color:#fff;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
 	.estrato-g1-header__rede-list,
 	.estrato-g1-header__rede-list[hidden]{
-		display:flex!important;list-style:none;margin:0;padding:.3rem 0;position:static;z-index:auto;
-		background:transparent;box-shadow:none;flex-direction:row;flex-wrap:nowrap;gap:.55rem;
-		overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;width:100%
+		display:flex!important;list-style:none;margin:0;padding:.3rem 0;position:static!important;z-index:auto;
+		background:transparent!important;box-shadow:none!important;flex-direction:row!important;flex-wrap:nowrap;
+		overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;width:100%;gap:.65rem
 	}
 	.estrato-g1-header__rede-list::-webkit-scrollbar{display:none}
-	.estrato-g1-header__rede-list li{border:0;flex:0 0 auto}
+	.estrato-g1-header__rede-list li{border:0!important;flex:0 0 auto}
 	.estrato-g1-header__rede-item{
-		display:flex;align-items:center;gap:.35rem;min-height:28px;color:#c8c8c8;text-decoration:none;padding:.15rem 0;white-space:nowrap
+		display:flex;align-items:center;gap:.35rem;min-height:28px;color:#f0f0f0!important;text-decoration:none;padding:.15rem 0;white-space:nowrap
 	}
-	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:hover{color:#fff}
+	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:hover,
+	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:active{color:#fff!important}
 	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:hover .estrato-g1-header__rede-name{text-decoration:underline}
-	.estrato-g1-header__rede-list .is-current .estrato-g1-header__rede-item{color:#fff;font-weight:700}
-	.estrato-g1-header__rede-name{font-size:.6875rem;font-weight:600}
+	.estrato-g1-header__rede-list .is-current .estrato-g1-header__rede-item{color:#fff!important;font-weight:700}
+	.estrato-g1-header__rede-name{font-size:.75rem;font-weight:600;opacity:1!important}
 	.estrato-g1-header__rede .estrato-network-mark{width:1.15rem;height:1.15rem;font-size:.55rem;border-radius:3px}
 	/* Sticky: logo + trilho de editorias juntos */
 	.estrato-g1-header__sticky{position:sticky;top:0;z-index:10055;box-shadow:0 1px 0 rgba(0,0,0,.06)}
 	.estrato-g1-header__principal{background:var(--estrato-g1-bar-bg);color:var(--estrato-g1-bar-fg)}
 	.estrato-g1-header__principal-row{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:48px}
+	.estrato-g1-header__logo,.estrato-g1-header__logo-text{color:#fff!important}
 	.estrato-g1-header__menu-btn,.estrato-g1-header__search-btn,.estrato-g1-header__drawer-close{
 		background:transparent;border:0;color:inherit;cursor:pointer;padding:.5rem;
 		display:flex;align-items:center;justify-content:center;width:44px;height:44px
@@ -413,22 +415,45 @@ function estrato_g1_header_styles() {
 	.estrato-g1-header__editoria .estrato-g1-header__inner{padding:.35rem 1rem}
 	.estrato-g1-header__editoria-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:inherit;text-decoration:none}
 	a.estrato-g1-header__editoria-label:hover{text-decoration:underline}
-	/* Trilho horizontal — underline fino só sob o item (sem barra full-bleed) */
-	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e8e8e8}
+	/*
+	 * Trilho horizontal — SEMPRE row (não herdar .estrato-g1-menu column).
+	 * Underline fino só sob o item ativo; itens legíveis sem precisar “passar o dedo”.
+	 */
+	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e8e8e8;max-height:none!important}
 	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity}
 	.estrato-g1-header__rail-inner::-webkit-scrollbar{display:none}
-	.estrato-g1-rail{display:flex;flex-wrap:nowrap;gap:0;list-style:none;margin:0;padding:0;min-height:40px;align-items:stretch}
-	.estrato-g1-rail>li{flex:0 0 auto;scroll-snap-align:start}
-	.estrato-g1-rail>li>a{
-		display:inline-flex;align-items:center;padding:.55rem .75rem;color:#1e1e1e;font-size:.8125rem;font-weight:600;
-		text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;line-height:1.2
+	.estrato-g1-header__rail .estrato-g1-rail,
+	.estrato-g1-header__rail ul.estrato-g1-rail,
+	ul.estrato-g1-rail{
+		display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:0!important;
+		list-style:none!important;margin:0!important;padding:0!important;min-height:40px;align-items:stretch;
+		width:max-content;max-width:none
 	}
-	.estrato-g1-rail>li>a:hover{
-		color:var(--estrato-g1-bar-bg,#C4170C)
+	.estrato-g1-header__rail .estrato-g1-rail>li,
+	ul.estrato-g1-rail>li{
+		flex:0 0 auto!important;width:auto!important;float:none!important;display:block!important;
+		border:0!important;scroll-snap-align:start
 	}
-	.estrato-g1-rail>li.current-menu-item>a,.estrato-g1-rail>li.current-menu-ancestor>a{
-		color:var(--estrato-g1-bar-bg,#C4170C);border-bottom-color:var(--estrato-g1-bar-bg,#C4170C)
+	.estrato-g1-header__rail .estrato-g1-rail>li>a,
+	ul.estrato-g1-rail>li>a{
+		display:inline-flex!important;align-items:center;padding:.55rem .75rem;color:#1e1e1e!important;
+		font-size:.8125rem;font-weight:600;text-decoration:none;white-space:nowrap;line-height:1.2;
+		border:0!important;border-bottom:2px solid transparent!important;box-shadow:none!important;
+		min-height:0!important;width:auto!important;opacity:1!important;background:transparent!important
 	}
+	.estrato-g1-header__rail .estrato-g1-rail>li>a:hover{
+		color:var(--estrato-g1-bar-bg,#C4170C)!important
+	}
+	.estrato-g1-header__rail .estrato-g1-rail>li.current-menu-item>a,
+	.estrato-g1-header__rail .estrato-g1-rail>li.current-menu-ancestor>a,
+	ul.estrato-g1-rail>li.current-menu-item>a{
+		color:var(--estrato-g1-bar-bg,#C4170C)!important;
+		border-bottom-color:var(--estrato-g1-bar-bg,#C4170C)!important;
+		box-shadow:none!important
+	}
+	/* Esconde chevron mega se algum filter ainda injetar no trilho */
+	.estrato-g1-header__rail .estrato-mega-toggle,
+	.estrato-g1-header__rail .sub-menu{display:none!important}
 	/* Drawer fullscreen */
 	.estrato-g1-header__overlay{
 		position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10070

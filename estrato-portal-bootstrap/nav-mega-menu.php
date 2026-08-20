@@ -258,37 +258,53 @@ function estrato_nav_rebuild_principal_menu( $categories = null ) {
  * @return array<string, mixed>
  */
 function estrato_nav_mega_menu_args( $args ) {
-	$loc   = $args['theme_location'] ?? '';
-	$class = (string) ( $args['menu_class'] ?? 'menu' );
+	$class   = (string) ( $args['menu_class'] ?? 'menu' );
+	$classes = preg_split( '/\s+/', trim( $class ) );
+	if ( ! is_array( $classes ) ) {
+		$classes = array();
+	}
 	/*
-	 * Trilho horizontal (estrato-g1-rail): NÃO herdar estrato-g1-menu / mega-nav.
-	 * Essas classes forçam flex-direction:column no mobile e transformam o
-	 * trilho em lista vertical com “botões apagados” (só aparecem no scroll).
+	 * Trilho horizontal: NUNCA herdar estrato-g1-menu / mega-nav.
+	 * Essas classes forçam flex-direction:column no mobile → “botões apagados”.
 	 */
-	if ( false !== strpos( $class, 'estrato-g1-rail' ) ) {
+	if ( in_array( 'estrato-g1-rail', $classes, true ) ) {
 		$args['menu_class'] = 'estrato-g1-rail';
 		return $args;
 	}
-	if ( in_array( $loc, array( 'primary', 'top-menu', 'footer-menu' ), true ) ) {
+	/*
+	 * Só menus que já pedem drawer/mega recebem essas classes.
+	 * Não auto-injetar em todo theme_location=primary (foi a causa do bug).
+	 */
+	if ( in_array( 'estrato-g1-menu', $classes, true ) || in_array( 'estrato-mega-nav', $classes, true ) ) {
 		foreach ( array( 'estrato-mega-nav', 'estrato-g1-menu' ) as $need ) {
-			if ( false === strpos( $class, $need ) ) {
-				$class .= ' ' . $need;
+			if ( ! in_array( $need, $classes, true ) ) {
+				$classes[] = $need;
 			}
 		}
-		$args['menu_class'] = trim( $class );
+		$args['menu_class'] = implode( ' ', $classes );
 	}
 	return $args;
 }
-add_filter( 'wp_nav_menu_args', 'estrato_nav_mega_menu_args', 20 );
+add_filter( 'wp_nav_menu_args', 'estrato_nav_mega_menu_args', 999 );
 
 /**
- * Marca itens pai para layout mega.
+ * Marca itens pai para layout mega (exceto trilho horizontal).
  *
- * @param array<int, string> $classes
- * @param WP_Post            $item
+ * @param array<int, string>   $classes
+ * @param WP_Post              $item
+ * @param stdClass|array|null  $args
  * @return array<int, string>
  */
-function estrato_nav_mega_menu_item_classes( $classes, $item ) {
+function estrato_nav_mega_menu_item_classes( $classes, $item, $args = null ) {
+	$menu_class = '';
+	if ( is_object( $args ) && isset( $args->menu_class ) ) {
+		$menu_class = (string) $args->menu_class;
+	} elseif ( is_array( $args ) && isset( $args['menu_class'] ) ) {
+		$menu_class = (string) $args['menu_class'];
+	}
+	if ( false !== strpos( $menu_class, 'estrato-g1-rail' ) ) {
+		return $classes;
+	}
 	if ( in_array( 'menu-item-has-children', $classes, true ) && 0 === (int) $item->menu_item_parent ) {
 		$classes[] = 'estrato-mega-parent';
 	}
@@ -297,7 +313,7 @@ function estrato_nav_mega_menu_item_classes( $classes, $item ) {
 	}
 	return $classes;
 }
-add_filter( 'nav_menu_css_class', 'estrato_nav_mega_menu_item_classes', 20, 2 );
+add_filter( 'nav_menu_css_class', 'estrato_nav_mega_menu_item_classes', 20, 3 );
 
 /**
  * CSS do mega menu institucional.

@@ -233,6 +233,8 @@ function estrato_g1_render_header() {
 							'container'      => false,
 							'fallback_cb'    => false,
 							'depth'          => 1,
+							/* Hard-lock: ignora poluição de menu_class por outros filters. */
+							'items_wrap'     => '<ul id="%1$s" class="estrato-g1-rail">%3$s</ul>',
 						)
 					);
 					?>
@@ -453,6 +455,20 @@ function estrato_g1_header_styles() {
 	/* Esconde chevron mega se algum filter ainda injetar no trilho */
 	.estrato-g1-header__rail .estrato-mega-toggle,
 	.estrato-g1-header__rail .sub-menu{display:none!important}
+	/* Cinto: se classes do drawer vazarem no UL do trilho, ainda força row + texto escuro */
+	.estrato-g1-header__rail ul.estrato-g1-menu,
+	.estrato-g1-header__rail ul.estrato-mega-nav{
+		display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;list-style:none!important;margin:0!important;padding:0!important
+	}
+	.estrato-g1-header__rail ul.estrato-g1-menu>li,
+	.estrato-g1-header__rail ul.estrato-mega-nav>li{
+		flex:0 0 auto!important;width:auto!important;border:0!important;float:none!important
+	}
+	.estrato-g1-header__rail ul.estrato-g1-menu>li>a,
+	.estrato-g1-header__rail ul.estrato-mega-nav>li>a{
+		color:#1e1e1e!important;background:transparent!important;opacity:1!important;min-height:0!important;
+		border-bottom:2px solid transparent!important;box-shadow:none!important;white-space:nowrap!important
+	}
 	/* Drawer fullscreen */
 	.estrato-g1-header__overlay{
 		position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10070
@@ -551,7 +567,7 @@ function estrato_g1_header_styles() {
 	<?php
 	$css = trim( ob_get_clean() );
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
-		estrato_perf_style_add( 'estrato-g1-header-css', $css, 'main' );
+		estrato_perf_style_add( 'estrato-g1-header-css', $css, 'critical' );
 	} else {
 		echo '<style id="estrato-g1-header-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}

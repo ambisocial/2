@@ -552,8 +552,6 @@ function estrato_g1_header_scripts() {
 		var overlay=document.getElementById('estrato-g1-nav-overlay');
 		var searchBtn=document.getElementById('estrato-g1-search-btn');
 		var searchPanel=document.getElementById('estrato-g1-search');
-		var redeBtn=document.getElementById('estrato-g1-rede-btn');
-		var redeSheet=document.getElementById('estrato-g1-rede-sheet');
 		var menu=root.querySelector('.estrato-g1-menu');
 		var mq=window.matchMedia('(min-width:960px)');
 		var lastFocus=null;
@@ -587,11 +585,6 @@ function estrato_g1_header_scripts() {
 				lastFocus=null;
 			}
 		}
-		function setRedeOpen(open){
-			if(!redeSheet||!redeBtn||isDesktop())return;
-			redeSheet.hidden=!open;
-			redeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-		}
 		function closeAllMegas(){
 			root.querySelectorAll('.estrato-mega-open').forEach(function(li){
 				li.classList.remove('estrato-mega-open');
@@ -623,17 +616,14 @@ function estrato_g1_header_scripts() {
 		if(isDesktop()){
 			if(nav)nav.hidden=false;
 			if(overlay)overlay.hidden=true;
-			if(redeSheet)redeSheet.hidden=false;
 		}else{
 			setMenuOpen(false);
-			setRedeOpen(false);
 		}
 
 		if(menuBtn&&nav){
 			menuBtn.addEventListener('click',function(){
 				var open=nav.hidden;
 				setMenuOpen(open);
-				if(open)setRedeOpen(false);
 			});
 		}
 		if(menuClose){
@@ -642,20 +632,12 @@ function estrato_g1_header_scripts() {
 		if(overlay){
 			overlay.addEventListener('click',function(){setMenuOpen(false);});
 		}
-		if(redeBtn&&redeSheet){
-			redeBtn.addEventListener('click',function(){
-				var open=redeSheet.hidden;
-				setRedeOpen(open);
-				if(open){setMenuOpen(false);closeSearch();}
-			});
-		}
 		if(searchBtn&&searchPanel){
 			searchBtn.addEventListener('click',function(){
 				var willOpen=searchPanel.hidden;
 				searchPanel.hidden=!willOpen;
 				searchBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 				if(willOpen){
-					setRedeOpen(false);
 					var i=document.getElementById('estrato-g1-search-input');
 					if(i)i.focus();
 					renderSuggest(i&&i.value||'');

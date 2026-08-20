@@ -174,22 +174,24 @@ function estrato_g1_render_header() {
 	<header id="estrato-g1-header" class="estrato-g1-header<?php echo $ctx['section'] ? ' estrato-g1-header--section' : ' estrato-g1-header--home'; ?>" role="banner"<?php echo $style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 		<div class="estrato-g1-header__rede" aria-label="Rede Estrato">
 			<div class="estrato-g1-header__inner estrato-g1-header__rede-row">
-				<button type="button" class="estrato-g1-header__rede-toggle" id="estrato-g1-rede-btn" aria-controls="estrato-g1-rede-sheet" aria-expanded="false">
-					Outras marcas
-				</button>
 				<span class="estrato-g1-header__rede-label">Rede Estrato</span>
-				<ul id="estrato-g1-rede-sheet" class="estrato-g1-header__rede-list" hidden>
+				<ul id="estrato-g1-rede-sheet" class="estrato-g1-header__rede-list">
 					<?php if ( function_exists( 'estrato_nav_network_catalog' ) ) : ?>
 						<?php foreach ( estrato_nav_network_catalog() as $node ) : ?>
 							<?php
 							$is_current = ( $node['id'] === $current );
 							$mark       = function_exists( 'estrato_nav_network_mark_html' ) ? estrato_nav_network_mark_html( $node ) : '';
+							$chip_name  = (string) ( $node['name'] ?? '' );
+							$chip_name  = preg_replace( '/^Estrato\s+/u', '', $chip_name );
+							if ( ! $chip_name ) {
+								$chip_name = (string) ( $node['short'] ?? $node['id'] ?? '' );
+							}
 							?>
 							<li class="<?php echo $is_current ? 'is-current' : ''; ?>">
 								<?php if ( $is_current ) : ?>
-									<span class="estrato-g1-header__rede-item" aria-current="page"><?php echo $mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><span class="estrato-g1-header__rede-name"><?php echo esc_html( $node['name'] ); ?></span></span>
+									<span class="estrato-g1-header__rede-item" aria-current="page"><?php echo $mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><span class="estrato-g1-header__rede-name"><?php echo esc_html( $chip_name ); ?></span></span>
 								<?php else : ?>
-									<a class="estrato-g1-header__rede-item" href="<?php echo esc_url( $node['url'] ); ?>"><?php echo $mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><span class="estrato-g1-header__rede-name"><?php echo esc_html( $node['name'] ); ?></span></a>
+									<a class="estrato-g1-header__rede-item" href="<?php echo esc_url( $node['url'] ); ?>" title="<?php echo esc_attr( (string) ( $node['name'] ?? $chip_name ) ); ?>"><?php echo $mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><span class="estrato-g1-header__rede-name"><?php echo esc_html( $chip_name ); ?></span></a>
 								<?php endif; ?>
 							</li>
 						<?php endforeach; ?>
@@ -209,7 +211,7 @@ function estrato_g1_render_header() {
 							<?php if ( $logo_html ) : ?>
 								<?php echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 							<?php else : ?>
-								<span class="estrato-g1-header__logo-text"><?php echo esc_html( $site_name ); ?></span>
+								<span class="estrato-g1-header__logo-text">estrato.</span>
 							<?php endif; ?>
 						</a>
 					</div>
@@ -220,23 +222,23 @@ function estrato_g1_render_header() {
 					</div>
 				</div>
 			</div>
-		</div>
 
-		<nav class="estrato-g1-header__rail" aria-label="Editorias rápidas">
-			<div class="estrato-g1-header__inner estrato-g1-header__rail-inner">
-				<?php
-				wp_nav_menu(
-					array(
-						'theme_location' => 'primary',
-						'menu_class'     => 'estrato-g1-rail',
-						'container'      => false,
-						'fallback_cb'    => false,
-						'depth'          => 1,
-					)
-				);
-				?>
-			</div>
-		</nav>
+			<nav class="estrato-g1-header__rail" aria-label="Editorias rápidas">
+				<div class="estrato-g1-header__inner estrato-g1-header__rail-inner">
+					<?php
+					wp_nav_menu(
+						array(
+							'theme_location' => 'primary',
+							'menu_class'     => 'estrato-g1-rail',
+							'container'      => false,
+							'fallback_cb'    => false,
+							'depth'          => 1,
+						)
+					);
+					?>
+				</div>
+			</nav>
+		</div>
 
 		<nav id="estrato-g1-nav" class="estrato-g1-header__nav" aria-label="Editorias" hidden>
 			<div class="estrato-g1-header__drawer-head">
@@ -322,7 +324,11 @@ function estrato_g1_header_hide_pressgrid() {
 		// Aumenta z-index e adiciona safe-area no back-to-top do PressGrid.
 		. '.pg-back-to-top,.pg-scroll-top,#back-to-top{bottom:calc(1rem + env(safe-area-inset-bottom,0px))!important}'
 		/* PressGrid “Urgente”: ocultar — breaking canônico é estrato-home-breaking (finance). */
-		. '.pg-breaking-bar,.pg-breaking-label,.pg-breaking-ticker,.pg-breaking-inner{display:none!important}';
+		. '.pg-breaking-bar,.pg-breaking-label,.pg-breaking-ticker,.pg-breaking-inner{display:none!important}'
+		/* Home: remove gap fantasma entre header G1 e feed. */
+		. 'body.home .pg-main,body.home .pg-container,body.blog .pg-main,body.blog .pg-container{padding-top:0!important;margin-top:0!important}'
+		. 'body.home .estrato-home-v2,body.blog .estrato-home-v2{padding-top:.65rem}'
+		. '@media(min-width:640px){body.home .estrato-home-v2,body.blog .estrato-home-v2{padding-top:1rem}}';
 	if ( function_exists( 'estrato_perf_style_add' ) ) {
 		estrato_perf_style_add( 'estrato-g1-header-hide-pressgrid', $css, 'critical' );
 	} else {
@@ -355,31 +361,31 @@ function estrato_g1_header_styles() {
 		outline:2px solid #9AFF33;outline-offset:2px
 	}
 	.estrato-g1-header__inner{max-width:1200px;margin:0 auto;padding:0 1rem}
-	/* Rede: fora do sticky; mobile = 1 toque */
+	/* Rede: chips horizontais (piso Globo) — sem “Outras marcas” opaco no mobile */
 	.estrato-g1-header__rede{background:var(--estrato-g1-rede-bg);color:#ccc;font-size:.75rem}
-	.estrato-g1-header__rede-row{display:flex;align-items:center;gap:.75rem;min-height:36px;position:relative}
-	.estrato-g1-header__rede-toggle{
-		background:transparent;border:0;color:#fff;font:inherit;font-weight:700;cursor:pointer;
-		padding:.45rem 0;text-transform:uppercase;letter-spacing:.04em;min-height:44px
-	}
+	.estrato-g1-header__rede-row{display:flex;align-items:center;gap:.5rem;min-height:32px;position:relative}
+	.estrato-g1-header__rede-toggle{display:none}
 	.estrato-g1-header__rede-label{display:none;font-weight:700;color:#fff;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
-	.estrato-g1-header__rede-list{
-		display:none;list-style:none;margin:0;padding:.5rem 1rem;position:absolute;left:0;right:0;top:100%;z-index:10060;
-		background:#2a2a2a;box-shadow:0 8px 24px rgba(0,0,0,.35);flex-direction:column;gap:0
+	.estrato-g1-header__rede-list,
+	.estrato-g1-header__rede-list[hidden]{
+		display:flex!important;list-style:none;margin:0;padding:.3rem 0;position:static;z-index:auto;
+		background:transparent;box-shadow:none;flex-direction:row;flex-wrap:nowrap;gap:.55rem;
+		overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;width:100%
 	}
-	.estrato-g1-header__rede-list:not([hidden]){display:flex}
-	.estrato-g1-header__rede-list li{border-bottom:1px solid rgba(255,255,255,.08)}
+	.estrato-g1-header__rede-list::-webkit-scrollbar{display:none}
+	.estrato-g1-header__rede-list li{border:0;flex:0 0 auto}
 	.estrato-g1-header__rede-item{
-		display:flex;align-items:center;gap:.65rem;min-height:44px;color:#ccc;text-decoration:none;padding:.25rem 0
+		display:flex;align-items:center;gap:.35rem;min-height:28px;color:#c8c8c8;text-decoration:none;padding:.15rem 0;white-space:nowrap
 	}
 	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:hover{color:#fff}
 	.estrato-g1-header__rede-list a.estrato-g1-header__rede-item:hover .estrato-g1-header__rede-name{text-decoration:underline}
 	.estrato-g1-header__rede-list .is-current .estrato-g1-header__rede-item{color:#fff;font-weight:700}
-	.estrato-g1-header__rede-name{font-size:.8125rem}
-	/* Sticky magro: logo + rail */
+	.estrato-g1-header__rede-name{font-size:.6875rem;font-weight:600}
+	.estrato-g1-header__rede .estrato-network-mark{width:1.15rem;height:1.15rem;font-size:.55rem;border-radius:3px}
+	/* Sticky: logo + trilho de editorias juntos */
 	.estrato-g1-header__sticky{position:sticky;top:0;z-index:10055;box-shadow:0 1px 0 rgba(0,0,0,.06)}
 	.estrato-g1-header__principal{background:var(--estrato-g1-bar-bg);color:var(--estrato-g1-bar-fg)}
-	.estrato-g1-header__principal-row{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;min-height:56px}
+	.estrato-g1-header__principal-row{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:48px}
 	.estrato-g1-header__menu-btn,.estrato-g1-header__search-btn,.estrato-g1-header__drawer-close{
 		background:transparent;border:0;color:inherit;cursor:pointer;padding:.5rem;
 		display:flex;align-items:center;justify-content:center;width:44px;height:44px
@@ -397,27 +403,31 @@ function estrato_g1_header_styles() {
 	.estrato-g1-header__menu-btn[aria-expanded="true"] .estrato-g1-header__menu-icon::after{top:0;transform:rotate(-45deg)}
 	.estrato-g1-header__logo-wrap{display:flex;justify-content:center;align-items:center}
 	.estrato-g1-header__logo{display:inline-flex;align-items:center;text-decoration:none;color:inherit}
-	.estrato-g1-header__logo-img{max-height:36px;width:auto;filter:brightness(0) invert(1)}
-	.estrato-g1-header__logo-text{font-size:1.75rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+	.estrato-g1-header__logo-img{max-height:32px;width:auto;filter:brightness(0) invert(1)}
+	.estrato-g1-header__logo-text{
+		font-family:var(--estrato-font-display,Georgia,"Times New Roman",serif);
+		font-size:1.5rem;font-weight:700;letter-spacing:-.03em;line-height:1;text-transform:lowercase
+	}
 	.estrato-g1-header__actions{display:flex;justify-content:flex-end}
 	.estrato-g1-header__editoria{background:var(--estrato-g1-bar-bg);color:var(--estrato-g1-bar-fg);border-top:1px solid rgba(255,255,255,.15)}
-	.estrato-g1-header__editoria .estrato-g1-header__inner{padding:.4rem 1rem}
-	.estrato-g1-header__editoria-label{font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:inherit;text-decoration:none}
+	.estrato-g1-header__editoria .estrato-g1-header__inner{padding:.35rem 1rem}
+	.estrato-g1-header__editoria-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:inherit;text-decoration:none}
 	a.estrato-g1-header__editoria-label:hover{text-decoration:underline}
-	/* Trilho horizontal — sempre visível no mobile */
-	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e5e5e5}
-	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-snap-type:x proximity}
-	.estrato-g1-rail{display:flex;flex-wrap:nowrap;gap:0;list-style:none;margin:0;padding:0;min-height:44px;align-items:stretch}
+	/* Trilho horizontal — underline fino só sob o item (sem barra full-bleed) */
+	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e8e8e8}
+	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity}
+	.estrato-g1-header__rail-inner::-webkit-scrollbar{display:none}
+	.estrato-g1-rail{display:flex;flex-wrap:nowrap;gap:0;list-style:none;margin:0;padding:0;min-height:40px;align-items:stretch}
 	.estrato-g1-rail>li{flex:0 0 auto;scroll-snap-align:start}
 	.estrato-g1-rail>li>a{
-		display:flex;align-items:center;padding:.6rem .85rem;color:#1e1e1e;font-size:.8125rem;font-weight:600;
-		text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent
+		display:inline-flex;align-items:center;padding:.55rem .75rem;color:#1e1e1e;font-size:.8125rem;font-weight:600;
+		text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;line-height:1.2
 	}
-	.estrato-g1-rail>li>a:hover,.estrato-g1-rail>li.current-menu-item>a,.estrato-g1-rail>li.current-menu-ancestor>a{
-		color:var(--estrato-g1-bar-bg,#C4170C);border-bottom-color:var(--estrato-g1-bar-bg,#C4170C)
+	.estrato-g1-rail>li>a:hover{
+		color:var(--estrato-g1-bar-bg,#C4170C)
 	}
 	.estrato-g1-rail>li.current-menu-item>a,.estrato-g1-rail>li.current-menu-ancestor>a{
-		box-shadow:inset 0 -3px 0 var(--estrato-g1-bar-bg,#C4170C)
+		color:var(--estrato-g1-bar-bg,#C4170C);border-bottom-color:var(--estrato-g1-bar-bg,#C4170C)
 	}
 	/* Drawer fullscreen */
 	.estrato-g1-header__overlay{
@@ -473,21 +483,21 @@ function estrato_g1_header_styles() {
 		.estrato-mega-toggle__icon{transition:none}
 	}
 	@media(min-width:960px){
-		.estrato-g1-header__rede-toggle{display:none}
-		.estrato-g1-header__rede-label{display:inline}
+		.estrato-g1-header__rede-label{display:inline;margin-right:.35rem}
+		.estrato-g1-header__rede-row{min-height:34px}
 		.estrato-g1-header__rede-list,
 		.estrato-g1-header__rede-list[hidden]{
-			display:flex!important;position:static;background:transparent;box-shadow:none;
-			flex-direction:row;gap:.85rem;padding:0;white-space:nowrap;overflow-x:auto;align-items:center
+			gap:.85rem;padding:.2rem 0
 		}
-		.estrato-g1-header__rede-list li{border:0}
-		.estrato-g1-header__rede-item{min-height:0;padding:.35rem 0;gap:.4rem}
-		.estrato-g1-header__rede-list .estrato-network-mark{width:1.35rem;height:1.35rem;font-size:.625rem;border-radius:4px}
+		.estrato-g1-header__rede-item{min-height:0;padding:.25rem 0;gap:.4rem}
+		.estrato-g1-header__rede-name{font-size:.75rem}
+		.estrato-g1-header__rede .estrato-network-mark{width:1.35rem;height:1.35rem;font-size:.625rem;border-radius:4px}
 		.estrato-g1-header__menu-btn,.estrato-g1-header__drawer-head,.estrato-g1-header__overlay,.estrato-g1-header__rail{display:none!important}
 		.estrato-mega-toggle{display:none}
-		.estrato-g1-header__principal-row{grid-template-columns:1fr auto 1fr}
+		.estrato-g1-header__principal-row{grid-template-columns:1fr auto 1fr;min-height:56px}
 		.estrato-g1-header__logo-wrap{grid-column:2}
 		.estrato-g1-header__actions{grid-column:3}
+		.estrato-g1-header__logo-text{font-size:1.75rem}
 		.estrato-g1-header__nav,
 		.estrato-g1-header__nav[hidden]{
 			display:block!important;position:relative;inset:auto;background:var(--estrato-g1-nav-bg);color:var(--estrato-g1-nav-fg);

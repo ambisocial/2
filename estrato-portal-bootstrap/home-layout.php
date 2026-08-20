@@ -713,9 +713,9 @@ function estrato_home_styles() {
 	if ( ! estrato_home_is_active() ) {
 		return;
 	}
-	$css = '.estrato-home-v2{max-width:1200px;margin:0 auto;padding:var(--estrato-space-3) 1rem}'
+	$css = '.estrato-home-v2{max-width:1200px;margin:0 auto;padding:.65rem 1rem var(--estrato-space-3)}'
 		. '@media(min-width:640px){.estrato-home-v2{padding:var(--estrato-space-4) 1rem}}'
-		. '.estrato-home-masthead{margin:0 0 var(--estrato-space-4);padding-bottom:var(--estrato-space-3);border-bottom:1px solid var(--estrato-line,#e5e5e5)}'
+		. '.estrato-home-masthead{margin:0 0 var(--estrato-space-3);padding-bottom:var(--estrato-space-2);border-bottom:1px solid var(--estrato-line,#e5e5e5)}'
 		. '.estrato-home-masthead__h1{font-size:clamp(22px,3.2vw,34px);line-height:1.15;margin:0 0 .4rem;max-width:42rem}'
 		. '.estrato-home-masthead__dek{margin:0;opacity:.82;max-width:42rem;font-size:.98rem}'
 		. '.estrato-home-breaking{margin:0 0 var(--estrato-space-3);background:#fff1e5;border:1px solid #e8d5c4;border-radius:var(--estrato-radius,4px)}'

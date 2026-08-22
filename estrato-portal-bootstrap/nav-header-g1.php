@@ -574,7 +574,7 @@ function estrato_g1_header_styles() {
 		echo '<style id="estrato-g1-header-css">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 }
-add_action( 'wp_head', 'estrato_g1_header_styles', 20 );
+add_action( 'wp_head', 'estrato_g1_header_styles', 2 );
 
 /**
  * JS — menu mobile, busca, teclado, Escape, focus trap (best practices portais).

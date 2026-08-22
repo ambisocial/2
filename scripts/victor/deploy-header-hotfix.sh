@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hotfix header 1.36.9 — rodar NO Victor (como root ou com sudo).
+# Hotfix header 1.36.10 — rodar NO Victor (como root ou com sudo).
 # Corrige: área branca clicável = links do trilho com color:#fff em coluna.
 set -euo pipefail
 

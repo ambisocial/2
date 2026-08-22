@@ -96,6 +96,13 @@ else
   fail_ 'sem cinto CSS 1.36.7 — deploy incompleto ou cache'
 fi
 
+# 6) Contenção nuclear 1.36.9 — trilho não pode crescer em coluna no mobile
+if grep -q 'max-height:48px' "$TMP"; then
+  pass 'CSS max-height:48px no rail (1.36.9+) presente'
+else
+  fail_ 'sem max-height:48px no rail — deploy 1.36.9 incompleto ou cache'
+fi
+
 if [[ $fail -eq 0 ]]; then
   echo "== RESULT: PASS =="
   exit 0

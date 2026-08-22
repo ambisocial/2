@@ -422,8 +422,8 @@ function estrato_g1_header_styles() {
 	 * Trilho horizontal — SEMPRE row (não herdar .estrato-g1-menu column).
 	 * Underline fino só sob o item ativo; itens legíveis sem precisar “passar o dedo”.
 	 */
-	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e8e8e8;max-height:none!important}
-	.estrato-g1-header__rail-inner{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity}
+	.estrato-g1-header__rail{background:#fff;border-bottom:1px solid #e8e8e8;max-height:48px;overflow:hidden}
+	.estrato-g1-header__rail-inner{max-height:48px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity}
 	.estrato-g1-header__rail-inner::-webkit-scrollbar{display:none}
 	.estrato-g1-header__rail .estrato-g1-rail,
 	.estrato-g1-header__rail ul.estrato-g1-rail,

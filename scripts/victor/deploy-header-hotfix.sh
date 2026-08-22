@@ -4,7 +4,7 @@
 set -euo pipefail
 
 REPO="${ESTRATO_REPO:-/var/www/estrato/repo}"
-BRANCH="${ESTRATO_REPO_BRANCH:-cursor/seo-geo-eeat-f149}"
+BRANCH="${ESTRATO_REPO_BRANCH:-Preditivit}"
 PLUGIN_SRC="${REPO}/estrato-portal-bootstrap"
 
 echo "== 1) Sync repo ($BRANCH) =="

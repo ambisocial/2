@@ -1,0 +1,1073 @@
+================================================================================
+  ESTRATO — DOCUMENTAÇÃO COMPLETA DO PROJETO
+  Rede de portais WordPress | Portal Factory
+================================================================================
+
+Versão do documento : 1.0.0
+Data de geração      : 2026-08-22
+Repositório          : https://github.com/ambisocial/2
+Branch de produção   : Preditivit
+Último commit        : 4e7ad6e — fix(header): emit G1 CSS before critical flush (1.36.10)
+Portal principal     : https://estrato.cc/
+VPS produção (Victor): 187.127.12.186 (nexhost.ambi.cloud)
+Repo no Victor       : /var/www/estrato/repo
+
+Este documento consolida arquitetura, operação, deploy e referências técnicas
+para backup e continuidade do projeto. Não inclui senhas ou chaves privadas.
+
+
+================================================================================
+  SUMÁRIO
+================================================================================
+
+  1.  Visão geral e objetivos
+  2.  Estrutura do repositório
+  3.  Arquitetura do sistema
+  4.  Plugins WordPress (detalhado)
+  5.  Portais da rede Estrato
+  6.  Temas WordPress
+  7.  Interface: Header G1, Home, Single, Footer
+  8.  SEO, AEO, GEO, EEAT e YMYL
+  9.  Pipeline de conteúdo (Victor → WordPress)
+  10. Infraestrutura e hospedagem
+  11. Deploy e publicação
+  12. CI/CD (GitHub Actions)
+  13. Scripts Victor (catálogo operacional)
+  14. Anti-regressão e gates de qualidade
+  15. Secrets, credenciais e variáveis de ambiente
+  16. Branches Git e fluxo de trabalho
+  17. Correções recentes (header mobile / iOS)
+  18. Comandos operacionais (runbook)
+  19. Troubleshooting
+  20. Referências e documentos complementares
+
+
+================================================================================
+  1. VISÃO GERAL E OBJETIVOS
+================================================================================
+
+O projeto Estrato é uma "fábrica de portais" (Portal Factory) de notícias
+WordPress, projetada para operar uma rede multi-vertical sob o domínio
+estrato.cc e subdomínios (mente, lifestyle, science, agro, etc.).
+
+Objetivos principais:
+  - Publicação automatizada via pipeline Python no VPS Victor
+  - Layout editorial inspirado no padrão G1/Globo (header em camadas, trilho
+    horizontal de editorias, manchete + bloco "Agora" + feed por categoria)
+  - SEO técnico, schema, Google News, AEO/GEO (llms.txt, IndexNow)
+  - EEAT/YMYL para conteúdo financeiro e de saúde
+  - Anti-regressão automatizada (robots, sitemap, schema, nav, mobile)
+  - Deploy reproduzível por YAML (portals/*.yaml) + scripts Victor
+
+Stack principal:
+  - WordPress 6.x + PHP 8.3-FPM + nginx
+  - Tema PressGrid 2.5 (produção)
+  - 3 plugins próprios (portal-bootstrap, rss-bootstrap, publisher-bridge)
+  - Cloudflare (DNS + proxy SSL Full)
+  - Yoast SEO, Contact Form 7
+
+
+================================================================================
+  2. ESTRUTURA DO REPOSITÓRIO
+================================================================================
+
+/workspace/  (raiz do repositório ambisocial/2)
+
+  estrato-portal-bootstrap/     Plugin principal — UI, SEO, nav, home, ops
+  estrato-publisher-bridge/     REST API pipeline → WordPress
+  estrato-rss-bootstrap/        Importação RSS + taxonomia + guard matrix
+  portals/                      Config YAML por portal + anti-regression
+  portals/drafts/               Rascunhos de taxonomia (referência)
+  scripts/
+    build-portal-packages.sh    Gera ZIPs dos 3 plugins
+    victor/                     ~177 scripts (.sh, .php, .py) — operação VPS
+    victor/lib/portal-env.sh    Resolve YAML → paths WP
+    victor/pipeline/            Cópia versionada scripts Python pipeline
+  docs/                         Documentação técnica e sprint plans
+  assets/branding/              Logo estrato (PNG/SVG)
+  content/templates/            Templates de conteúdo (ex.: post-aeo.md)
+  .github/workflows/            CI/CD GitHub Actions
+  Jannah-wp-theme/              Tema legado vendored (NÃO usado em produção)
+  install-jannah-helper/        Helper one-off Jannah
+  unzip-jannah-helper/          Utilitário unzip Jannah
+  *.zip                         Pacotes pré-build dos plugins (opcional)
+
+Build local dos plugins:
+
+  bash scripts/build-portal-packages.sh
+
+Saída:
+  estrato-portal-bootstrap.zip
+  estrato-publisher-bridge.zip
+  estrato-rss-bootstrap.zip
+
+
+================================================================================
+  3. ARQUITETURA DO SISTEMA
+================================================================================
+
+3.1 Diagrama lógico (texto)
+
+  [Fontes RSS / Web] ──► [Pipeline Victor - Python]
+                              │
+                              │ scout (1h)
+                              │ curator (5min)
+                              │ writer (5min)
+                              │ publisher (5min)
+                              │ linker (5min)
+                              ▼
+                    wp_bridge.py / REST API
+                              │
+                              ▼
+              estrato-publisher-bridge (WordPress)
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+     estrato-rss-bootstrap   posts WP    estrato-portal-bootstrap
+     (complementar RSS)                    (render, SEO, nav, home)
+              │                               │
+              └───────────────┬───────────────┘
+                              ▼
+                    Tema PressGrid 2.5
+                              ▼
+                    nginx + PHP-FPM + Cloudflare
+                              ▼
+                         Usuário final
+
+3.2 Camadas de responsabilidade
+
+  | Camada          | Componente                    | Função                    |
+  |-----------------|-------------------------------|---------------------------|
+  | Edge            | Cloudflare                    | DNS, CDN, SSL, WAF        |
+  | Web             | nginx + PHP 8.3-FPM           | Servir WordPress          |
+  | CMS             | WordPress + PressGrid         | Tema base, widgets        |
+  | Plugins Estrato | portal-bootstrap              | Factory, UI G1, SEO       |
+  | Plugins Estrato | publisher-bridge              | API publicação            |
+  | Plugins Estrato | rss-bootstrap                 | Feeds RSS BR              |
+  | Conteúdo        | Pipeline Victor (Python)      | IA + curadoria + publish  |
+  | Config          | portals/*.yaml                | Declarativo por portal    |
+  | Ops             | scripts/victor/*              | Deploy, gates, setup      |
+
+3.3 Fluxo de publicação (pipeline_primary)
+
+  Modo padrão dos portais em produção: pipeline_primary
+    - Pipeline Victor é a fonte principal de artigos
+    - RSS complementar: poucos itens/hora (ex.: 2/feed, máx 15/run)
+    - Imagens: originais da matéria (og:image, conteúdo); sem stock Unsplash
+    - Dedup: external_id no bridge
+    - Thumbnails: sideload + cron backfill hourly
+
+
+================================================================================
+  4. PLUGINS WORDPRESS (DETALHADO)
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1 estrato-portal-bootstrap — v1.36.10
+--------------------------------------------------------------------------------
+
+Arquivo principal : estrato-portal-bootstrap/estrato-portal-bootstrap.php
+Constante versão  : ESTRATO_PORTAL_VERSION = '1.36.10'
+Opção WP config   : estrato_portal_config (JSON do YAML do portal)
+
+Descrição:
+  Provisiona tema (PressGrid ou Newspack), aplica configuração do portal,
+  renderiza navegação estilo G1, home editorial, single article, ticker BR,
+  design system, performance (LCP, CSS consolidado), SEO/AEO/EEAT/YMYL,
+  Google News, newsletter, crons ops, gate safeguards.
+
+Módulos PHP (ordem de require no bootstrap):
+
+  pressgrid-pt-br.php          Tradução/localização PressGrid PT-BR
+  seo-robots.php               Regras robots.txt
+  seo-schema.php               JSON-LD, anti-duplicação schema PressGrid
+  eeat.php                     Autores, mapa categoria-autor
+  author-personas.php          Personas, retratos, term-author
+  editorial-staff.php          Mapa equipe editorial, editor-chefe
+  syndication.php              Hooks sindicação outbound
+  content-quality.php          Gates de qualidade de conteúdo
+  nav-visual.php               Componentes visuais de navegação
+  nav-mega-menu.php            Mega menu walker, filtros menu_class
+  nav-header-g1.php            Header G1 (rede, rail, drawer, busca)
+  nav-footer-ft.php            Footer estilo Financial Times
+  seo-aeo.php                  IndexNow, news sitemap cron, GEO
+  seo-faq.php                  Blocos FAQ institucionais
+  ymyl.php                     Disclaimers YMYL (finanças/saúde)
+  entity-pages.php             Hubs /tudo-sobre/
+  network-hubs.php             Hubs cross-portal rede Estrato
+  gate-safeguards.php          Anti-regressão em runtime (categorias)
+  taxonomy.php                 Helpers taxonomia
+  portal-taxonomy.php          Taxonomia por portal (colunas, editorias)
+  google-news.php              Integração Google News Publisher
+  seo-category.php             SEO de arquivos de categoria
+  pipeline-sanitize.php        Higiene HTML do pipeline
+  pipeline-categorization.php  Categorização automática
+  design-system.php            Tokens CSS (--estrato-*)
+  fonts-selfhosted.php         Fontes self-hosted (Inter, Newsreader)
+  home-layout.php              Home G1: hero, Agora, blocos editoria
+  single-article.php           Template single: byline, share, related
+  ticker-br.php                Ticker IBOV/USD/Selic/Bitcoin
+  newsletter-esp.php           Integração newsletter ESP
+  category-archive.php         Archives: chips + breadcrumb
+  seo-yoast-defaults.php       Defaults Yoast, OG fixes
+  perf-consolidate-styles.php    Consolidador CSS critical/main
+  perf-lcp.php                 CSS crítico LCP home/single
+  retention.php                Retenção de leitores
+  ops.php                      Crons semanais/mensais/diários
+  category-redirects.php         Redirects 301 categorias legadas
+
+Assets:
+  assets/estrato-logo.svg
+  assets/llms.txt              Resumo GEO para LLMs
+  assets/llms-full.txt         Versão expandida
+  assets/fonts/                Inter, Newsreader, IBM Plex Mono (woff2)
+
+Ativação:
+  register_activation_hook → estrato_portal_activate
+  Aplica config, instala tema, plugins bundled, taxonomia
+
+--------------------------------------------------------------------------------
+4.2 estrato-publisher-bridge — v1.7.1
+--------------------------------------------------------------------------------
+
+Arquivo principal : estrato-publisher-bridge/estrato-publisher-bridge.php
+Constante versão  : ESTRATO_BRIDGE_VERSION = '1.7.0' (header plugin 1.7.1)
+Secret option     : estrato_bridge_secret
+
+Endpoints REST:
+
+  POST /wp-json/estrato/v1/publish
+  POST /wp-json/estrato/v1/taxonomy-sync
+
+Autenticação:
+  Header: X-Estrato-Secret: <valor de estrato_bridge_secret>
+
+Payload publish (exemplo):
+
+  {
+    "title": "Título da notícia",
+    "content": "<p>Corpo HTML</p>",
+    "category": "economia",
+    "source_url": "https://...",
+    "source_name": "G1",
+    "external_id": "unique-id-for-dedup"
+  }
+
+Funcionalidades:
+  - Sideload imagem destacada da URL original
+  - Rejeição de imagens stock
+  - Dedup por external_id
+  - Cron hourly backfill thumbnails (estrato_thumbnail_backfill_event)
+  - Unpublish posts sem imagem original
+  - Meta: _estrato_original_image_url, _estrato_skip_reason
+
+--------------------------------------------------------------------------------
+4.3 estrato-rss-bootstrap — v1.11.0
+--------------------------------------------------------------------------------
+
+Arquivo principal : estrato-rss-bootstrap/estrato-rss-bootstrap.php
+Constante versão  : ESTRATO_RSS_VERSION = '1.8.0' (header 1.11.0)
+
+Módulos:
+  taxonomy-sync.php      Sync categorias do YAML do portal
+  rss-curation.php       Curadoria de feeds
+  rss-keywords.php       Keywords por feed
+  rss-guard-matrix.php   Matriz fonte × editoria (coerência)
+  taxonomy-helpers.php   Helpers
+
+Presets RSS (exemplos):
+  brasil-financeiro, brasil-mind, brasil-lifestyle, brasil-science,
+  brasil-agro, brasil-esg, brasil-viagem, brasil-politica, etc.
+
+Modos de conteúdo (content.mode no YAML):
+  pipeline_primary   Pipeline principal + RSS complementar
+  rss_and_pipeline   RSS e pipeline em paralelo
+  rss_only           Apenas RSS
+
+Defaults:
+  5 itens/feed, 12 no primeiro run, 120 máx/run, cron 30min
+  pipeline_primary: limites reduzidos (2/6/15 hourly)
+
+
+================================================================================
+  5. PORTAIS DA REDE ESTRATO
+================================================================================
+
+Configuração declarativa em portals/estrato-<id>.yaml
+Anti-regressão em portals/estrato-anti-regression.yaml (+ variantes por portal)
+
+5.1 Portais em produção (16 ativos)
+
+  | ID portal        | Domínio              | RSS preset         | Modo             |
+  |------------------|----------------------|--------------------|------------------|
+  | estrato-finance  | estrato.cc           | brasil-financeiro  | pipeline_primary |
+  | estrato-mind     | mente.estrato.cc     | brasil-mind        | pipeline_primary |
+  | estrato-lifestyle| lifestyle.estrato.cc | brasil-lifestyle   | pipeline_primary |
+  | estrato-science  | science.estrato.cc   | brasil-science     | pipeline_primary |
+  | estrato-agro     | agro.estrato.cc      | brasil-agro        | pipeline_primary |
+  | estrato-esg      | esg.estrato.cc       | brasil-esg         | pipeline_primary |
+  | estrato-viagem   | viagem.estrato.cc    | brasil-viagem      | pipeline_primary |
+  | estrato-culture  | culture.estrato.cc   | brasil-culture     | pipeline_primary |
+  | estrato-politica | politica.estrato.cc  | brasil-politica    | pipeline_primary |
+  | estrato-esporte  | esporte.estrato.cc   | brasil-esporte     | pipeline_primary |
+  | estrato-saude    | saude.estrato.cc     | brasil-saude       | pipeline_primary |
+  | estrato-educacao | educacao.estrato.cc  | brasil-educacao    | pipeline_primary |
+  | estrato-tech     | tech.estrato.cc      | brasil-tech        | pipeline_primary |
+  | estrato-carros   | carros.estrato.cc    | brasil-carros      | pipeline_primary |
+
+5.2 Portais especiais
+
+  estrato-general    portal-exemplo.com   Template Newspack (não produção)
+  estrato-sustain    sustain.estrato.cc   DEPRECATED — split agro/esg/viagem
+
+5.3 Exemplo: estrato-finance.yaml (estrato.cc)
+
+  id: estrato-finance
+  domain: estrato.cc
+  title: Estrato
+  tagline: Economia, mercados e finanças
+  language: pt_BR
+  timezone: America/Sao_Paulo
+  theme.family: pressgrid
+  theme.source: PressGrid v2.5.0 (GitHub stantchev)
+  plugins.bundled: portal-bootstrap, rss-bootstrap, publisher-bridge
+  content.mode: pipeline_primary
+  taxonomy.schema_version: 2
+  categories: economia, mercados, negocios, financas-pessoais,
+              criptomoedas, agronegocio, mundo
+  hosting.vps_ip: 187.127.12.186
+  hosting.web_root: /var/www/estrato.cc
+
+5.4 Web roots no Victor
+
+  /var/www/estrato.cc
+  /var/www/mente.estrato.cc
+  /var/www/lifestyle.estrato.cc
+  ... (um diretório por subdomínio)
+
+5.5 Taxonomia (finance)
+
+  Camadas: categories (editorias menu), subcategories, columns (colunas marca)
+  Arquivo canônico: portals/estrato-finance-taxonomy.php
+  legacy_categories.merge: politica→economia, tecnologia→negocios, brasil→mundo
+
+
+================================================================================
+  6. TEMAS WORDPRESS
+================================================================================
+
+6.1 Produção (todos os portais live)
+
+  Tema: PressGrid v2.5.0
+  Fonte: https://github.com/stantchev/PressGrid-WordPress-Theme
+  ZIP:   .../releases/download/v2.5.0/pressgrid-v2.5.0.zip
+  Demo:  https://stantchev.github.io/PressGrid-WordPress-Theme/
+
+  O plugin portal-bootstrap:
+    - Instala e ativa PressGrid na ativação
+    - Oculta header/footer legado PressGrid via CSS (nav-header-g1 substitui)
+    - Mantém featured images e layout builder onde aplicável
+
+6.2 Template generalista (não produção)
+
+  Tema: Newspack Scott child v2.22.3
+  Plugin: Newspack v5.12.0
+  Portal: estrato-general (portal-exemplo.com)
+
+6.3 Legado no repositório (referência)
+
+  Jannah 7.6.5 + child 1.0.2 em Jannah-wp-theme/
+  Não usado em portais Estrato em produção.
+
+
+================================================================================
+  7. INTERFACE: HEADER G1, HOME, SINGLE, FOOTER
+================================================================================
+
+7.1 Header G1 (nav-header-g1.php) — padrão Globo/G1
+
+  Estrutura vertical (mobile e desktop):
+
+  [1] Barra utilitária — Ticker financeiro (ticker-br.php, wp_body_open prio 7)
+  [2] Barra Rede Estrato — chips horizontais sempre visíveis (sem "Outras marcas")
+  [3] Faixa principal vermelha (#C4170C) — hamburger | logo estrato. | busca
+  [4] Trilho de editorias — scroll horizontal (Início, Economia, Mercados...)
+  [5] Drawer fullscreen — menu completo com mega panels (mobile)
+  [6] Overlay + painel de busca com sugestões
+
+  Classes CSS principais:
+    .estrato-g1-header
+    .estrato-g1-header__rede / __rede-list
+    .estrato-g1-header__sticky / __principal
+    .estrato-g1-header__rail / .estrato-g1-rail
+    .estrato-g1-header__nav (drawer)
+    .estrato-g1-menu / .estrato-mega-nav
+
+  Proteções anti-regressão (v1.36.7+):
+    - Filter nav-mega-menu.php prio 999: rail NUNCA recebe estrato-g1-menu
+    - items_wrap hard-lock: class="estrato-g1-rail"
+    - CSS belt: flex-direction:row!important + texto escuro
+    - Cinto anti-leak se classes drawer vazarem
+    - max-height:48px no rail mobile (v1.36.9)
+    - CSS header em wp_head prio 2 (antes flush critical prio 3) — v1.36.10
+
+  Gate de validação:
+    bash scripts/victor/check-header-home-gate.sh https://estrato.cc/
+
+7.2 Home editorial (home-layout.php) — Sprint home-g1
+
+  Seções:
+    [A] Masthead — H1 + dek editorial (YMYL/EEAT)
+    [B] Hero — 1 card grande + 2 laterais (desktop grid 1.6fr/1fr)
+    [C] Agora — lista headlines recentes + "Ver todas"
+    [D] Blocos por editoria — grid cards + "Ver mais em {editoria}"
+    [E] Em destaque — lista compacta
+    [F] Hub Rede Estrato — links verticais
+    [G] Guias / Newsletter
+
+  Hero pick: determinístico (hash + slot horário + editoria prioridade)
+  Kickers: uppercase UTF-8 seguro, cor por editoria (--estrato-cat-color)
+  Shortcode: [estrato_home_columns]
+
+7.3 Single article (single-article.php)
+
+  - Breadcrumb compacto mobile (<720px)
+  - Byline com avatar, job, persona badge
+  - Featured image próprio (oculta duplicata PressGrid)
+  - Share bar fixa mobile (bottom safe-area)
+  - Prev/next + related
+  - max-width: min(680px, 100%) — sem overflow horizontal mobile
+  - .pg-breadcrumbs oculto (evita duplicação)
+
+7.4 Footer FT (nav-footer-ft.php)
+
+  Estilo Financial Times: colunas, acordeão mobile, links legais
+
+7.5 Ticker BR (ticker-br.php)
+
+  IBOVESPA, USD/BRL, SELIC, IPCA 12m, BITCOIN
+  Posição: após header (wp_body_open priority 7)
+
+
+================================================================================
+  8. SEO, AEO, GEO, EEAT E YMYL
+================================================================================
+
+8.1 SEO técnico
+
+  seo-robots.php         robots.txt customizado
+  seo-yoast-defaults.php Meta defaults, OG image fixes
+  seo-category.php       Archives SEO
+  estrato-news-sitemap.php  Sitemap notícias standalone
+  google-news.php        Publisher Center integration
+
+8.2 Schema (seo-schema.php)
+
+  - NewsMediaOrganization
+  - NewsArticle / Article
+  - BreadcrumbList
+  - Anti-duplicação schema PressGrid legado
+  - article:published_time, article:modified_time
+
+8.3 AEO / GEO (seo-aeo.php)
+
+  - IndexNow ping
+  - News sitemap cron
+  - assets/llms.txt e llms-full.txt
+
+8.4 EEAT (eeat.php, editorial-staff.php, author-personas.php)
+
+  - Mapa equipe editorial verificável
+  - Personas por categoria
+  - Retratos autores (sideload)
+  - editor-in-chief, reviewedBy (roadmap)
+
+8.5 YMYL (ymyl.php)
+
+  Disclaimers financeiros/saúde em singles e hubs
+
+8.6 Entity pages (entity-pages.php, network-hubs.php)
+
+  /tudo-sobre/{tema}/ — hubs estilo InfoMoney
+  estrato.cc/{vertical} — network hubs
+
+8.7 Gate SEO live
+
+  bash scripts/victor/check-seo-live-gate.sh
+
+8.8 Scorecard referência (auditoria 2026-08-20, live pré-deploy header)
+
+  SEO técnico    84/100
+  SEO on-page    80/100
+  AEO            86/100
+  GEO            91/100
+  EEAT/YMYL      76/100
+  Composto       83/100
+
+
+================================================================================
+  9. PIPELINE DE CONTEÚDO (VICTOR → WORDPRESS)
+================================================================================
+
+9.1 Crons Python no VPS Victor (fora do repo público)
+
+  | Cron              | Intervalo | Função              |
+  |-------------------|-----------|---------------------|
+  | estrato-scout     | 1h        | Coleta fontes       |
+  | estrato-curator   | 5min      | Curadoria           |
+  | estrato-writer    | 5min      | Redação             |
+  | estrato-publisher | 5min      | Publicação          |
+  | estrato-linker    | 5min      | Links internos      |
+
+9.2 Paths Victor (pipeline live)
+
+  /var/www/estrato/pipeline/     Scripts Python em produção
+  /var/www/estrato/.env.local    WP_ESTRATO_SECRET
+  /root/estrato-cc-wp.env        Credenciais WP estrato.cc
+
+9.3 Bridge flow
+
+  writer.py --portal=estrato
+       → wp_bridge.py
+       → POST https://estrato.cc/wp-json/estrato/v1/publish
+       → estrato-publisher-bridge cria/atualiza post WP
+
+9.4 Scripts Python no repo (scripts/victor/)
+
+  wp_bridge.py              Publicar via REST
+  sync-gsc-metrics.py       Métricas Search Console
+  syndicate-outbound.py     Sindicação outbound
+  validate-rss-feeds.py     Validar feeds RSS
+  sync-firesfera-feeds.py   Sync feeds Firesfera
+
+
+================================================================================
+  10. INFRAESTRUTURA E HOSPEDAGEM
+================================================================================
+
+10.1 VPS Victor
+
+  IP:        187.127.12.186
+  Hostname:  nexhost.ambi.cloud
+  SO:        Linux (nginx + PHP 8.3-FPM por pool/site)
+  Repo git:  /var/www/estrato/repo
+
+10.2 Cloudflare (estrato.cc)
+
+  NS: anahi.ns.cloudflare.com, ignat.ns.cloudflare.com
+  DNS A → 187.127.12.186 (proxy ON)
+  SSL:   Cloudflare Full + Let's Encrypt origem
+  Certs: /etc/letsencrypt/live/{domain}/
+
+10.3 nginx
+
+  Configs: /etc/nginx/conf.d/domains/*.estrato.cc.conf
+  Um pool PHP-FPM por site: /run/php/php8.3-fpm-{domain}.sock
+  Logs:    /var/log/nginx/domains/{domain}.log
+
+10.4 WordPress estrato.cc
+
+  Docroot: /var/www/estrato.cc
+  Tema:    PressGrid 2.5
+  Plugins ativos: estrato-portal-bootstrap 1.36.10,
+                  estrato-publisher-bridge 1.7.1,
+                  estrato-rss-bootstrap 1.11.0,
+                  wordpress-seo, contact-form-7
+
+10.5 Ambi Dev webhook (deploy notify)
+
+  http://72.61.129.243:3100/api/webhook/github
+  Disparado por GitHub Actions após build em push Preditivit
+
+10.6 Host alternativo (não apagar)
+
+  72.61.129.243 — Ambi host (webhook squad); não wipe
+
+
+================================================================================
+  11. DEPLOY E PUBLICAÇÃO
+================================================================================
+
+11.1 Fluxo Git → Produção
+
+  1. Desenvolvimento em branch cursor/* ou feature
+  2. Merge em Preditivit (branch base produção)
+  3. git push origin Preditivit
+  4. GitHub Actions: build-portal-packages.sh + webhook
+  5. Victor: git pull + rsync plugins para docroots
+
+11.2 Deploy manual header hotfix (recomendado pós-merge UI)
+
+  No Victor como root:
+
+  cd /var/www/estrato/repo
+  git pull origin Preditivit
+  bash scripts/victor/deploy-header-hotfix.sh
+
+  O script:
+    - Sync repo (branch Preditivit por padrão)
+    - rsync estrato-portal-bootstrap/ → todos wp-content/plugins encontrados
+    - OPcache reset via WP-CLI
+    - Roda check-header-home-gate.sh
+
+  Variáveis:
+    ESTRATO_REPO=/var/www/estrato/repo
+    ESTRATO_REPO_BRANCH=Preditivit
+
+11.3 Deploy multi-portal completo
+
+  bash scripts/victor/deploy-victor-multi-portal.sh
+  (DNS Cloudflare + WP + nginx + SSL + taxonomia — 16 portais)
+
+11.4 Setup produção finance
+
+  bash scripts/victor/setup-estrato-production.sh
+  bash scripts/victor/setup-estrato-portal-branding.sh
+
+11.5 Pós-deploy — validação obrigatória
+
+  bash scripts/victor/check-header-home-gate.sh https://estrato.cc/
+  bash scripts/victor/check-portal-regression-all.sh --strict
+  bash scripts/victor/check-seo-live-gate.sh
+  bash scripts/victor/audit-e2e-production.sh --strict
+
+11.6 Notas deploy 2026-08-22
+
+  - Após rsync plugin, pode ser necessário reload PHP-FPM + flush Redis
+  - OPcache_reset via WP-CLI não basta se workers mantêm bytecode antigo
+  - Comando útil no Victor:
+      redis-cli FLUSHALL
+      sudo -u www-data wp --path=/var/www/estrato.cc cache flush
+      systemctl reload php8.3-fpm
+
+
+================================================================================
+  12. CI/CD (GITHUB ACTIONS)
+================================================================================
+
+12.1 deploy-estrato-portal.yml
+
+  Trigger:
+    - push branches: Preditivit, cursor/extract-php-drive-zip-2c04
+    - paths: plugins, portals, scripts, workflows
+    - workflow_dispatch (portal input)
+
+  Jobs:
+    build:  scripts/build-portal-packages.sh → artifacts ZIP
+    notify: webhook Ambi Dev (72.61.129.243:3100)
+
+12.2 estrato-anti-regression.yml
+
+  Trigger:
+    - PR/push Preditivit ou cursor/**
+
+  Jobs:
+    static-regression:  check-portal-regression-ci.sh + shellcheck
+    victor-regression:  SSH Victor → check-portal-regression-all.sh --strict
+                        (requer secrets VICTOR_SSH_HOST/USER/PASSWORD)
+
+12.3 Secrets GitHub Actions
+
+  VICTOR_SSH_HOST
+  VICTOR_SSH_USER
+  VICTOR_SSH_PASSWORD
+
+
+================================================================================
+  13. SCRIPTS VICTOR (CATÁLOGO OPERACIONAL)
+================================================================================
+
+Total aproximado: ~177 arquivos em scripts/victor/
+
+13.1 Deploy (3)
+
+  deploy-header-hotfix.sh           Hotfix plugin header todos docroots
+  deploy-victor-multi-portal.sh     Deploy completo 16 portais
+  deploy-multi-portal-hostinger.sh  Variante Hostinger
+
+13.2 Check / Gate (15+)
+
+  check-portal-regression-ci.sh     CI estático
+  check-portal-regression.sh        Regressão portal único
+  check-portal-regression-all.sh    Todos portais (--strict)
+  check-header-home-gate.sh         Gate header mobile G1
+  check-seo-live-gate.sh            Gate SEO/AEO/GEO/EEAT live
+  check-schema-sample.sh            Amostra schema JSON-LD
+  check-rich-results-sample.sh      Rich results
+  check-portal-lighthouse.sh        Lighthouse single
+  check-portal-lighthouse-all.sh  Lighthouse all
+  check-freshrss.sh                 FreshRSS health
+  check-outbound-aggregators.sh     Agregadores outbound
+  check-package-e.sh                Package E validation
+  check-social-fediverse.sh         Fediverse
+  check-syndication.sh              Sindicação
+  audit-e2e-production.sh           Auditoria E2E (--strict)
+  monitor-estrato-network.sh        Monitor rede
+
+13.3 Setup infraestrutura (20+)
+
+  setup-estrato-production.sh       Config produção estrato.cc
+  setup-estrato-nginx-*.sh          nginx perf, security headers
+  setup-estrato-ops.sh              Crons ops
+  setup-estrato-freshrss.sh         FreshRSS
+  setup-estrato-gsc.sh              Google Search Console bot
+  setup-selfhosted-fonts.sh         Fontes self-hosted
+  setup-portal-full-stack.sh        Stack completo portal
+  setup-g1-header-all-portals.sh    Rollout header G1
+  setup-gate-all-portals.sh         Gate safeguards all
+  setup-ft-footer-all-portals.sh    Footer FT all
+  setup-newsletter-from-secrets.sh  Newsletter de /root/.secrets/
+
+13.4 Setup SEO / EEAT (10+)
+
+  setup-estrato-seo.sh              Sprint 1 SEO
+  setup-estrato-schema.sh           Sprint 2 schema
+  setup-estrato-aeo.sh              Sprint 6 AEO/GEO
+  setup-estrato-eeat.sh             EEAT
+  setup-seo-geo-eeat-all.sh         GEO/EEAT all portals
+  setup-seo-eeat-hardening-all.sh   EEAT hardening
+  setup-plan-seo-9.php              Plano SEO 9/10
+  PLAN-SEO-9.md                     Documento plano SEO
+
+13.5 Sprints (40+)
+
+  setup-sprint0-hotfix.sh … setup-sprint11-taxonomy-v2.php
+  setup-sprint-a1-all-portals.sh … setup-sprint-g3-finance-hub.php
+  setup-visual-audit-fix-all-portals.sh
+  setup-visual-audit-v3-v8-all-portals.sh
+
+13.6 Fix / manutenção (30+ PHP)
+
+  fix-post-content-hygiene.php
+  fix-author-jobs-refresh.php
+  purge-off-matrix-posts.php
+  backfill-featured-images.php
+  refresh-original-images.php
+  drafts-hygiene.php
+  ops-monthly-maintenance.php
+  trash-pre2024-posts.php
+
+13.7 Runbook
+
+  bash scripts/victor/runbook-production.sh
+  (imprime comandos canônicos Victor)
+
+
+================================================================================
+  14. ANTI-REGRESSÃO E GATES DE QUALIDADE
+================================================================================
+
+14.1 Arquivo machine-readable
+
+  portals/estrato-anti-regression.yaml
+  + variantes por portal (mind, lifestyle, science, …)
+
+14.2 Documentação
+
+  docs/ESTRATO-ANTI-REGRESSAO.md
+  docs/ESTRATO-BENCHMARK-TECNICO.md
+
+14.3 Categorias de regras (exemplos)
+
+  AR-ROBOTS-001…006    robots.txt
+  AR-SITEMAP-001…005   sitemaps + news-sitemap
+  AR-SCHEMA-001…010    JSON-LD home/post
+  AR-EEAT-001…005      autores, equipe, colunistas
+  AR-AEO-001…002       llms.txt, FAQ
+  AR-NAV-003…004       hubs, newsletter
+  AR-VISUAL-004        ticker + /cotacoes/
+
+14.4 Gate header home (check-header-home-gate.sh)
+
+  Verifica no HTML live:
+    [PASS] sem <button rede-toggle>
+    [PASS] sem texto "Outras marcas"
+    [PASS] rede-sheet sem atributo hidden
+    [PASS] rail UL class = apenas estrato-g1-rail
+    [PASS] CSS flex-direction:row!important
+    [PASS] sem underline inset grosso (CSS antigo)
+    [PASS] cinto CSS anti-leak 1.36.7+
+    [PASS] max-height:48px no rail 1.36.9+
+
+  Uso:
+    bash scripts/victor/check-header-home-gate.sh https://estrato.cc/
+    bash scripts/victor/check-header-home-gate.sh https://187.127.12.186/
+    (IP usa Host: estrato.cc automaticamente)
+
+14.5 Critério sprint (--strict)
+
+  check-portal-regression-all.sh --strict → 0 blockers, 0 warnings
+
+
+================================================================================
+  15. SECRETS, CREDENCIAIS E VARIÁVEIS DE AMBIENTE
+================================================================================
+
+ATENÇÃO: Nunca commitar senhas ou chaves no repositório.
+
+15.1 Victor — filesystem
+
+  /root/.secrets/cloudflare.ini       DNS API Cloudflare
+  /root/.secrets/newsletter.env       Newsletter ESP
+  /root/.secrets/gsc-service-account.json   GSC indexing bot
+  /root/estrato-cc-wp.env             Credenciais WP estrato.cc
+  /var/www/estrato/.env.local         WP_ESTRATO_SECRET (bridge)
+
+15.2 GitHub Actions secrets
+
+  VICTOR_SSH_HOST
+  VICTOR_SSH_USER
+  VICTOR_SSH_PASSWORD
+
+15.3 Cloud Agent Cursor (deploy remoto)
+
+  ESTRATO_VPS_SSH_KEY    Chave privada SSH para root@187.127.12.186
+  (configurar em Secrets do ambiente Cloud Agent no dashboard Cursor)
+
+15.4 Variáveis de ambiente comuns
+
+  ESTRATO_REPO              /var/www/estrato/repo
+  ESTRATO_REPO_BRANCH       Preditivit
+  ESTRATO_PORTAL            estrato-finance (ID portal para WP-CLI)
+  ESTRATO_VPS_IP            187.127.12.186
+  ESTRATO_HOST_HEADER       Host header para curls de gate
+  CLOUDFLARE_CREDENTIALS    /root/.secrets/cloudflare.ini
+  WP_ESTRATO_URL            URL bridge publish
+  WP_ESTRATO_SECRET         Secret bridge auth
+  ESTRATO_SKIP_PORTRAITS    1 para pular sideload retratos
+  ESTRATO_DRY_RUN           1 para scripts sem escrita
+
+15.5 Cloudflare API
+
+  Email: tpb@ambi.social
+  Usar Global API Key (não token cfut inválido em cloud agent)
+  Zone: estrato.cc
+
+
+================================================================================
+  16. BRANCHES GIT E FLUXO DE TRABALHO
+================================================================================
+
+16.1 Branch base produção
+
+  Preditivit  (origin/HEAD)
+
+16.2 Convenção branches feature (Cloud Agent)
+
+  cursor/<descriptive-name>-f149
+  cursor/<name>-2c04  (sprints anteriores)
+
+16.3 Branches ativas (amostra)
+
+  cursor/seo-geo-eeat-f149       SEO/GEO/EEAT (merged → Preditivit)
+  cursor/home-g1-feed-f149       Home G1 feed
+  cursor/mobile-audit-fixes-f149 Mobile audit
+  cursor/nav-ticker-fixes-f149   Nav + ticker
+  cursor/p1-portals-f149         P1 portals polish
+  cursor/continue-ops-health-f149 Ops health
+
+16.4 PRs
+
+  Ex.: PR #34 — SEO/GEO/EEAT + header fixes (merged em Preditivit)
+
+16.5 Workflow desenvolvedor
+
+  1. git checkout -b cursor/minha-feature-f149
+  2. commit + push
+  3. PR → base Preditivit
+  4. CI anti-regression
+  5. Merge
+  6. Deploy Victor (manual ou webhook)
+
+
+================================================================================
+  17. CORREÇÕES RECENTES (HEADER MOBILE / iOS)
+================================================================================
+
+17.1 Problema: área branca fantasma no iOS (ago/2026)
+
+  Sintoma: abaixo do trilho "Início" (sublinhado vermelho), void branco
+  clicável de ~400-600px antes do conteúdo. Links invisíveis (branco sobre
+  branco). Botão "OUTRAS MARCAS" ainda visível.
+
+  Causa raiz:
+    Filter estrato_nav_mega_menu_args injetava classes drawer
+    (estrato-g1-menu, estrato-mega-nav) no UL do trilho horizontal.
+    CSS drawer: flex-direction:column + color:#fff em fundo branco.
+    Apenas "Início" (current-menu-item) ficava vermelho visível.
+
+17.2 Correções aplicadas (cadeia 1.36.7 → 1.36.10)
+
+  v1.36.7  Isolar rail no filter prio 999; items_wrap hard-lock;
+           CSS belt row!important; remover toggle "Outras marcas"
+  v1.36.8  Overflow artigo mobile; hide .pg-breadcrumbs duplicado
+  v1.36.9  max-height:48px overflow:hidden no rail (contenção nuclear)
+  v1.36.10 Mover estrato_g1_header_styles wp_head prio 2 (antes flush
+           critical prio 3) — CSS do rail finalmente no HTML
+
+17.3 Deploy 2026-08-22
+
+  - Merge Preditivit + SSH Victor + deploy-header-hotfix.sh
+  - Reload PHP-FPM + redis-cli FLUSHALL necessários
+  - Gate PASS em https://estrato.cc/ e IP Victor
+
+17.4 Comparação visual pós-fix vs globo.com
+
+  Similar (piso G1):
+    - Barra rede com chips
+    - Faixa vermelha logo+busca
+    - Trilho horizontal editorias
+    - Hero manchete + laterais
+    - Bloco "Agora"
+
+  Diferente (intencional):
+    - Estrato: nicho finanças + ticker IBOV/USD/Selic
+    - Globo: portal generalista multi-vertical, mais denso
+    - Estrato: serif headlines; Globo: sans Globotipo
+    - Estrato: mobile-first mais limpo; Globo: mais widgets/vídeo
+
+
+================================================================================
+  18. COMANDOS OPERACIONAIS (RUNBOOK)
+================================================================================
+
+18.1 No Victor — deploy/sync
+
+  cd /var/www/estrato/repo && git pull origin Preditivit
+  bash scripts/victor/deploy-header-hotfix.sh
+  bash scripts/victor/setup-selfhosted-fonts.sh
+  bash scripts/victor/setup-s7-perf-all-portals.sh
+
+18.2 Validação pós-deploy
+
+  bash scripts/victor/check-header-home-gate.sh https://estrato.cc/
+  bash scripts/victor/check-portal-regression-all.sh --strict
+  bash scripts/victor/check-seo-live-gate.sh
+  bash scripts/victor/check-schema-sample.sh
+  bash scripts/victor/audit-e2e-production.sh --strict
+
+18.3 Indexação GSC
+
+  bash scripts/victor/setup-estrato-gsc.sh
+  python3 scripts/victor/check-gsc-coverage.py
+
+18.4 Conteúdo / higiene
+
+  wp --path=/var/www/estrato.cc eval-file scripts/victor/fix-post-content-hygiene.php
+  wp --path=/var/www/estrato.cc eval-file scripts/victor/backfill-featured-images.php
+
+18.5 Build local (dev)
+
+  bash scripts/build-portal-packages.sh
+
+18.6 SSH Victor (exemplo)
+
+  ssh -i ~/.ssh/estrato_victor_deploy root@187.127.12.186
+
+
+================================================================================
+  19. TROUBLESHOOTING
+================================================================================
+
+19.1 Header antigo no live após deploy
+
+  Sintomas: OUTRAS MARCAS, rail class poluída, sem max-height:48px
+  Causas:   Plugin não rsyncado; OPcache/PHP-FPM cache; Cloudflare cache
+  Ações:
+    1. Verificar versão no disco:
+       grep Version /var/www/estrato.cc/wp-content/plugins/estrato-portal-bootstrap/estrato-portal-bootstrap.php
+    2. Rerun deploy-header-hotfix.sh
+    3. redis-cli FLUSHALL
+    4. wp cache flush + opcache_reset
+    5. systemctl reload php8.3-fpm
+    6. Hard refresh mobile / purge Cloudflare se necessário
+
+19.2 CSS header ausente (gate fail flex-direction:row)
+
+  Causa: estrato_g1_header_styles registrado após flush critical (prio 20 vs 3)
+  Fix:   versão >= 1.36.10 (prio 2)
+
+19.3 Overflow horizontal em artigos mobile
+
+  Causa: .pg-main-col max-width 680px fixo + breadcrumbs duplicados
+  Fix:   versão >= 1.36.8 (min(680px,100%))
+
+19.4 Pipeline não publica
+
+  Verificar: WP_ESTRATO_SECRET, estrato_bridge_secret, endpoint REST
+  Logs: Victor pipeline + wp debug.log
+
+19.5 CI deploy workflow fail "Missing estrato-rss-bootstrap"
+
+  Build local requer diretório estrato-rss-bootstrap/ presente no checkout
+
+19.6 Gate curl IP Victor
+
+  check-header-home-gate.sh adiciona -H 'Host: estrato.cc' e -k para IP
+
+
+================================================================================
+  20. REFERÊNCIAS E DOCUMENTOS COMPLEMENTARES
+================================================================================
+
+  docs/ESTRATO-PORTAL-FACTORY.md      Visão factory + migração Victor
+  docs/ESTRATO-ANTI-REGRESSAO.md       Catálogo anti-regressão
+  docs/ESTRATO-SPRINT-PLAN.md          Plano sprints S1-S8+
+  docs/ESTRATO-SPRINT-PRINTS.md        Prints sprint + SSH Victor
+  docs/ESTRATO-BENCHMARK-ROADMAP.md    Benchmark vs G1/Valor/Exame
+  docs/ESTRATO-BENCHMARK-TECNICO.md    Matriz SEO técnico 17 portais
+  docs/ESTRATO-VISUAL-AUDIT-2026-07-13.md  Bugs visuais B1-B11
+  scripts/victor/PLAN-SEO-9.md         Plano SEO 9/10 executável
+  scripts/victor/runbook-production.sh Runbook comandos Victor
+
+  Links externos:
+    Portal:     https://estrato.cc/
+    PressGrid:  https://stantchev.github.io/PressGrid-WordPress-Theme/
+    Repo:       https://github.com/ambisocial/2
+    Cloud Agent env: cursor.com/dashboard/cloud-agents/environments
+
+  Contatos operacionais (docs):
+    admin email portal: tpb@tbj.com.br
+    cert email:         tpb@ambi.social
+
+
+================================================================================
+  APÊNDICE A — MAPA DE MÓDULOS portal-bootstrap (referência rápida)
+================================================================================
+
+  Nav/UI     nav-header-g1, nav-mega-menu, nav-visual, nav-footer-ft,
+             home-layout, single-article, ticker-br, category-archive
+  SEO        seo-robots, seo-schema, seo-yoast-defaults, seo-category,
+             seo-aeo, seo-faq, google-news, estrato-news-sitemap
+  EEAT/YMYL  eeat, author-personas, editorial-staff, ymyl,
+             entity-pages, network-hubs
+  Pipeline   pipeline-sanitize, pipeline-categorization, content-quality
+  Perf       perf-lcp, perf-consolidate-styles, fonts-selfhosted,
+             design-system
+  Ops        ops, gate-safeguards, retention, newsletter-esp,
+             syndication, category-redirects, portal-taxonomy, taxonomy
+
+
+================================================================================
+  APÊNDICE B — CHECKLIST BACKUP / DISASTER RECOVERY
+================================================================================
+
+  [ ] Clone repo: git clone https://github.com/ambisocial/2.git
+  [ ] Branch Preditivit checkout
+  [ ] Build plugins: bash scripts/build-portal-packages.sh
+  [ ] Backup Victor: /var/www/*.estrato.cc + /var/www/estrato/repo
+  [ ] Backup secrets: /root/.secrets/, /root/estrato-cc-wp.env
+  [ ] Backup DB: wp db export por portal
+  [ ] Backup SSL: /etc/letsencrypt/live/
+  [ ] Backup nginx: /etc/nginx/conf.d/domains/
+  [ ] Documentar estrato_bridge_secret e WP_ESTRATO_SECRET (fora do git)
+  [ ] Testar restore: deploy-victor-multi-portal.sh em staging
+  [ ] Validar gates: check-portal-regression-all.sh --strict
+
+
+================================================================================
+  FIM DO DOCUMENTO
+================================================================================
+
+Gerado automaticamente para backup do projeto Estrato.
+Para atualizar: regerar após merges significativos em Preditivit.
